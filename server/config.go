@@ -1,20 +1,31 @@
 package server
 
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+)
+
 var storageRoot string
 var users map[string]string
 var userPolicies map[string]func(string, string) bool
 
 func init() {
-	storageRoot = "./data" // local dir to store buckets & objects
-
-	// In-memory user with access key & secret key (hardcoded for MVP)
-	users = map[string]string{
-		"myaccesskey": "mysecretkey",
+	if err := godotenv.Load(); err != nil {
+		os.Exit(2)
 	}
 
-	// Simple user policies (for MVP: allow all operations)
+	storageRoot = os.Getenv("LS_STORAGE_ROOT")
+
+	var admin_access_key = os.Getenv("LS_ADMIN_ACCESS_KEY")
+	var admin_secret_key = os.Getenv("LS_ADMIN_SECRET_KEY")
+
+	users = map[string]string{
+		admin_access_key: admin_secret_key,
+	}
+
 	userPolicies = map[string]func(string, string) bool{
-		"myaccesskey": func(bucket, op string) bool {
+		admin_access_key: func(bucket, op string) bool {
 			return true
 		},
 	}
