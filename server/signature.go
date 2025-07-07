@@ -16,6 +16,14 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 	if !strings.HasPrefix(auth, "AWS4-HMAC-SHA256") {
 		return "", false
 	}
+
+	var ok bool
+
+	auth, ok = strings.CutPrefix(auth, "AWS4-HMAC-SHA256 ")
+	if !ok {
+		return "", false
+	}
+
 	// Parse Credential= part
 	parts := strings.Split(auth, ",")
 	var credential string
@@ -30,7 +38,7 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 		return "", false
 	}
 	accessKey := strings.Split(credential, "/")[0]
-	_, ok := users[accessKey]
+	_, ok = users[accessKey]
 	if !ok {
 		return "", false
 	}

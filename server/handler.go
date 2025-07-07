@@ -9,8 +9,31 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MakeNowJust/heredoc"
 	log "github.com/sirupsen/logrus"
 )
+
+func handleRoot(w http.ResponseWriter, r *http.Request) {
+	log.Info("Received probe: ", r.URL.Path)
+
+	w.Header().Set("Content-Type", "application/xml")
+	w.Header().Set("Server", "LabStore")
+	w.Header().Set("x-amz-request-id", "12345")
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(
+		heredoc.Doc(`
+			<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+			<Owner>
+				<ID>admin</ID>
+				<DisplayName>admin</DisplayName>
+			</Owner>
+			<Buckets>
+			</Buckets>
+			</ListAllMyBucketsResult>
+		`),
+	))
+}
 
 // Create bucket: PUT /bucket
 func handlePutBucket(w http.ResponseWriter, _ *http.Request, bucket string, accessKey string) {
@@ -172,6 +195,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		} else if len(parts) == 2 {
 			handleGetObject(w, r, parts[0], parts[1], accessKey)
 			return
+		} else {
+			handleRoot(w, r)
+			return
 		}
 	case "DELETE":
 		if len(parts) == 1 {
@@ -181,6 +207,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			handleDeleteObject(w, r, parts[0], parts[1], accessKey)
 			return
 		}
+	case "HEAD":
+		handleRoot(w, r)
+		return
 	}
 
 	writeS3Error(w, "NotImplemented", "Operation not implemented", 501)
