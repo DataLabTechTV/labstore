@@ -24,12 +24,12 @@ func handleListObjects(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(
 		heredoc.Doc(`
 			<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-				<Owner>
-					<ID>admin</ID>
-					<DisplayName>admin</DisplayName>
-				</Owner>
-				<Buckets>
-				</Buckets>
+			  <Owner>
+			    <ID>admin</ID>
+			    <DisplayName>admin</DisplayName>
+			  </Owner>
+			  <Buckets>
+			  </Buckets>
 			</ListAllMyBucketsResult>
 		`),
 	))
