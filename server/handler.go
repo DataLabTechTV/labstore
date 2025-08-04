@@ -20,23 +20,28 @@ func handleListObjects(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Server", "LabStore")
 	w.Header().Set("x-amz-request-id", "12345")
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte(
 		heredoc.Doc(`
-		<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-			<Owner>
-				<ID>admin</ID>
-				<DisplayName>admin</DisplayName>
-			</Owner>
-			<Buckets>
-			</Buckets>
-		</ListAllMyBucketsResult>
+			<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+				<Owner>
+					<ID>admin</ID>
+					<DisplayName>admin</DisplayName>
+				</Owner>
+				<Buckets>
+				</Buckets>
+			</ListAllMyBucketsResult>
 		`),
 	))
 }
 
 // Create bucket: PUT /bucket
-func handlePutBucket(w http.ResponseWriter, _ *http.Request, bucket string, accessKey string) {
+func handlePutBucket(
+	w http.ResponseWriter,
+	_ *http.Request,
+	bucket string,
+	accessKey string,
+) {
 	if !checkPolicy(accessKey, bucket, "CreateBucket") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
@@ -53,7 +58,12 @@ func handlePutBucket(w http.ResponseWriter, _ *http.Request, bucket string, acce
 }
 
 // Delete bucket: DELETE /bucket
-func handleDeleteBucket(w http.ResponseWriter, _ *http.Request, bucket string, accessKey string) {
+func handleDeleteBucket(
+	w http.ResponseWriter,
+	_ *http.Request,
+	bucket string,
+	accessKey string,
+) {
 	if !checkPolicy(accessKey, bucket, "DeleteBucket") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
@@ -68,7 +78,13 @@ func handleDeleteBucket(w http.ResponseWriter, _ *http.Request, bucket string, a
 }
 
 // Upload object: PUT /bucket/key
-func handlePutObject(w http.ResponseWriter, r *http.Request, bucket, key, accessKey string) {
+func handlePutObject(
+	w http.ResponseWriter,
+	r *http.Request,
+	bucket,
+	key,
+	accessKey string,
+) {
 	if !checkPolicy(accessKey, bucket, "PutObject") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
@@ -96,7 +112,13 @@ func handlePutObject(w http.ResponseWriter, r *http.Request, bucket, key, access
 }
 
 // Get object: GET /bucket/key
-func handleGetObject(w http.ResponseWriter, r *http.Request, bucket, key, accessKey string) {
+func handleGetObject(
+	w http.ResponseWriter,
+	r *http.Request,
+	bucket,
+	key,
+	accessKey string,
+) {
 	if !checkPolicy(accessKey, bucket, "GetObject") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
@@ -112,7 +134,13 @@ func handleGetObject(w http.ResponseWriter, r *http.Request, bucket, key, access
 }
 
 // Delete object: DELETE /bucket/key
-func handleDeleteObject(w http.ResponseWriter, _ *http.Request, bucket, key, accessKey string) {
+func handleDeleteObject(
+	w http.ResponseWriter,
+	_ *http.Request,
+	bucket,
+	key,
+	accessKey string,
+) {
 	if !checkPolicy(accessKey, bucket, "DeleteObject") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
