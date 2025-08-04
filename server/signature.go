@@ -1,18 +1,50 @@
 package server
 
 import (
+	"crypto/sha256"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 )
 
-// --- AWS Signature V4 Verification ---
+func toCanonicalRequest(r *http.Request, timestamp string) (string, bool) {
+	var canReq strings.Builder
 
-// For simplicity, we only check Authorization header with access key and sign
-// string presence. Full signature verification is complex, so this is a stub.
+	canReq.WriteString(r.Method)
+	canReq.WriteString("\n")
+
+	canReq.WriteString(r.URL.Path)
+	canReq.WriteString("\n")
+
+	canReq.WriteString(r.URL.RawQuery)
+	canReq.WriteString("\n")
+
+	canReq.WriteString("host:")
+	canReq.WriteString(r.Host)
+	canReq.WriteString("\n")
+
+	canReq.WriteString("x-amz-date:")
+	canReq.WriteString(timestamp)
+	canReq.WriteString("\n\n")
+
+	canReq.WriteString("host;x-amz-date")
+	canReq.WriteString("\n")
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		return "", false
+	}
+
+	canReq.WriteString(fmt.Sprintf("%x", sha256.Sum256(body)))
+
+	return canReq.String(), true
+}
 
 func verifyAWSSigV4(r *http.Request) (string, bool) {
 	auth := r.Header.Get("Authorization")
-	// Example: Authorization: AWS4-HMAC-SHA256 Credential=myaccesskey/20230629/us-east-1/s3/aws4_request, SignedHeaders=host;x-amz-date, Signature=...
+
 	if !strings.HasPrefix(auth, "AWS4-HMAC-SHA256") {
 		return "", false
 	}
@@ -42,7 +74,17 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 	if !ok {
 		return "", false
 	}
+
 	// Here you'd do full signature verification with secretKey, canonical request, etc.
 	// For MVP, we just check presence of accessKey in users.
+
+	timestamp := r.Header.Get("X-Amz-Date")
+	// canonicalRequest, ok := toCanonicalRequest(r, timestamp)
+	_, ok = toCanonicalRequest(r, timestamp)
+
+	if !ok {
+		return "", false
+	}
+
 	return accessKey, true
 }
