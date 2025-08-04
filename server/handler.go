@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func handleRoot(w http.ResponseWriter, r *http.Request) {
+func handleListObjects(w http.ResponseWriter, r *http.Request) {
 	log.Info("Received probe: ", r.URL.Path)
 
 	w.Header().Set("Content-Type", "application/xml")
@@ -23,14 +23,14 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(
 		heredoc.Doc(`
-			<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+		<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 			<Owner>
 				<ID>admin</ID>
 				<DisplayName>admin</DisplayName>
 			</Owner>
 			<Buckets>
 			</Buckets>
-			</ListAllMyBucketsResult>
+		</ListAllMyBucketsResult>
 		`),
 	))
 }
@@ -49,7 +49,7 @@ func handlePutBucket(w http.ResponseWriter, _ *http.Request, bucket string, acce
 			return
 		}
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 }
 
 // Delete bucket: DELETE /bucket
@@ -64,7 +64,7 @@ func handleDeleteBucket(w http.ResponseWriter, _ *http.Request, bucket string, a
 		writeS3Error(w, "NoSuchBucket", "Bucket does not exist or not empty", 404)
 		return
 	}
-	w.WriteHeader(204)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Upload object: PUT /bucket/key
@@ -92,7 +92,7 @@ func handlePutObject(w http.ResponseWriter, r *http.Request, bucket, key, access
 		writeS3Error(w, "InternalError", "Failed to write object", 500)
 		return
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 }
 
 // Get object: GET /bucket/key
@@ -123,7 +123,7 @@ func handleDeleteObject(w http.ResponseWriter, _ *http.Request, bucket, key, acc
 		writeS3Error(w, "NoSuchKey", "Object not found", 404)
 		return
 	}
-	w.WriteHeader(204)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // List buckets: GET /
@@ -174,45 +174,38 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse URL path: /bucket or /bucket/key
 	parts := strings.SplitN(strings.Trim(r.URL.Path, "/"), "/", 2)
 
 	switch r.Method {
 	case "PUT":
 		if len(parts) == 1 {
-			// PUT Bucket
 			handlePutBucket(w, r, parts[0], accessKey)
-			return
 		} else if len(parts) == 2 {
-			// PUT Object
 			handlePutObject(w, r, parts[0], parts[1], accessKey)
-			return
 		}
 	case "GET":
 		if r.URL.Path == "/" || r.URL.Path == "" {
 			handleListBuckets(w, r, accessKey)
-			return
 		} else if len(parts) == 2 {
 			handleGetObject(w, r, parts[0], parts[1], accessKey)
-			return
 		} else {
-			handleRoot(w, r)
-			return
+			handleListObjects(w, r)
 		}
 	case "DELETE":
 		if len(parts) == 1 {
 			handleDeleteBucket(w, r, parts[0], accessKey)
-			return
 		} else if len(parts) == 2 {
 			handleDeleteObject(w, r, parts[0], parts[1], accessKey)
-			return
 		}
 	case "HEAD":
-		handleRoot(w, r)
-		return
+		if len(parts) == 2 {
+			handleGetObject(w, r, parts[0], parts[1], accessKey)
+		} else {
+			handleListObjects(w, r)
+		}
+	default:
+		writeS3Error(w, "NotImplemented", "Operation not implemented", 501)
 	}
-
-	writeS3Error(w, "NotImplemented", "Operation not implemented", 501)
 }
 
 func Start() {
