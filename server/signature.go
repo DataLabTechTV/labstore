@@ -230,7 +230,7 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	secretKey, ok := users[accessKey]
 
 	if !ok {
-		return "", fmt.Errorf("No secret key found for access key %s", accessKey)
+		return "", fmt.Errorf("no secret key found for access key %s", accessKey)
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
