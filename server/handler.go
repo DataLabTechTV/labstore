@@ -196,8 +196,8 @@ func handleListBuckets(w http.ResponseWriter, _ *http.Request, accessKey string)
 // --- Main router ---
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	accessKey, ok := verifyAWSSigV4(r)
-	if !ok {
+	accessKey, err := verifyAWSSigV4(r)
+	if err != nil {
 		writeS3Error(w, "InvalidAccessKeyId", "Signature or access key invalid", 403)
 		return
 	}

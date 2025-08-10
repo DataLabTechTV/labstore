@@ -1,17 +1,54 @@
 package server
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"sort"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, bool) {
+func queryEncode(kv string) string {
+	esc := url.QueryEscape(kv)
+	esc = strings.ReplaceAll(esc, "+", "%20")
+	esc = strings.ReplaceAll(esc, "%7E", "~")
+	return esc
+}
+
+func buildQueryString(rawQuery string) string {
+	m, _ := url.ParseQuery(rawQuery)
+
+	keys := make([]string, 0, len(m))
+
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	var parts []string
+
+	for _, key := range keys {
+		values := m[key]
+		sort.Strings(values)
+
+		for _, value := range values {
+			parts = append(parts, queryEncode(key)+"="+queryEncode(value))
+		}
+	}
+
+	return strings.Join(parts, "&")
+}
+
+func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, error) {
 	var canonicalRequest strings.Builder
 
 	canonicalRequest.WriteString(r.Method)
@@ -20,7 +57,9 @@ func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, boo
 	canonicalRequest.WriteString(r.URL.Path)
 	canonicalRequest.WriteString("\n")
 
-	canonicalRequest.WriteString(r.URL.RawQuery)
+	queryString := buildQueryString(r.URL.RawQuery)
+	log.Debug("Canonical query string: " + queryString)
+	canonicalRequest.WriteString(queryString)
 	canonicalRequest.WriteString("\n")
 
 	for _, signedHeader := range signedHeaders {
@@ -28,7 +67,7 @@ func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, boo
 
 		if header == "host" {
 			canonicalRequest.WriteString("host:")
-			canonicalRequest.WriteString(r.Host)
+			canonicalRequest.WriteString(strings.TrimSpace(r.Host))
 			canonicalRequest.WriteString("\n")
 			continue
 		}
@@ -47,12 +86,22 @@ func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, boo
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		return "", false
+		return "", errors.New("Could not read body")
 	}
 
-	canonicalRequest.WriteString(fmt.Sprintf("%x", sha256.Sum256(body)))
+	if len(body) == 0 {
+		log.Debug(fmt.Sprintf("Body (%d bytes): EMPTY", len(body)))
+	} else {
+		log.Debug(fmt.Sprintf("Body (%d bytes): %s", len(body), string(body)))
+	}
 
-	return canonicalRequest.String(), true
+	// Restore body
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	hash := sha256.Sum256(body)
+	canonicalRequest.WriteString(fmt.Sprintf("%x", hash))
+
+	return canonicalRequest.String(), nil
 }
 
 func buildStringToSign(
@@ -81,8 +130,13 @@ func computeSignature(
 	secretKey string,
 	scope string,
 	stringToSign string,
-) (string, bool) {
+) (string, error) {
 	scopeParts := strings.Split(scope, "/")
+
+	if len(scopeParts) != 4 {
+		return "", errors.New("Scope must contain 4 parts")
+	}
+
 	date := scopeParts[0]
 	awsRegion := scopeParts[1]
 	awsService := scopeParts[2]
@@ -109,10 +163,10 @@ func computeSignature(
 	mac.Write([]byte(stringToSign))
 	signature := mac.Sum(nil)
 
-	return string(signature), true
+	return hex.EncodeToString(signature), nil
 }
 
-func verifyAWSSigV4(r *http.Request) (string, bool) {
+func verifyAWSSigV4(r *http.Request) (string, error) {
 	auth := r.Header.Get("Authorization")
 
 	log.Debug("Authorization: " + auth)
@@ -120,12 +174,12 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 	// Remove prefix
 
 	if !strings.HasPrefix(auth, "AWS4-HMAC-SHA256") {
-		return "", false
+		return "", errors.New("Authorization must start with AWS4-HMAC-SHA256")
 	}
 
 	auth, ok := strings.CutPrefix(auth, "AWS4-HMAC-SHA256 ")
 	if !ok {
-		return "", false
+		return "", errors.New("Couldn't remove prefix AWS4-HMAC-SHA256")
 	}
 
 	// Parse credentials, signed headers, and signature
@@ -153,15 +207,15 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 	}
 
 	if credentials == "" {
-		return "", false
+		return "", errors.New("Credentials is empty")
 	}
 
 	if len(signedHeaders) == 0 {
-		return "", false
+		return "", errors.New("SignedHeaders is empty")
 	}
 
 	if signature == "" {
-		return "", false
+		return "", errors.New("Signature is empty")
 	}
 
 	log.Debug("Credentials: " + credentials)
@@ -176,7 +230,7 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 	secretKey, ok := users[accessKey]
 
 	if !ok {
-		return "", false
+		return "", fmt.Errorf("No secret key found for access key %s", accessKey)
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
@@ -186,10 +240,10 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 
 	// Compute signature
 
-	canonicalRequest, ok := buildCanonicalRequest(r, signedHeaders)
+	canonicalRequest, err := buildCanonicalRequest(r, signedHeaders)
 
-	if !ok {
-		return "", false
+	if err != nil {
+		return "", errors.New("Could not build canonical request")
 	}
 
 	log.Debug("Canonical request: " + canonicalRequest)
@@ -199,19 +253,19 @@ func verifyAWSSigV4(r *http.Request) (string, bool) {
 
 	log.Debug("String to sign: " + stringToSign)
 
-	recomputedSignature, ok := computeSignature(secretKey, scope, stringToSign)
+	recomputedSignature, err := computeSignature(secretKey, scope, stringToSign)
 
-	if !ok {
-		return "", false
+	if err != nil {
+		return "", errors.New("Could not compute signature")
 	}
 
-	log.Debug("Signature (recomputed): " + fmt.Sprintf("%x", recomputedSignature))
+	log.Debug("Signature (recomputed): " + recomputedSignature)
 
 	if signature == recomputedSignature {
-		return accessKey, true
+		return accessKey, nil
 	}
 
 	log.Error("Original and recomputed signatures differ")
 
-	return "", false
+	return "", errors.New("Original and recomputed signatures differ")
 }
