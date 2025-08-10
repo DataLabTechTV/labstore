@@ -86,7 +86,7 @@ func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, err
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		return "", errors.New("Could not read body")
+		return "", errors.New("could not read body")
 	}
 
 	if len(body) == 0 {
@@ -134,7 +134,7 @@ func computeSignature(
 	scopeParts := strings.Split(scope, "/")
 
 	if len(scopeParts) != 4 {
-		return "", errors.New("Scope must contain 4 parts")
+		return "", errors.New("scope must contain 4 parts")
 	}
 
 	date := scopeParts[0]
@@ -174,12 +174,12 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	// Remove prefix
 
 	if !strings.HasPrefix(auth, "AWS4-HMAC-SHA256") {
-		return "", errors.New("Authorization must start with AWS4-HMAC-SHA256")
+		return "", errors.New("header Authorization must start with AWS4-HMAC-SHA256")
 	}
 
 	auth, ok := strings.CutPrefix(auth, "AWS4-HMAC-SHA256 ")
 	if !ok {
-		return "", errors.New("Couldn't remove prefix AWS4-HMAC-SHA256")
+		return "", errors.New("could not remove prefix AWS4-HMAC-SHA256")
 	}
 
 	// Parse credentials, signed headers, and signature
@@ -207,15 +207,15 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	}
 
 	if credentials == "" {
-		return "", errors.New("Credentials is empty")
+		return "", errors.New("header Credentials is empty")
 	}
 
 	if len(signedHeaders) == 0 {
-		return "", errors.New("SignedHeaders is empty")
+		return "", errors.New("header SignedHeaders is empty")
 	}
 
 	if signature == "" {
-		return "", errors.New("Signature is empty")
+		return "", errors.New("header Signature is empty")
 	}
 
 	log.Debug("Credentials: " + credentials)
@@ -243,7 +243,7 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	canonicalRequest, err := buildCanonicalRequest(r, signedHeaders)
 
 	if err != nil {
-		return "", errors.New("Could not build canonical request")
+		return "", errors.New("could not build canonical request")
 	}
 
 	log.Debug("Canonical request: " + canonicalRequest)
@@ -256,7 +256,7 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	recomputedSignature, err := computeSignature(secretKey, scope, stringToSign)
 
 	if err != nil {
-		return "", errors.New("Could not compute signature")
+		return "", errors.New("could not compute signature")
 	}
 
 	log.Debug("Signature (recomputed): " + recomputedSignature)
@@ -267,5 +267,5 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 
 	log.Error("Original and recomputed signatures differ")
 
-	return "", errors.New("Original and recomputed signatures differ")
+	return "", errors.New("signatures do not match")
 }
