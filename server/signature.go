@@ -120,10 +120,17 @@ func buildStringToSign(
 	stringToSign.WriteString(scope)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(fmt.Sprintf("%x", sha256.Sum256([]byte(canonicalRequest))))
+	hash := sha256.Sum256([]byte(canonicalRequest))
+	stringToSign.WriteString(hex.EncodeToString(hash[:]))
 	stringToSign.WriteString("\n")
 
 	return stringToSign.String()
+}
+
+func hmacSHA256(key, value []byte) []byte {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(value)
+	return mac.Sum(nil)
 }
 
 func computeSignature(
@@ -138,30 +145,14 @@ func computeSignature(
 	}
 
 	date := scopeParts[0]
-	awsRegion := scopeParts[1]
-	awsService := scopeParts[2]
+	region := scopeParts[1]
+	service := scopeParts[2]
 
-	hashFunc := sha256.New
-
-	mac := hmac.New(hashFunc, []byte("AWS4"+secretKey))
-	mac.Write([]byte(date))
-	dateKey := mac.Sum(nil)
-
-	mac = hmac.New(hashFunc, dateKey)
-	mac.Write([]byte(awsRegion))
-	dateRegionKey := mac.Sum(nil)
-
-	mac = hmac.New(hashFunc, dateRegionKey)
-	mac.Write([]byte(awsService))
-	dateRegionServiceKey := mac.Sum(nil)
-
-	mac = hmac.New(hashFunc, dateRegionServiceKey)
-	mac.Write([]byte("aws4_request"))
-	signingKey := mac.Sum(nil)
-
-	mac = hmac.New(hashFunc, signingKey)
-	mac.Write([]byte(stringToSign))
-	signature := mac.Sum(nil)
+	dateKey := hmacSHA256([]byte("AWS4"+secretKey), []byte(date))
+	dateRegionKey := hmacSHA256(dateKey, []byte(region))
+	dateRegionServiceKey := hmacSHA256(dateRegionKey, []byte(service))
+	signingKey := hmacSHA256(dateRegionServiceKey, []byte("aws4_request"))
+	signature := hmacSHA256(signingKey, []byte(stringToSign))
 
 	return hex.EncodeToString(signature), nil
 }
@@ -249,6 +240,8 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	log.Debug("Canonical request: " + canonicalRequest)
 
 	timestamp := r.Header.Get("X-Amz-Date")
+	log.Debug("Timestamp: " + timestamp)
+
 	stringToSign := buildStringToSign(timestamp, scope, canonicalRequest)
 
 	log.Debug("String to sign: " + stringToSign)
@@ -261,7 +254,19 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 
 	log.Debug("Signature (recomputed): " + recomputedSignature)
 
-	if signature == recomputedSignature {
+	byteSignature, err := hex.DecodeString(signature)
+
+	if err != nil {
+		return "", errors.New("could not decode original signature")
+	}
+
+	byteRecomputedSignature, err := hex.DecodeString((recomputedSignature))
+
+	if err != nil {
+		return "", errors.New("could not decode recomputed signature")
+	}
+
+	if hmac.Equal(byteSignature, byteRecomputedSignature) {
 		return accessKey, nil
 	}
 
