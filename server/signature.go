@@ -16,6 +16,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD"
+
 func queryEncode(kv string) string {
 	esc := url.QueryEscape(kv)
 	esc = strings.ReplaceAll(esc, "+", "%20")
@@ -48,7 +50,11 @@ func buildQueryString(rawQuery string) string {
 	return strings.Join(parts, "&")
 }
 
-func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, error) {
+func buildCanonicalRequest(
+	r *http.Request,
+	signedHeaders []string,
+	payloadHash string,
+) (string, error) {
 	var canonicalRequest strings.Builder
 
 	canonicalRequest.WriteString(r.Method)
@@ -83,23 +89,30 @@ func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, err
 	canonicalRequest.WriteString(strings.Join(signedHeaders, ";"))
 	canonicalRequest.WriteString("\n")
 
-	body, err := io.ReadAll(r.Body)
+	var recomputedPayloadHash string
 
-	if err != nil {
-		return "", errors.New("could not read body")
-	}
-
-	if len(body) == 0 {
-		log.Debug(fmt.Sprintf("Body (%d bytes): EMPTY", len(body)))
+	if payloadHash == UNSIGNED_PAYLOAD {
+		recomputedPayloadHash = payloadHash
 	} else {
-		log.Debug(fmt.Sprintf("Body (%d bytes): %s", len(body), string(body)))
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return "", errors.New("could not read body")
+		}
+
+		if len(body) == 0 {
+			log.Debug(fmt.Sprintf("Body (%d bytes): EMPTY", len(body)))
+		} else {
+			log.Debug(fmt.Sprintf("Body (%d bytes): %s", len(body), string(body)))
+		}
+
+		// Restore body
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+		hash := sha256.Sum256(body)
+		recomputedPayloadHash = hex.EncodeToString(hash[:])
 	}
 
-	// Restore body
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-	hash := sha256.Sum256(body)
-	canonicalRequest.WriteString(hex.EncodeToString(hash[:]))
+	canonicalRequest.WriteString(recomputedPayloadHash)
 
 	return canonicalRequest.String(), nil
 }
@@ -158,8 +171,10 @@ func computeSignature(
 
 func verifyAWSSigV4(r *http.Request) (string, error) {
 	auth := r.Header.Get("Authorization")
-
 	log.Debug("Authorization: " + auth)
+
+	payloadHash := r.Header.Get("X-Amz-Content-SHA256")
+	log.Debug("X-Amz-Content-SHA256: " + payloadHash)
 
 	// Remove prefix
 
@@ -229,7 +244,7 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 
 	// Compute signature
 
-	canonicalRequest, err := buildCanonicalRequest(r, signedHeaders)
+	canonicalRequest, err := buildCanonicalRequest(r, signedHeaders, payloadHash)
 	if err != nil {
 		return "", errors.New("could not build canonical request")
 	}
