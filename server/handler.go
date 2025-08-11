@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/xml"
 	"io"
 	"net/http"
@@ -13,12 +15,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func newRequestID() string {
+	b := make([]byte, 8)
+	_, err := rand.Read(b)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return hex.EncodeToString(b)
+}
+
 func handleListObjects(w http.ResponseWriter, r *http.Request) {
+	requestID := newRequestID()
 	log.Info("Received probe: ", r.URL.Path)
 
 	w.Header().Set("Content-Type", "application/xml")
 	w.Header().Set("Server", "LabStore")
-	w.Header().Set("x-amz-request-id", "12345")
+	w.Header().Set("X-Amz-Request-Id", requestID)
 
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte(
@@ -160,6 +174,7 @@ func handleListBuckets(w http.ResponseWriter, _ *http.Request, accessKey string)
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
+
 	// For MVP: just list bucket dirs in storageRoot
 	entries, err := os.ReadDir(storageRoot)
 	if err != nil {
