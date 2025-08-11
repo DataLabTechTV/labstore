@@ -99,7 +99,7 @@ func buildCanonicalRequest(r *http.Request, signedHeaders []string) (string, err
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	hash := sha256.Sum256(body)
-	canonicalRequest.WriteString(fmt.Sprintf("%x", hash))
+	canonicalRequest.WriteString(hex.EncodeToString(hash[:]))
 
 	return canonicalRequest.String(), nil
 }
@@ -122,7 +122,6 @@ func buildStringToSign(
 
 	hash := sha256.Sum256([]byte(canonicalRequest))
 	stringToSign.WriteString(hex.EncodeToString(hash[:]))
-	stringToSign.WriteString("\n")
 
 	return stringToSign.String()
 }
@@ -218,36 +217,31 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	credentialParts := strings.Split(credentials, "/")
 
 	accessKey := credentialParts[0]
-	secretKey, ok := users[accessKey]
+	log.Debug("Access key: " + accessKey)
 
+	secretKey, ok := users[accessKey]
 	if !ok {
 		return "", fmt.Errorf("no secret key found for access key %s", accessKey)
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
-
-	log.Debug("Access key: " + accessKey)
 	log.Debug("Scope: " + scope)
 
 	// Compute signature
 
 	canonicalRequest, err := buildCanonicalRequest(r, signedHeaders)
-
 	if err != nil {
 		return "", errors.New("could not build canonical request")
 	}
-
 	log.Debug("Canonical request: " + canonicalRequest)
 
 	timestamp := r.Header.Get("X-Amz-Date")
 	log.Debug("Timestamp: " + timestamp)
 
 	stringToSign := buildStringToSign(timestamp, scope, canonicalRequest)
-
 	log.Debug("String to sign: " + stringToSign)
 
 	recomputedSignature, err := computeSignature(secretKey, scope, stringToSign)
-
 	if err != nil {
 		return "", errors.New("could not compute signature")
 	}
@@ -255,13 +249,11 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	log.Debug("Signature (recomputed): " + recomputedSignature)
 
 	byteSignature, err := hex.DecodeString(signature)
-
 	if err != nil {
 		return "", errors.New("could not decode original signature")
 	}
 
 	byteRecomputedSignature, err := hex.DecodeString((recomputedSignature))
-
 	if err != nil {
 		return "", errors.New("could not decode recomputed signature")
 	}
@@ -271,6 +263,5 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	}
 
 	log.Error("Original and recomputed signatures differ")
-
 	return "", errors.New("signatures do not match")
 }
