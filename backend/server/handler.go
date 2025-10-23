@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DataLabTechTV/labstore/config"
+	"github.com/DataLabTechTV/labstore/iam"
 	"github.com/MakeNowJust/heredoc"
 	log "github.com/sirupsen/logrus"
 )
@@ -56,11 +58,11 @@ func handlePutBucket(
 	bucket string,
 	accessKey string,
 ) {
-	if !checkPolicy(accessKey, bucket, "CreateBucket") {
+	if !iam.CheckPolicy(accessKey, bucket, "CreateBucket") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
-	path := filepath.Join(storageRoot, bucket)
+	path := filepath.Join(config.Env.StorageRoot, bucket)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		err := os.MkdirAll(path, 0755)
 		if err != nil {
@@ -78,11 +80,11 @@ func handleDeleteBucket(
 	bucket string,
 	accessKey string,
 ) {
-	if !checkPolicy(accessKey, bucket, "DeleteBucket") {
+	if !iam.CheckPolicy(accessKey, bucket, "DeleteBucket") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
-	path := filepath.Join(storageRoot, bucket)
+	path := filepath.Join(config.Env.StorageRoot, bucket)
 	err := os.Remove(path)
 	if err != nil {
 		writeS3Error(w, "NoSuchBucket", "Bucket does not exist or not empty", 404)
@@ -99,11 +101,11 @@ func handlePutObject(
 	key,
 	accessKey string,
 ) {
-	if !checkPolicy(accessKey, bucket, "PutObject") {
+	if !iam.CheckPolicy(accessKey, bucket, "PutObject") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
-	bucketPath := filepath.Join(storageRoot, bucket)
+	bucketPath := filepath.Join(config.Env.StorageRoot, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
 		writeS3Error(w, "NoSuchBucket", "Bucket does not exist", 404)
 		return
@@ -133,11 +135,11 @@ func handleGetObject(
 	key,
 	accessKey string,
 ) {
-	if !checkPolicy(accessKey, bucket, "GetObject") {
+	if !iam.CheckPolicy(accessKey, bucket, "GetObject") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
-	objPath := filepath.Join(storageRoot, bucket, key)
+	objPath := filepath.Join(config.Env.StorageRoot, bucket, key)
 	f, err := os.Open(objPath)
 	if err != nil {
 		writeS3Error(w, "NoSuchKey", "Object not found", 404)
@@ -155,11 +157,11 @@ func handleDeleteObject(
 	key,
 	accessKey string,
 ) {
-	if !checkPolicy(accessKey, bucket, "DeleteObject") {
+	if !iam.CheckPolicy(accessKey, bucket, "DeleteObject") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
-	objPath := filepath.Join(storageRoot, bucket, key)
+	objPath := filepath.Join(config.Env.StorageRoot, bucket, key)
 	err := os.Remove(objPath)
 	if err != nil {
 		writeS3Error(w, "NoSuchKey", "Object not found", 404)
@@ -170,13 +172,13 @@ func handleDeleteObject(
 
 // List buckets: GET /
 func handleListBuckets(w http.ResponseWriter, _ *http.Request, accessKey string) {
-	if !checkPolicy(accessKey, "", "ListBuckets") {
+	if !iam.CheckPolicy(accessKey, "", "ListBuckets") {
 		writeS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
 
 	// For MVP: just list bucket dirs in storageRoot
-	entries, err := os.ReadDir(storageRoot)
+	entries, err := os.ReadDir(config.Env.StorageRoot)
 	if err != nil {
 		writeS3Error(w, "InternalError", "Failed to list buckets", 500)
 		return
@@ -252,7 +254,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Start() {
-	os.MkdirAll(storageRoot, 0755)
+	os.MkdirAll(config.Env.StorageRoot, 0755)
 	http.HandleFunc("/", handler)
 	log.Info("Starting minimal S3-compatible server on :9000")
 	log.Fatal(http.ListenAndServe(":9000", nil))

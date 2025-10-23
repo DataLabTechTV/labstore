@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/DataLabTechTV/labstore/iam"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -234,7 +235,7 @@ func verifyAWSSigV4(r *http.Request) (string, error) {
 	accessKey := credentialParts[0]
 	log.Debug("Access key: " + accessKey)
 
-	secretKey, ok := users[accessKey]
+	secretKey, ok := iam.Users[accessKey]
 	if !ok {
 		return "", fmt.Errorf("no secret key found for access key %s", accessKey)
 	}
