@@ -3,6 +3,8 @@ package server
 import (
 	"os"
 
+	"path/filepath"
+
 	"github.com/joho/godotenv"
 )
 
@@ -15,7 +17,7 @@ func init() {
 		os.Exit(2)
 	}
 
-	storageRoot = os.Getenv("LS_STORAGE_ROOT")
+	storageRoot = filepath.Join("..", os.Getenv("LS_STORAGE_ROOT"))
 
 	var admin_access_key = os.Getenv("LS_ADMIN_ACCESS_KEY")
 	var admin_secret_key = os.Getenv("LS_ADMIN_SECRET_KEY")
