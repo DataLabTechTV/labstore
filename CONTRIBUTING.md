@@ -86,7 +86,6 @@ We'll use a monorepo structure, where top-level directories correspond to indepe
 monorepo/
 ├── .github/
 ├── web/
-├── mobile/
 ├── backend/
 ├── shared/
 ├── infra/
@@ -101,7 +100,6 @@ monorepo/
 
 - `.github/` – GitHub templates (PRs, issues, etc.) and workflows (CI/CD)
 - `web/` – web ui frontend
-- `mobile/` – mobile app
 - `backend/` – REST API endpoint and admin tools
 - `shared/` – shared assets, specs, etc. (no libs here—create another top-level project as those come along)
 - `infra/` – CI/CD (to call from GH workflows), deployment scripts, Docker, etc.
