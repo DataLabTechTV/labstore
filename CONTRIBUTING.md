@@ -58,12 +58,18 @@ BREAKING CHANGE: use javascript features not available in node 6
 
 ### Type Scope
 
-For the type scope, use nothing for top-level files (e.g., `justfile`, `.gitignore`, etc.), and use the project name (i.e., the name of the folder at the top-level, e.g., `web`, `backend`, etc.) as the optional scope.
+For the type scope, use nothing for top-level files (e.g., `justfile`, `.gitignore`, etc.), but only when there is no other option. Otherwise, always use the project name (i.e., the name of the folder at the top-level, e.g., `web`, `backend`, etc.) as the optional scope.
 
 An example for root-level:
 
 ```
 chore: add node_modules to gitignore
+```
+
+Another example for root-level, affecting the `justfile` for the `backend` project:
+
+```
+chore(backend): add server run command
 ```
 
 An example for the `web/` project (web UI frontend):
