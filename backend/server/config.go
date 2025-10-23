@@ -11,7 +11,7 @@ var users map[string]string
 var userPolicies map[string]func(string, string) bool
 
 func init() {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load("../.env"); err != nil {
 		os.Exit(2)
 	}
 
