@@ -1,53 +1,41 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 
+	"github.com/DataLabTechTV/labstore/internal/helper"
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 )
 
+const dotenvPath = ".env"
+
+var Env ServerConfig
+
 type ServerConfig struct {
+	Port           uint16 `env:"LS_PORT" envDefault:"1337"`
 	StorageRoot    string `env:"LS_STORAGE_ROOT" envDefault:"../data"`
 	AdminAccessKey string `env:"LS_ADMIN_ACCESS_KEY" envDefault:"admin"`
 	AdminSecretKey string `env:"LS_ADMIN_SECRET_KEY" envDefault:"admin"`
 }
 
-const DOTENV_PATH = ".env"
-
-var Env ServerConfig
-
 func LoadEnv() {
-	if err := godotenv.Load(DOTENV_PATH); err != nil {
+	if err := godotenv.Load(dotenvPath); err != nil {
 		log.Debug("No .env file found, skipping...")
 	} else {
-		log.Infoln("Environment loaded from:", DOTENV_PATH)
+		log.Debugln("Environment source:", dotenvPath)
 	}
 
-	if err := env.Parse(&Env); err != nil {
-		log.Fatal(err)
-	}
+	Env := helper.Must(env.ParseAs[ServerConfig]())
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	absStoragePath, err := filepath.Abs(Env.StorageRoot)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	relStorageRoot, err := filepath.Rel(cwd, absStoragePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	Env.StorageRoot = relStorageRoot
+	cwd := helper.Must(os.Getwd())
+	absStoragePath := helper.Must(filepath.Abs(Env.StorageRoot))
+	Env.StorageRoot = helper.Must(filepath.Rel(cwd, absStoragePath))
 
 	t := reflect.TypeOf(Env)
 	v := reflect.ValueOf(Env)
@@ -57,7 +45,7 @@ func LoadEnv() {
 		value := v.Field(i)
 
 		env_var_name := field.Tag.Get("env")
-		env_var_value := value.String()
+		env_var_value := fmt.Sprintf("%v", value)
 
 		if strings.Contains(env_var_name, "SECRET") {
 			if len(env_var_value) > 0 {
@@ -67,6 +55,6 @@ func LoadEnv() {
 			}
 		}
 
-		log.Infoln(env_var_name, env_var_value)
+		log.Debugf("%s: %s", env_var_name, env_var_value)
 	}
 }

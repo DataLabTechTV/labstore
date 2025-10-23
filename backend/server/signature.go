@@ -17,7 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD"
+const unsignedPayload = "UNSIGNED-PAYLOAD"
 
 func queryEncode(kv string) string {
 	esc := url.QueryEscape(kv)
@@ -92,7 +92,7 @@ func buildCanonicalRequest(
 
 	var recomputedPayloadHash string
 
-	if payloadHash == UNSIGNED_PAYLOAD {
+	if payloadHash == unsignedPayload {
 		recomputedPayloadHash = payloadHash
 	} else {
 		body, err := io.ReadAll(r.Body)
@@ -101,9 +101,9 @@ func buildCanonicalRequest(
 		}
 
 		if len(body) == 0 {
-			log.Debug(fmt.Sprintf("Body (%d bytes): EMPTY", len(body)))
+			log.Debugf("Body (%d bytes): EMPTY", len(body))
 		} else {
-			log.Debug(fmt.Sprintf("Body (%d bytes): %s", len(body), string(body)))
+			log.Debugf("Body (%d bytes): %s", len(body), string(body))
 		}
 
 		// Restore body

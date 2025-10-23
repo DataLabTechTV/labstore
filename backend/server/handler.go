@@ -13,18 +13,21 @@ import (
 
 	"github.com/DataLabTechTV/labstore/config"
 	"github.com/DataLabTechTV/labstore/iam"
+	"github.com/DataLabTechTV/labstore/internal/helper"
 	"github.com/MakeNowJust/heredoc"
 	log "github.com/sirupsen/logrus"
 )
 
+func Start() {
+	os.MkdirAll(config.Env.StorageRoot, 0755)
+	http.HandleFunc("/", handler)
+	log.Info("Starting minimal S3-compatible server on :9000")
+	log.Fatal(http.ListenAndServe(":9000", nil))
+}
+
 func newRequestID() string {
 	b := make([]byte, 8)
-	_, err := rand.Read(b)
-
-	if err != nil {
-		panic(err)
-	}
-
+	helper.Must(rand.Read(b))
 	return hex.EncodeToString(b)
 }
 
@@ -251,11 +254,4 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeS3Error(w, "NotImplemented", "Operation not implemented", 501)
 	}
-}
-
-func Start() {
-	os.MkdirAll(config.Env.StorageRoot, 0755)
-	http.HandleFunc("/", handler)
-	log.Info("Starting minimal S3-compatible server on :9000")
-	log.Fatal(http.ListenAndServe(":9000", nil))
 }
