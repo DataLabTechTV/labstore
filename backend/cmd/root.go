@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/DataLabTechTV/labstore/config"
+	"github.com/DataLabTechTV/labstore/iam"
 	"github.com/DataLabTechTV/labstore/internal/helper"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -29,6 +30,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		config.LoadEnv()
+		iam.Load()
 	},
 }
 

@@ -31,7 +31,7 @@ func LoadEnv() {
 		log.Debugln("Environment source:", dotenvPath)
 	}
 
-	Env := helper.Must(env.ParseAs[ServerConfig]())
+	Env = helper.Must(env.ParseAs[ServerConfig]())
 
 	cwd := helper.Must(os.Getwd())
 	absStoragePath := helper.Must(filepath.Abs(Env.StorageRoot))
