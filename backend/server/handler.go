@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -21,8 +22,8 @@ import (
 func Start() {
 	os.MkdirAll(config.Env.StorageRoot, 0755)
 	http.HandleFunc("/", handler)
-	log.Info("Starting minimal S3-compatible server on :9000")
-	log.Fatal(http.ListenAndServe(":9000", nil))
+	log.Infof("Starting minimal S3-compatible server on :%d", config.Env.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Env.Port), nil))
 }
 
 func newRequestID() string {

@@ -18,7 +18,7 @@ const dotenvPath = ".env"
 var Env ServerConfig
 
 type ServerConfig struct {
-	Port           uint16 `env:"LS_PORT" envDefault:"1337"`
+	Port           uint16 `env:"LS_PORT" envDefault:"6789"`
 	StorageRoot    string `env:"LS_STORAGE_ROOT" envDefault:"../data"`
 	AdminAccessKey string `env:"LS_ADMIN_ACCESS_KEY" envDefault:"admin"`
 	AdminSecretKey string `env:"LS_ADMIN_SECRET_KEY" envDefault:"admin"`
