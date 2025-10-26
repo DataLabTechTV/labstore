@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/iam"
+	"github.com/DataLabTechTV/labstore/backend/iam"
 	log "github.com/sirupsen/logrus"
 )
 

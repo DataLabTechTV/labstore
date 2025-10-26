@@ -3,8 +3,8 @@ package cmd
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/DataLabTechTV/labstore/config"
-	"github.com/DataLabTechTV/labstore/server"
+	"github.com/DataLabTechTV/labstore/backend/config"
+	"github.com/DataLabTechTV/labstore/backend/server"
 	"github.com/spf13/cobra"
 )
 

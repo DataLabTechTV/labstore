@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/config"
-	"github.com/DataLabTechTV/labstore/iam"
-	"github.com/DataLabTechTV/labstore/internal/helper"
+	"github.com/DataLabTechTV/labstore/backend/config"
+	"github.com/DataLabTechTV/labstore/backend/iam"
+	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

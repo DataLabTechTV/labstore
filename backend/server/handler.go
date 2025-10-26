@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataLabTechTV/labstore/config"
-	"github.com/DataLabTechTV/labstore/iam"
-	"github.com/DataLabTechTV/labstore/internal/helper"
+	"github.com/DataLabTechTV/labstore/backend/config"
+	"github.com/DataLabTechTV/labstore/backend/iam"
+	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	"github.com/MakeNowJust/heredoc"
 	log "github.com/sirupsen/logrus"
 )
