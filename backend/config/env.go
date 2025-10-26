@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/internal/helper"
+	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"

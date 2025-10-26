@@ -1,4 +1,4 @@
-module github.com/DataLabTechTV/labstore
+module github.com/DataLabTechTV/labstore/backend
 
 go 1.24.4
 
