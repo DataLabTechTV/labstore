@@ -13,7 +13,7 @@ type S3Error struct {
 	HostId    string
 }
 
-func writeS3Error(w http.ResponseWriter, code, message string, statusCode int) {
+func WriteS3Error(w http.ResponseWriter, code, message string, statusCode int) {
 	w.WriteHeader(statusCode)
 	errResp := S3Error{
 		Code:    code,

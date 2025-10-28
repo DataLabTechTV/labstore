@@ -170,7 +170,7 @@ func computeSignature(
 	return hex.EncodeToString(signature), nil
 }
 
-func verifyAWSSigV4(r *http.Request) (string, error) {
+func VerifyAWSSigV4(r *http.Request) (string, error) {
 	auth := r.Header.Get("Authorization")
 	log.Debug("Authorization: " + auth)
 
