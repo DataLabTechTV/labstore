@@ -9,6 +9,7 @@ import (
 
 	"github.com/DataLabTechTV/labstore/backend/config"
 	"github.com/DataLabTechTV/labstore/backend/iam"
+	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	"github.com/DataLabTechTV/labstore/backend/server"
 )
 
@@ -44,6 +45,26 @@ func handlePutObject(
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+// HeadObject: Head /:bucket/:key
+func handleHeadObject(
+	w http.ResponseWriter,
+	r *http.Request,
+	bucket,
+	key,
+	accessKey string,
+) {
+	if !iam.CheckPolicy(accessKey, bucket, "GetObject") {
+		server.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
+		return
+	}
+	objPath := filepath.Join(config.Env.StorageRoot, bucket, key)
+	if helper.FileExists(objPath) {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
 }
 
 // GetObject: GET /:bucket/:key

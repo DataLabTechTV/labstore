@@ -11,6 +11,34 @@ import (
 	"github.com/DataLabTechTV/labstore/backend/server"
 )
 
+// !FIXME: move types to a proper location
+
+type Bucket struct {
+	Name         string `xml:"Name"`
+	CreationDate string `xml:"CreationDate"`
+}
+
+type ListAllMyBucketsResult struct {
+	XMLName xml.Name `xml:"ListAllMyBucketsResult"`
+	Owner   struct {
+		ID          string `xml:"ID"`
+		DisplayName string `xml:"DisplayName"`
+	}
+	Buckets struct {
+		Bucket []Bucket `xml:"Bucket"`
+	}
+}
+
+// HeadBucket: HEAD /
+func handleHeadBucket(w http.ResponseWriter, _ *http.Request, accessKey string) {
+	if !iam.CheckPolicy(accessKey, "", "ListBuckets") {
+		server.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // ListBuckets: GET /
 func handleListBuckets(w http.ResponseWriter, _ *http.Request, accessKey string) {
 	if !iam.CheckPolicy(accessKey, "", "ListBuckets") {
@@ -22,23 +50,6 @@ func handleListBuckets(w http.ResponseWriter, _ *http.Request, accessKey string)
 	if err != nil {
 		server.WriteS3Error(w, "InternalError", "Failed to list buckets", 500)
 		return
-	}
-
-	// !FIXME: move types out of handler
-	type Bucket struct {
-		Name         string `xml:"Name"`
-		CreationDate string `xml:"CreationDate"`
-	}
-
-	type ListAllMyBucketsResult struct {
-		XMLName xml.Name `xml:"ListAllMyBucketsResult"`
-		Owner   struct {
-			ID          string `xml:"ID"`
-			DisplayName string `xml:"DisplayName"`
-		}
-		Buckets struct {
-			Bucket []Bucket `xml:"Bucket"`
-		}
 	}
 
 	result := ListAllMyBucketsResult{}
