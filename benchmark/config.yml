@@ -1,0 +1,61 @@
+warp:
+  api: v1
+  benchmark: mixed
+  quiet: false
+  no-color: false
+  json: false
+
+  params:
+    duration: 1m
+    concurrent: 8
+    objects: 1000
+
+    distribution:
+      get: 45.0
+      stat: 30.0
+      put: 15.0
+      delete: 10.0 # Must be same or lower than 'put'.
+
+    obj:
+      size: 100KiB
+      rand-size: false
+
+    autoterm:
+      enabled: false
+      dur: 10s
+      pct: 7.5
+
+    no-clear: false
+    keep-data: false
+
+  io:
+    prefix:
+    no-prefix: false
+    md5: false
+    disable-multipart: false
+    disable-sha256-payload: false
+    sse-s3-encrypt: false
+    sse-c-encrypt: false
+    storage-class:
+
+  analyze:
+    verbose: false
+    host: ''
+    filter-op: ''
+    segment-duration:
+    out:
+    skip-duration:
+    limit:
+    offset:
+
+  advanced:
+    stress: false
+    debug: false
+    disable-http-keepalive: false
+    http2: false
+    rps-limit:
+    host-select: weighed
+    resolve-host: false
+    sndbuf: 32768
+    rcvbuf: 32768
+    serve:
