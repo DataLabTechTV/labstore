@@ -14,7 +14,7 @@ warp:
       get: 45.0
       stat: 30.0
       put: 15.0
-      delete: 10.0 # Must be same or lower than 'put'.
+      delete: 10.0
 
     obj:
       size: 100KiB
