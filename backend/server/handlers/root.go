@@ -58,10 +58,10 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 			handleDeleteObject(w, r, parts[0], parts[1], accessKey)
 		}
 	case "HEAD":
-		if len(parts) == 2 {
-			handleGetObject(w, r, parts[0], parts[1], accessKey)
-		} else {
-			handleListObjects(w, r)
+		if r.URL.Path == "/" || r.URL.Path == "" {
+			handleHeadBucket(w, r, accessKey)
+		} else if len(parts) == 2 {
+			handleHeadObject(w, r, parts[0], parts[1], accessKey)
 		}
 	default:
 		server.WriteS3Error(w, "NotImplemented", "Operation not implemented", 501)
