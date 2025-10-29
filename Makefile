@@ -32,7 +32,9 @@ run: build
 
 benchmark:
 	set -a; . $(BENCHMARK_DIR)/.env; \
-	(cd $(BENCHMARK_DIR) && warp run config.yml)
+	(cd $(BENCHMARK_DIR) && mkdir -p output/ && cd output/ && warp run ../config.yml)
 
 clean:
-	rm -rf $(BIN_DIR) $(FRONTEND_DIR)/node_modules $(FRONTEND_BUILD_DIR)
+	rm -rf $(BIN_DIR)
+	rm -rf $(FRONTEND_DIR)/node_modules $(FRONTEND_BUILD_DIR)
+	rm -rf $(BENCHMARK_DIR)/output

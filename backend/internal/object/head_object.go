@@ -1,34 +1,33 @@
 package object
 
 import (
+	"mime"
 	"path/filepath"
+	"strconv"
+	"time"
 
-	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	"github.com/gofiber/fiber/v2"
 )
-
-func HeadObject(bucket, key string) error {
-	objPath := filepath.Join(config.Env.StorageRoot, bucket, key)
-
-	if !helper.FileExists(objPath) {
-		return ErrorNoSuchKey()
-	}
-
-	return nil
-}
 
 // HeadObjectHandler: Head /:bucket/:key
 func HeadObjectHandler(c *fiber.Ctx) error {
 	bucket := c.Params("bucket")
-	key := c.Params("key")
+	key := c.Params("+")
 
-	if err := HeadObject(bucket, key); err != nil {
+	file, size, err := GetObject(bucket, key)
+	if err != nil {
 		core.HandleError(c, err)
 		return err
 	}
+	defer file.Close()
 
-	c.Status(fiber.StatusOK)
-	return nil
+	ext := filepath.Ext(key)
+	mimeType := mime.TypeByExtension(ext)
+	c.Type(mimeType)
+
+	c.Response().Header.SetLastModified(time.Now())
+	c.Response().Header.Set("Content-Length", strconv.Itoa(size))
+
+	return c.SendStatus(fiber.StatusOK)
 }

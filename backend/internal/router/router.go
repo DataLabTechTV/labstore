@@ -7,6 +7,7 @@ import (
 	"github.com/DataLabTechTV/labstore/backend/internal/bucket"
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
 	"github.com/DataLabTechTV/labstore/backend/internal/object"
 	"github.com/DataLabTechTV/labstore/backend/internal/service"
@@ -18,23 +19,25 @@ import (
 func Start() {
 	os.MkdirAll(config.Env.StorageRoot, 0755)
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 5 * helper.GiB,
+	})
 
 	app.Use(middleware.AuthMiddleware())
 	app.Use(middleware.IAMMiddleware())
 
 	app.Put("/:bucket", middleware.WithIAM(iam.CreateBucket, bucket.PutBucketHandler))
-	app.Put("/:bucket/:key", middleware.WithIAM(iam.PutObject, object.PutObjectHandler))
+	app.Put("/:bucket/+", middleware.WithIAM(iam.PutObject, object.PutObjectHandler))
 
 	app.Get("/", middleware.WithIAM(iam.ListAllMyBuckets, service.ListBucketsHandler))
 	app.Get("/:bucket", middleware.WithIAM(iam.ListBucket, bucket.ListObjectsHandler))
-	app.Get("/:bucket/:key", middleware.WithIAM(iam.GetObject, object.GetObjectHandler))
+	app.Get("/:bucket/+", middleware.WithIAM(iam.GetObject, object.GetObjectHandler))
 
 	app.Delete("/:bucket", middleware.WithIAM(iam.DeleteBucket, bucket.DeleteBucketHandler))
-	app.Delete("/:bucket/:key", middleware.WithIAM(iam.DeleteObject, object.DeleteObjectHandler))
+	app.Delete("/:bucket/+", middleware.WithIAM(iam.DeleteObject, object.DeleteObjectHandler))
 
 	app.Head("/:bucket", middleware.WithIAM(iam.ListBucket, bucket.HeadBucketHandler))
-	app.Head("/:bucket/:key", middleware.WithIAM(iam.GetObject, object.HeadObjectHandler))
+	app.Head("/:bucket/+", middleware.WithIAM(iam.GetObject, object.HeadObjectHandler))
 
 	app.Use(func(c *fiber.Ctx) error {
 		core.HandleError(c, core.ErrorNotImplemented())
