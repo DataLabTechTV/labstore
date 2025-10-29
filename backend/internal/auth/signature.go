@@ -177,7 +177,9 @@ func buildCanonicalRequest(
 		logger.Log.Debugf("Body length: %d", len(body))
 
 		// Restore body
-		c.Request().SetBody(body)
+		bodyCopy := make([]byte, len(body))
+		copy(bodyCopy, body)
+		c.Request().SetBody(bodyCopy)
 
 		hash := sha256.Sum256(body)
 		recomputedPayloadHash = hex.EncodeToString(hash[:])
