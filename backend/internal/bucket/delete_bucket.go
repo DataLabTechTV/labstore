@@ -1,31 +1,33 @@
 package bucket
 
 import (
-	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/gofiber/fiber/v2"
 )
 
-// DeleteBucket: DELETE /:bucket
-func DeleteBucket(
-	w http.ResponseWriter,
-	_ *http.Request,
-	bucket string,
-	accessKey string,
-) {
-	if !iam.CheckPolicy(accessKey, bucket, "DeleteBucket") {
-		core.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
-		return
-	}
+func DeleteBucket(bucket string) error {
 	path := filepath.Join(config.Env.StorageRoot, bucket)
+
 	err := os.Remove(path)
 	if err != nil {
-		core.WriteS3Error(w, "NoSuchBucket", "Bucket does not exist or not empty", 404)
-		return
+		return core.ErrorNoSuchBucket()
 	}
-	w.WriteHeader(http.StatusNoContent)
+
+	return nil
+}
+
+// DeleteBucketHandler: DELETE /:bucket
+func DeleteBucketHandler(c *fiber.Ctx) error {
+	bucket := c.Params("bucket")
+	if err := DeleteBucket(bucket); err != nil {
+		core.HandleError(c, err)
+		return err
+	}
+
+	c.Status(fiber.StatusNoContent)
+	return nil
 }
