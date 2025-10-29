@@ -1,35 +1,43 @@
 package bucket
 
 import (
-	"net/http"
+	"encoding/xml"
 
+	"github.com/DataLabTechTV/labstore/backend/internal/core"
 	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
 	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
-	"github.com/MakeNowJust/heredoc"
+	"github.com/gofiber/fiber/v2"
 )
 
-// ListObjects: GET /:bucket
-func ListObjects(w http.ResponseWriter, r *http.Request) {
+type ListBucketResult struct {
+	XMLName     xml.Name `xml:"ListBucketResult"`
+	IsTruncated bool
+	Marker      string
+	Name        string
+	Prefix      string
+	MaxKeys     int
+}
+
+func ListBucket(bucket string) (*ListBucketResult, error) {
+	// TODO: implement
+	return &ListBucketResult{}, nil
+}
+
+// ListObjectsHandler: GET /:bucket
+func ListObjectsHandler(c *fiber.Ctx) error {
+	bucket := c.Params("bucket")
 	requestID := middleware.NewRequestID()
-	logger.Log.Info("Received probe: ", r.URL.Path)
 
-	w.Header().Set("Content-Type", "application/xml")
-	w.Header().Set("Server", "LabStore")
-	w.Header().Set("X-Amz-Request-Id", requestID)
+	logger.Log.Info("Received probe: ", c.Path())
 
-	w.WriteHeader(http.StatusNotFound)
+	res, err := ListBucket(bucket)
+	if err != nil {
+		core.HandleError(c, err)
+		return err
+	}
 
-	// !FIXME: ListAllMyBucketsResult is for ListBuckets, not ListObjects
-	w.Write([]byte(
-		heredoc.Doc(`
-			<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-			  <Owner>
-			    <ID>admin</ID>
-			    <DisplayName>admin</DisplayName>
-			  </Owner>
-			  <Buckets>
-			  </Buckets>
-			</ListAllMyBucketsResult>
-		`),
-	))
+	c.Set("Server", "LabStore")
+	c.Set("X-Amz-Request-Id", requestID)
+
+	return c.XML(res)
 }

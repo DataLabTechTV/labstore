@@ -2,22 +2,76 @@ package core
 
 import (
 	"encoding/xml"
-	"net/http"
+	"errors"
+	"fmt"
+
+	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
+	"github.com/gofiber/fiber/v2"
 )
 
-type S3Error struct {
-	XMLName   xml.Name `xml:"Error"`
-	Code      string
-	Message   string
-	RequestId string
-	HostId    string
+func ErrorAccessDenied() *S3Error {
+	return &S3Error{
+		Code:       "AccessDenied",
+		Message:    "AccessDenied",
+		StatusCode: 403,
+	}
 }
 
-func WriteS3Error(w http.ResponseWriter, code, message string, statusCode int) {
-	w.WriteHeader(statusCode)
-	errResp := S3Error{
-		Code:    code,
-		Message: message,
+func ErrorNotImplemented() *S3Error {
+	return &S3Error{
+		Code:       "NotImplemented",
+		Message:    "Operation not implemented",
+		StatusCode: fiber.StatusNotImplemented,
 	}
-	xml.NewEncoder(w).Encode(errResp)
+}
+
+func ErrorInternalError(message string) *S3Error {
+	return &S3Error{
+		Code:       "InternalError",
+		Message:    message,
+		StatusCode: fiber.StatusInternalServerError,
+	}
+}
+
+func ErrorNoSuchBucket() *S3Error {
+	return &S3Error{
+		Code:       "NoSuckBucket",
+		Message:    "Bucket does not exist",
+		StatusCode: fiber.StatusNotFound,
+	}
+}
+
+type S3Error struct {
+	XMLName    xml.Name `xml:"Error"`
+	Code       string
+	Message    string
+	RequestId  string
+	HostId     string
+	StatusCode int `xml:"-"`
+}
+
+func (e *S3Error) Error() string {
+	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+}
+
+func (e *S3Error) WithRequestID(requestID string) *S3Error {
+	e.RequestId = requestID
+	return e
+}
+
+func (e *S3Error) WithHostID(hostID string) *S3Error {
+	e.HostId = hostID
+	return e
+}
+
+func HandleError(c *fiber.Ctx, err error) {
+	logger.Log.Error(err.Error())
+
+	var s3Error *S3Error
+
+	if errors.As(err, &s3Error) {
+		c.Status(s3Error.StatusCode).XML(s3Error)
+	} else {
+		c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 }
