@@ -23,13 +23,12 @@ func DeleteObject(bucket, key string) error {
 // DeleteObjectHandler: DELETE /:bucket/:key
 func DeleteObjectHandler(c *fiber.Ctx) error {
 	bucket := c.Params("bucket")
-	key := c.Params("key")
+	key := c.Params("+")
 
 	if err := DeleteObject(bucket, key); err != nil {
 		core.HandleError(c, err)
 		return err
 	}
 
-	c.Status(fiber.StatusNoContent)
-	return nil
+	return c.SendStatus(fiber.StatusNoContent)
 }

@@ -38,7 +38,7 @@ func PutObject(bucket string, key string, data []byte) error {
 // PutObjectHandler: PUT /:bucket/:key
 func PutObjectHandler(c *fiber.Ctx) error {
 	bucket := c.Params("bucket")
-	key := c.Params("key")
+	key := c.Params("+")
 	data := c.Body()
 
 	if err := PutObject(bucket, key, data); err != nil {
@@ -46,6 +46,5 @@ func PutObjectHandler(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(fiber.StatusOK)
-	return nil
+	return c.SendStatus(fiber.StatusOK)
 }

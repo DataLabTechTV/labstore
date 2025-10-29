@@ -1,6 +1,7 @@
 # Project
 bin/
 data/
+output/
 .zed/
 .vscode/
 __debug*
