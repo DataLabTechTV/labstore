@@ -1,16 +1,16 @@
-package handlers
+package service
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/DataLabTechTV/labstore/backend/auth"
+	"github.com/DataLabTechTV/labstore/backend/bucket"
 	"github.com/DataLabTechTV/labstore/backend/config"
-	"github.com/DataLabTechTV/labstore/backend/internal/helper"
-	"github.com/DataLabTechTV/labstore/backend/server"
+	"github.com/DataLabTechTV/labstore/backend/core"
+	"github.com/DataLabTechTV/labstore/backend/object"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,16 +21,10 @@ func Start() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Env.Port), nil))
 }
 
-func NewRequestID() string {
-	b := make([]byte, 8)
-	helper.Must(rand.Read(b))
-	return hex.EncodeToString(b)
-}
-
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	accessKey, err := server.VerifyAWSSigV4(r)
+	accessKey, err := auth.VerifyAWSSigV4(r)
 	if err != nil {
-		server.WriteS3Error(w, "InvalidAccessKeyId", "Signature or access key invalid", 403)
+		core.WriteS3Error(w, "InvalidAccessKeyId", "Signature or access key invalid", 403)
 		return
 	}
 
@@ -39,31 +33,31 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
 		if len(parts) == 1 {
-			handlePutBucket(w, r, parts[0], accessKey)
+			bucket.PutBucket(w, r, parts[0], accessKey)
 		} else if len(parts) == 2 {
-			handlePutObject(w, r, parts[0], parts[1], accessKey)
+			object.PutObject(w, r, parts[0], parts[1], accessKey)
 		}
 	case "GET":
 		if r.URL.Path == "/" || r.URL.Path == "" {
 			handleListBuckets(w, r, accessKey)
 		} else if len(parts) == 2 {
-			handleGetObject(w, r, parts[0], parts[1], accessKey)
+			object.GetObject(w, r, parts[0], parts[1], accessKey)
 		} else {
-			handleListObjects(w, r)
+			bucket.ListObjects(w, r)
 		}
 	case "DELETE":
 		if len(parts) == 1 {
-			handleDeleteBucket(w, r, parts[0], accessKey)
+			bucket.DeleteBucket(w, r, parts[0], accessKey)
 		} else if len(parts) == 2 {
-			handleDeleteObject(w, r, parts[0], parts[1], accessKey)
+			object.DeleteObject(w, r, parts[0], parts[1], accessKey)
 		}
 	case "HEAD":
 		if r.URL.Path == "/" || r.URL.Path == "" {
-			handleHeadBucket(w, r, accessKey)
+			bucket.HeadBucket(w, r, accessKey)
 		} else if len(parts) == 2 {
-			handleHeadObject(w, r, parts[0], parts[1], accessKey)
+			object.HeadObject(w, r, parts[0], parts[1], accessKey)
 		}
 	default:
-		server.WriteS3Error(w, "NotImplemented", "Operation not implemented", 501)
+		core.WriteS3Error(w, "NotImplemented", "Operation not implemented", 501)
 	}
 }
