@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
