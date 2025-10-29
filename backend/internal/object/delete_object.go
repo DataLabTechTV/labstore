@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/DataLabTechTV/labstore/backend/config"
-	"github.com/DataLabTechTV/labstore/backend/core"
-	"github.com/DataLabTechTV/labstore/backend/iam"
+	"github.com/DataLabTechTV/labstore/backend/internal/config"
+	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
 )
 
 // DeleteObject: DELETE /:bucket/:key

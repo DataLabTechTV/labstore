@@ -6,19 +6,19 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/backend/auth"
-	"github.com/DataLabTechTV/labstore/backend/bucket"
-	"github.com/DataLabTechTV/labstore/backend/config"
-	"github.com/DataLabTechTV/labstore/backend/core"
-	"github.com/DataLabTechTV/labstore/backend/object"
-	log "github.com/sirupsen/logrus"
+	"github.com/DataLabTechTV/labstore/backend/internal/auth"
+	"github.com/DataLabTechTV/labstore/backend/internal/bucket"
+	"github.com/DataLabTechTV/labstore/backend/internal/config"
+	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/DataLabTechTV/labstore/backend/internal/object"
+	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 )
 
 func Start() {
 	os.MkdirAll(config.Env.StorageRoot, 0755)
 	http.HandleFunc("/", rootHandler)
-	log.Infof("Starting minimal S3-compatible server on :%d", config.Env.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Env.Port), nil))
+	logger.Log.Infof("Starting minimal S3-compatible server on :%d", config.Env.Port)
+	logger.Log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Env.Port), nil))
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
