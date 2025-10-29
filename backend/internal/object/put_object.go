@@ -1,46 +1,51 @@
 package object
 
 import (
+	"bytes"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/gofiber/fiber/v2"
 )
 
-// PutObject: PUT /:bucket/:key
-func PutObject(
-	w http.ResponseWriter,
-	r *http.Request,
-	bucket,
-	key,
-	accessKey string,
-) {
-	if !iam.CheckPolicy(accessKey, bucket, "PutObject") {
-		core.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
-		return
-	}
+func PutObject(bucket string, key string, data []byte) error {
 	bucketPath := filepath.Join(config.Env.StorageRoot, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
-		core.WriteS3Error(w, "NoSuchBucket", "Bucket does not exist", 404)
-		return
+		return core.ErrorNoSuchBucket()
 	}
+
 	objPath := filepath.Join(bucketPath, key)
 	objDir := filepath.Dir(objPath)
 	os.MkdirAll(objDir, 0755)
+
 	f, err := os.Create(objPath)
 	if err != nil {
-		core.WriteS3Error(w, "InternalError", "Failed to create object", 500)
-		return
+		return core.ErrorInternalError("Failed to create object")
 	}
 	defer f.Close()
-	_, err = io.Copy(f, r.Body)
+
+	_, err = io.Copy(f, bytes.NewReader(data))
 	if err != nil {
-		core.WriteS3Error(w, "InternalError", "Failed to write object", 500)
-		return
+		return core.ErrorInternalError("Failed to write object")
 	}
-	w.WriteHeader(http.StatusOK)
+
+	return nil
+}
+
+// PutObjectHandler: PUT /:bucket/:key
+func PutObjectHandler(c *fiber.Ctx) error {
+	bucket := c.Params("bucket")
+	key := c.Params("key")
+	data := c.Body()
+
+	if err := PutObject(bucket, key, data); err != nil {
+		core.HandleError(c, err)
+		return err
+	}
+
+	c.Status(fiber.StatusOK)
+	return nil
 }

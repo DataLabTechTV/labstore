@@ -1,32 +1,35 @@
 package object
 
 import (
-	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/gofiber/fiber/v2"
 )
 
-// DeleteObject: DELETE /:bucket/:key
-func DeleteObject(
-	w http.ResponseWriter,
-	_ *http.Request,
-	bucket,
-	key,
-	accessKey string,
-) {
-	if !iam.CheckPolicy(accessKey, bucket, "DeleteObject") {
-		core.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
-		return
-	}
+func DeleteObject(bucket, key string) error {
 	objPath := filepath.Join(config.Env.StorageRoot, bucket, key)
+
 	err := os.Remove(objPath)
 	if err != nil {
-		core.WriteS3Error(w, "NoSuchKey", "Object not found", 404)
-		return
+		return ErrorNoSuchKey()
 	}
-	w.WriteHeader(http.StatusNoContent)
+
+	return nil
+}
+
+// DeleteObjectHandler: DELETE /:bucket/:key
+func DeleteObjectHandler(c *fiber.Ctx) error {
+	bucket := c.Params("bucket")
+	key := c.Params("key")
+
+	if err := DeleteObject(bucket, key); err != nil {
+		core.HandleError(c, err)
+		return err
+	}
+
+	c.Status(fiber.StatusNoContent)
+	return nil
 }

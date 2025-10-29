@@ -1,34 +1,44 @@
 package object
 
 import (
-	"net/http"
+	"io"
+	"mime"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/gofiber/fiber/v2"
 )
 
-// GetObject: GET /:bucket/:key
-func GetObject(
-	w http.ResponseWriter,
-	r *http.Request,
-	bucket,
-	key,
-	accessKey string,
-) {
-	if !iam.CheckPolicy(accessKey, bucket, "GetObject") {
-		core.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
-		return
-	}
+func GetObject(bucket, key string) (io.ReadSeeker, error) {
 	objPath := filepath.Join(config.Env.StorageRoot, bucket, key)
+
 	f, err := os.Open(objPath)
 	if err != nil {
-		core.WriteS3Error(w, "NoSuchKey", "Object not found", 404)
-		return
+		return nil, ErrorNoSuchKey()
 	}
 	defer f.Close()
-	http.ServeContent(w, r, key, time.Now(), f)
+
+	return f, nil
+}
+
+// GetObjectHandler: GET /:bucket/:key
+func GetObjectHandler(c *fiber.Ctx) error {
+	bucket := c.Params("bucket")
+	key := c.Params("key")
+
+	f, err := GetObject(bucket, key)
+	if err != nil {
+		core.HandleError(c, err)
+		return err
+	}
+
+	ext := filepath.Ext(key)
+	mimeType := mime.TypeByExtension(ext)
+	c.Type(mimeType)
+
+	c.Response().Header.SetLastModified(time.Now())
+	return c.SendStream(f)
 }
