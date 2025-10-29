@@ -41,6 +41,5 @@ func PutBucketHandler(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(fiber.StatusOK)
-	return nil
+	return c.SendStatus(fiber.StatusOK)
 }
