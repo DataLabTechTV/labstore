@@ -1,23 +1,16 @@
 package helper
 
-import log "github.com/sirupsen/logrus"
+import "github.com/DataLabTechTV/labstore/backend/pkg/logger"
 
 func Must[T any](val T, err error) T {
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	return val
 }
 
-func MustGet[T any](val T, ok bool, msg string) T {
-	if !ok {
-		log.Fatal(msg)
-	}
-	return val
-}
-
-func Check(err error) {
+func CheckFatal(err error) {
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 }
