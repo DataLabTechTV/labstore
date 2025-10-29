@@ -174,12 +174,7 @@ func buildCanonicalRequest(
 		recomputedPayloadHash = payloadHash
 	} else {
 		body := c.Body()
-
-		if len(body) == 0 {
-			logger.Log.Debugf("Body (%d bytes): EMPTY", len(body))
-		} else {
-			logger.Log.Debugf("Body (%d bytes): %s", len(body), string(body))
-		}
+		logger.Log.Debugf("Body length: %d", len(body))
 
 		// Restore body
 		c.Request().SetBody(body)
