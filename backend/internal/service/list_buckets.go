@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/DataLabTechTV/labstore/backend/config"
-	"github.com/DataLabTechTV/labstore/backend/core"
-	"github.com/DataLabTechTV/labstore/backend/iam"
+	"github.com/DataLabTechTV/labstore/backend/internal/config"
+	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
 )
 
 // !FIXME: move types to a proper location

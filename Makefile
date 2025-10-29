@@ -1,7 +1,7 @@
 BIN_DIR := bin
 BACKEND_DIR := backend
 FRONTEND_DIR := web
-BACKEND_CMD := $(BIN_DIR)/backend
+BACKEND_CMD := $(BIN_DIR)/labstore-server
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/dist
 BENCHMARK_DIR := benchmark
 
@@ -15,7 +15,7 @@ $(BIN_DIR):
 BACKEND_SRCS := $(shell find $(BACKEND_DIR) -name "*.go")
 
 $(BACKEND_CMD): $(BACKEND_SRCS) | $(BIN_DIR)
-	cd $(BACKEND_DIR) && go build -o ../$(BACKEND_CMD) main.go
+	cd $(BACKEND_DIR) && go build -o ../$(BACKEND_CMD) ./cmd/labstore-server
 
 backend: $(BACKEND_CMD)
 

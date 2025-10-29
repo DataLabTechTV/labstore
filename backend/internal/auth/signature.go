@@ -13,18 +13,18 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/backend/iam"
-	log "github.com/sirupsen/logrus"
+	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
+	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 )
 
 const unsignedPayload = "UNSIGNED-PAYLOAD"
 
 func VerifyAWSSigV4(r *http.Request) (string, error) {
 	auth := r.Header.Get("Authorization")
-	log.Debug("Authorization: " + auth)
+	logger.Log.Debug("Authorization: " + auth)
 
 	payloadHash := r.Header.Get("X-Amz-Content-SHA256")
-	log.Debug("X-Amz-Content-SHA256: " + payloadHash)
+	logger.Log.Debug("X-Amz-Content-SHA256: " + payloadHash)
 
 	// Remove prefix
 
@@ -73,16 +73,16 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 		return "", errors.New("header Signature is empty")
 	}
 
-	log.Debug("Credentials: " + credentials)
-	log.Debug("SignedHeaders: " + strings.Join(signedHeaders, ";"))
-	log.Debug("Signature: " + signature)
+	logger.Log.Debug("Credentials: " + credentials)
+	logger.Log.Debug("SignedHeaders: " + strings.Join(signedHeaders, ";"))
+	logger.Log.Debug("Signature: " + signature)
 
 	// Extract access key and scope
 
 	credentialParts := strings.Split(credentials, "/")
 
 	accessKey := credentialParts[0]
-	log.Debug("Access key: " + accessKey)
+	logger.Log.Debug("Access key: " + accessKey)
 
 	secretKey, ok := iam.Users[accessKey]
 	if !ok {
@@ -90,7 +90,7 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
-	log.Debug("Scope: " + scope)
+	logger.Log.Debug("Scope: " + scope)
 
 	// Compute signature
 
@@ -98,20 +98,20 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 	if err != nil {
 		return "", errors.New("could not build canonical request")
 	}
-	log.Debug("Canonical request: " + canonicalRequest)
+	logger.Log.Debug("Canonical request: " + canonicalRequest)
 
 	timestamp := r.Header.Get("X-Amz-Date")
-	log.Debug("Timestamp: " + timestamp)
+	logger.Log.Debug("Timestamp: " + timestamp)
 
 	stringToSign := buildStringToSign(timestamp, scope, canonicalRequest)
-	log.Debug("String to sign: " + stringToSign)
+	logger.Log.Debug("String to sign: " + stringToSign)
 
 	recomputedSignature, err := computeSignature(secretKey, scope, stringToSign)
 	if err != nil {
 		return "", errors.New("could not compute signature")
 	}
 
-	log.Debug("Signature (recomputed): " + recomputedSignature)
+	logger.Log.Debug("Signature (recomputed): " + recomputedSignature)
 
 	byteSignature, err := hex.DecodeString(signature)
 	if err != nil {
@@ -127,7 +127,7 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 		return accessKey, nil
 	}
 
-	log.Error("Original and recomputed signatures differ")
+	logger.Log.Error("Original and recomputed signatures differ")
 	return "", errors.New("signatures do not match")
 }
 
@@ -145,7 +145,7 @@ func buildCanonicalRequest(
 	canonicalRequest.WriteString("\n")
 
 	queryString := buildQueryString(r.URL.RawQuery)
-	log.Debug("Canonical query string: " + queryString)
+	logger.Log.Debug("Canonical query string: " + queryString)
 	canonicalRequest.WriteString(queryString)
 	canonicalRequest.WriteString("\n")
 
@@ -181,9 +181,9 @@ func buildCanonicalRequest(
 		}
 
 		if len(body) == 0 {
-			log.Debugf("Body (%d bytes): EMPTY", len(body))
+			logger.Log.Debugf("Body (%d bytes): EMPTY", len(body))
 		} else {
-			log.Debugf("Body (%d bytes): %s", len(body), string(body))
+			logger.Log.Debugf("Body (%d bytes): %s", len(body), string(body))
 		}
 
 		// Restore body

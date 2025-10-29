@@ -3,15 +3,15 @@ package bucket
 import (
 	"net/http"
 
-	"github.com/DataLabTechTV/labstore/backend/middleware"
+	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
+	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 	"github.com/MakeNowJust/heredoc"
-	log "github.com/sirupsen/logrus"
 )
 
 // ListObjects: GET /:bucket
 func ListObjects(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.NewRequestID()
-	log.Info("Received probe: ", r.URL.Path)
+	logger.Log.Info("Received probe: ", r.URL.Path)
 
 	w.Header().Set("Content-Type", "application/xml")
 	w.Header().Set("Server", "LabStore")

@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/helper"
+	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
-	log "github.com/sirupsen/logrus"
 )
 
 const dotenvPath = ".env"
@@ -24,11 +24,15 @@ type ServerConfig struct {
 	AdminSecretKey string `env:"LS_ADMIN_SECRET_KEY" envDefault:"admin"`
 }
 
-func LoadEnv() {
+func Load() {
+	loadEnv()
+}
+
+func loadEnv() {
 	if err := godotenv.Load(dotenvPath); err != nil {
-		log.Debug("No .env file found, skipping...")
+		logger.Log.Debug("No .env file found, skipping...")
 	} else {
-		log.Debugln("Environment source:", dotenvPath)
+		logger.Log.Debugln("Environment source:", dotenvPath)
 	}
 
 	Env = helper.Must(env.ParseAs[ServerConfig]())
@@ -55,6 +59,6 @@ func LoadEnv() {
 			}
 		}
 
-		log.Debugf("%s: %s", env_var_name, env_var_value)
+		logger.Log.Debugf("%s: %s", env_var_name, env_var_value)
 	}
 }
