@@ -1,4 +1,4 @@
-package handlers
+package service
 
 import (
 	"encoding/xml"
@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/DataLabTechTV/labstore/backend/config"
+	"github.com/DataLabTechTV/labstore/backend/core"
 	"github.com/DataLabTechTV/labstore/backend/iam"
-	"github.com/DataLabTechTV/labstore/backend/server"
 )
 
 // !FIXME: move types to a proper location
@@ -29,26 +29,16 @@ type ListAllMyBucketsResult struct {
 	}
 }
 
-// HeadBucket: HEAD /
-func handleHeadBucket(w http.ResponseWriter, _ *http.Request, accessKey string) {
-	if !iam.CheckPolicy(accessKey, "", "ListBuckets") {
-		server.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
 // ListBuckets: GET /
 func handleListBuckets(w http.ResponseWriter, _ *http.Request, accessKey string) {
 	if !iam.CheckPolicy(accessKey, "", "ListBuckets") {
-		server.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
+		core.WriteS3Error(w, "AccessDenied", "Access Denied", 403)
 		return
 	}
 
 	entries, err := os.ReadDir(config.Env.StorageRoot)
 	if err != nil {
-		server.WriteS3Error(w, "InternalError", "Failed to list buckets", 500)
+		core.WriteS3Error(w, "InternalError", "Failed to list buckets", 500)
 		return
 	}
 
