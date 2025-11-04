@@ -187,6 +187,8 @@ func buildCanonicalRequest(
 
 		hash := sha256.Sum256(body)
 		recomputedPayloadHash = hex.EncodeToString(hash[:])
+
+		logger.Log.Debugln("Body SHA256:", recomputedPayloadHash)
 	}
 
 	canonicalRequest.WriteString(recomputedPayloadHash)

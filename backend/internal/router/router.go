@@ -47,6 +47,7 @@ func Start() {
 		Addr: addr,
 		Handler: chain(
 			mux,
+			middleware.CompressionMiddleware,
 			middleware.AuthMiddleware,
 			middleware.IAMMiddleware,
 			middleware.NormalizeMiddleware,
