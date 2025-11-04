@@ -19,9 +19,6 @@ func Start() {
 
 	mux := http.NewServeMux()
 
-	// router.Use(middleware.AuthMiddleware())
-	// router.Use(middleware.IAMMiddleware())
-
 	mux.Handle("PUT /{bucket}", middleware.WithIAM(iam.CreateBucket, http.HandlerFunc(bucket.PutBucketHandler)))
 	mux.Handle("PUT /{bucket}/{key...}", middleware.WithIAM(iam.PutObject, http.HandlerFunc(object.PutObjectHandler)))
 
@@ -34,11 +31,6 @@ func Start() {
 
 	mux.Handle("HEAD /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.HeadBucketHandler)))
 	mux.Handle("HEAD /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.HeadObjectHandler)))
-
-	// router.Use(func(c *fiber.Ctx) error {
-	// 	core.HandleError(c, core.ErrorNotImplemented())
-	// 	return nil
-	// })
 
 	addr := fmt.Sprintf("%s:%d", config.Env.Host, config.Env.Port)
 	logger.Log.Infoln("Starting minimal S3-compatible server on", addr)
