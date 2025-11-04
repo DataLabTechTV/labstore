@@ -1,27 +1,29 @@
 package auth
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 
 	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
 	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
-	"github.com/gofiber/fiber/v2"
 )
 
 const unsignedPayload = "UNSIGNED-PAYLOAD"
 
-func VerifyAWSSigV4(c *fiber.Ctx) (string, error) {
-	auth := c.Get("Authorization")
+func VerifyAWSSigV4(r *http.Request) (string, error) {
+	auth := r.Header.Get("Authorization")
 	logger.Log.Debug("Authorization: " + auth)
 
-	payloadHash := c.Get("X-Amz-Content-SHA256")
+	payloadHash := r.Header.Get("X-Amz-Content-SHA256")
 	logger.Log.Debug("X-Amz-Content-SHA256: " + payloadHash)
 
 	// Remove prefix
@@ -92,13 +94,13 @@ func VerifyAWSSigV4(c *fiber.Ctx) (string, error) {
 
 	// Compute signature
 
-	canonicalRequest, err := buildCanonicalRequest(c, signedHeaders, payloadHash)
+	canonicalRequest, err := buildCanonicalRequest(r, signedHeaders, payloadHash)
 	if err != nil {
 		return "", errors.New("could not build canonical request")
 	}
 	logger.Log.Debug("Canonical request: " + canonicalRequest)
 
-	timestamp := c.Get("X-Amz-Date")
+	timestamp := r.Header.Get("X-Amz-Date")
 	logger.Log.Debug("Timestamp: " + timestamp)
 
 	stringToSign := buildStringToSign(timestamp, scope, canonicalRequest)
@@ -130,19 +132,19 @@ func VerifyAWSSigV4(c *fiber.Ctx) (string, error) {
 }
 
 func buildCanonicalRequest(
-	c *fiber.Ctx,
+	r *http.Request,
 	signedHeaders []string,
 	payloadHash string,
 ) (string, error) {
 	var canonicalRequest strings.Builder
 
-	canonicalRequest.WriteString(c.Method())
+	canonicalRequest.WriteString(r.Method)
 	canonicalRequest.WriteString("\n")
 
-	canonicalRequest.WriteString(c.Path())
+	canonicalRequest.WriteString(r.URL.Path)
 	canonicalRequest.WriteString("\n")
 
-	queryString := buildQueryString(string(c.Request().URI().QueryString()))
+	queryString := buildQueryString(r.URL.RawQuery)
 	logger.Log.Debug("Canonical query string: " + queryString)
 	canonicalRequest.WriteString(queryString)
 	canonicalRequest.WriteString("\n")
@@ -152,14 +154,14 @@ func buildCanonicalRequest(
 
 		if header == "host" {
 			canonicalRequest.WriteString("host:")
-			canonicalRequest.WriteString(strings.TrimSpace(c.Hostname()))
+			canonicalRequest.WriteString(strings.TrimSpace(r.Host))
 			canonicalRequest.WriteString("\n")
 			continue
 		}
 
 		canonicalRequest.WriteString(header)
 		canonicalRequest.WriteString(":")
-		canonicalRequest.WriteString(strings.TrimSpace(c.Get(signedHeader)))
+		canonicalRequest.WriteString(strings.TrimSpace(r.Header.Get(signedHeader)))
 		canonicalRequest.WriteString("\n")
 	}
 
@@ -173,13 +175,15 @@ func buildCanonicalRequest(
 	if payloadHash == unsignedPayload {
 		recomputedPayloadHash = payloadHash
 	} else {
-		body := c.Body()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return "", errors.New("could not read body")
+		}
+
 		logger.Log.Debugf("Body length: %d", len(body))
 
 		// Restore body
-		bodyCopy := make([]byte, len(body))
-		copy(bodyCopy, body)
-		c.Request().SetBody(bodyCopy)
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		hash := sha256.Sum256(body)
 		recomputedPayloadHash = hex.EncodeToString(hash[:])

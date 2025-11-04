@@ -4,9 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
-	"github.com/gofiber/fiber/v2"
 )
 
 func ErrorAccessDenied() *S3Error {
@@ -21,7 +21,7 @@ func ErrorNotImplemented() *S3Error {
 	return &S3Error{
 		Code:       "NotImplemented",
 		Message:    "Operation not implemented",
-		StatusCode: fiber.StatusNotImplemented,
+		StatusCode: http.StatusNotImplemented,
 	}
 }
 
@@ -29,7 +29,7 @@ func ErrorInternalError(message string) *S3Error {
 	return &S3Error{
 		Code:       "InternalError",
 		Message:    message,
-		StatusCode: fiber.StatusInternalServerError,
+		StatusCode: http.StatusInternalServerError,
 	}
 }
 
@@ -37,7 +37,7 @@ func ErrorNoSuchBucket() *S3Error {
 	return &S3Error{
 		Code:       "NoSuckBucket",
 		Message:    "Bucket does not exist",
-		StatusCode: fiber.StatusNotFound,
+		StatusCode: http.StatusNotFound,
 	}
 }
 
@@ -64,14 +64,14 @@ func (e *S3Error) WithHostID(hostID string) *S3Error {
 	return e
 }
 
-func HandleError(c *fiber.Ctx, err error) {
+func HandleError(w http.ResponseWriter, err error) {
 	logger.Log.Error(err.Error())
 
 	var s3Error *S3Error
 
 	if errors.As(err, &s3Error) {
-		c.Status(s3Error.StatusCode).XML(s3Error)
+		WriteXML(w, s3Error.StatusCode, s3Error)
 	} else {
-		c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

@@ -1,27 +1,39 @@
 package middleware
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/DataLabTechTV/labstore/backend/internal/auth"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/gofiber/fiber/v2"
 )
+
+const accessKeyCtx ContextKey = "accessKey"
 
 var ErrorInvalidAccessKey = &core.S3Error{
 	Code:       "InvalidAccessKeyId",
 	Message:    "Signature or access key invalid",
-	StatusCode: fiber.StatusForbidden,
+	StatusCode: http.StatusForbidden,
 }
 
-func AuthMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		accessKey, err := auth.VerifyAWSSigV4(c)
+func GetRequestAccessKey(r *http.Request) string {
+	if accessKey := r.Context().Value(accessKeyCtx); accessKey != nil {
+		return accessKey.(string)
+	}
+
+	return ""
+}
+
+// Must come before middleware that changes the request (e.g., NormalizeMiddleware)
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accessKey, err := auth.VerifyAWSSigV4(r)
 		if err != nil {
-			core.HandleError(c, err)
-			return c.Next()
+			core.HandleError(w, err)
+			return
 		}
 
-		c.Locals("accessKey", accessKey)
-
-		return c.Next()
-	}
+		ctx := context.WithValue(r.Context(), accessKeyCtx, accessKey)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
