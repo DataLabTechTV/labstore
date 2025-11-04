@@ -3,12 +3,12 @@ package object
 import (
 	"bytes"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/gofiber/fiber/v2"
 )
 
 func PutObject(bucket string, key string, data []byte) error {
@@ -36,15 +36,20 @@ func PutObject(bucket string, key string, data []byte) error {
 }
 
 // PutObjectHandler: PUT /:bucket/:key
-func PutObjectHandler(c *fiber.Ctx) error {
-	bucket := c.Params("bucket")
-	key := c.Params("+")
-	data := c.Body()
+func PutObjectHandler(w http.ResponseWriter, r *http.Request) {
+	bucket := r.PathValue("bucket")
+	key := r.PathValue("key")
 
-	if err := PutObject(bucket, key, data); err != nil {
-		core.HandleError(c, err)
-		return err
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		core.HandleError(w, err)
+		return
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	if err := PutObject(bucket, key, data); err != nil {
+		core.HandleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

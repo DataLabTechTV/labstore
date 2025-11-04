@@ -2,11 +2,10 @@ package bucket
 
 import (
 	"encoding/xml"
+	"net/http"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
 	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
-	"github.com/gofiber/fiber/v2"
 )
 
 type ListBucketResult struct {
@@ -24,20 +23,18 @@ func ListBucket(bucket string) (*ListBucketResult, error) {
 }
 
 // ListObjectsHandler: GET /:bucket
-func ListObjectsHandler(c *fiber.Ctx) error {
-	bucket := c.Params("bucket")
+func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
+	bucket := r.PathValue("bucket")
 	requestID := middleware.NewRequestID()
-
-	logger.Log.Info("Received probe: ", c.Path())
 
 	res, err := ListBucket(bucket)
 	if err != nil {
-		core.HandleError(c, err)
-		return err
+		core.HandleError(w, err)
+		return
 	}
 
-	c.Set("Server", "LabStore")
-	c.Set("X-Amz-Request-Id", requestID)
+	w.Header().Set("Server", "LabStore")
+	w.Header().Set("X-Amz-Request-Id", requestID)
 
-	return c.XML(res)
+	core.WriteXML(w, http.StatusOK, res)
 }
