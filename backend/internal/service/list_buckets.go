@@ -2,12 +2,13 @@ package service
 
 import (
 	"encoding/xml"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/gofiber/fiber/v2"
+	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
 )
 
 // !FIXME: move types to a proper location
@@ -49,14 +50,14 @@ func ListBuckets(accessKey string) (*ListAllMyBucketsResult, error) {
 }
 
 // ListBuckets: GET /
-func ListBucketsHandler(c *fiber.Ctx) error {
-	accessKey := c.Params("accessKey")
+func ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
+	accessKey := middleware.GetRequestAccessKey(r)
 
 	res, err := ListBuckets(accessKey)
 	if err != nil {
-		core.HandleError(c, err)
-		return err
+		core.HandleError(w, err)
+		return
 	}
 
-	return c.XML(res)
+	core.WriteXML(w, http.StatusOK, res)
 }

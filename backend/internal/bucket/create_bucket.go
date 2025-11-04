@@ -2,26 +2,26 @@ package bucket
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/gofiber/fiber/v2"
 )
 
 func ErrorBucketAlreadyExists() *core.S3Error {
 	return &core.S3Error{
 		Code:       "BucketAlreadyExists",
 		Message:    "Could not create bucket, because it already exists",
-		StatusCode: fiber.StatusConflict,
+		StatusCode: http.StatusConflict,
 	}
 }
 
 func CreateBucket(bucket string) error {
 	path := filepath.Join(config.Env.StorageRoot, bucket)
 
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
+	if _, err := os.Stat(path); err == nil {
 		return ErrorBucketAlreadyExists()
 	}
 
@@ -33,13 +33,13 @@ func CreateBucket(bucket string) error {
 }
 
 // CreateBucket: PUT /:bucket
-func PutBucketHandler(c *fiber.Ctx) error {
-	bucket := c.Params("bucket")
+func PutBucketHandler(w http.ResponseWriter, r *http.Request) {
+	bucket := r.PathValue("bucket")
 
 	if err := CreateBucket(bucket); err != nil {
-		core.HandleError(c, err)
-		return err
+		core.HandleError(w, err)
+		return
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	w.WriteHeader(http.StatusOK)
 }

@@ -1,38 +1,52 @@
 package middleware
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
 	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
-	"github.com/gofiber/fiber/v2"
 )
 
-func WithIAM(action iam.Action, handler fiber.Handler) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		c.Locals("iamAction", action)
-		return handler(c)
-	}
+const iamActionCtx ContextKey = "iamAction"
+
+func WithIAM(action iam.Action, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), iamActionCtx, action)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
-func IAMMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		action, _ := c.Locals("iamAction").(string)
+func GetRequestAction(r *http.Request) string {
+	if action := r.Context().Value(iamActionCtx); action != nil {
+		return action.(string)
+	}
+
+	return ""
+}
+
+func IAMMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		action := GetRequestAction(r)
 		if action == "" {
-			return c.Next()
+			next.ServeHTTP(w, r)
+			return
 		}
 
-		bucket := c.Params("bucket")
+		bucket := r.PathValue("bucket")
 		if bucket == "" {
-			return c.Next()
+			next.ServeHTTP(w, r)
+			return
 		}
 
-		accessKey := c.Locals("accessKey").(string)
+		accessKey := GetRequestAccessKey(r)
 
 		if !iam.CheckPolicy(accessKey, bucket, action) {
-			core.HandleError(c, core.ErrorAccessDenied())
-			// !FIXME: proper S3 error handling
-			return fiber.ErrForbidden
+			// !FIXME: AWS compliant error handling?
+			core.HandleError(w, core.ErrorAccessDenied())
+			return
 		}
 
-		return c.Next()
-	}
+		next.ServeHTTP(w, r)
+	})
 }
