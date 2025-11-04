@@ -17,9 +17,17 @@ import (
 	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 )
 
-const unsignedPayload = "UNSIGNED-PAYLOAD"
+const UnsignedPayload = "UNSIGNED-PAYLOAD"
 
-func VerifyAWSSigV4(r *http.Request) (string, error) {
+type SigV4Result struct {
+	AccessKey   string
+	Signature   string
+	IsStreaming bool
+}
+
+func VerifySigV4(r *http.Request) (*SigV4Result, error) {
+	// !FIXME: Could we refactor this into a few more functions?
+
 	auth := r.Header.Get("Authorization")
 	logger.Log.Debug("Authorization: " + auth)
 
@@ -29,12 +37,12 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 	// Remove prefix
 
 	if !strings.HasPrefix(auth, "AWS4-HMAC-SHA256") {
-		return "", errors.New("header Authorization must start with AWS4-HMAC-SHA256")
+		return nil, errors.New("header Authorization must start with AWS4-HMAC-SHA256")
 	}
 
 	auth, ok := strings.CutPrefix(auth, "AWS4-HMAC-SHA256 ")
 	if !ok {
-		return "", errors.New("could not remove prefix AWS4-HMAC-SHA256")
+		return nil, errors.New("could not remove prefix AWS4-HMAC-SHA256")
 	}
 
 	// Parse credentials, signed headers, and signature
@@ -62,15 +70,15 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 	}
 
 	if credentials == "" {
-		return "", errors.New("header Credentials is empty")
+		return nil, errors.New("header Credentials is empty")
 	}
 
 	if len(signedHeaders) == 0 {
-		return "", errors.New("header SignedHeaders is empty")
+		return nil, errors.New("header SignedHeaders is empty")
 	}
 
 	if signature == "" {
-		return "", errors.New("header Signature is empty")
+		return nil, errors.New("header Signature is empty")
 	}
 
 	logger.Log.Debug("Credentials: " + credentials)
@@ -86,7 +94,7 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 
 	secretKey, ok := iam.Users[accessKey]
 	if !ok {
-		return "", fmt.Errorf("no secret key found for access key %s", accessKey)
+		return nil, fmt.Errorf("no secret key found for access key %s", accessKey)
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
@@ -96,7 +104,7 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 
 	canonicalRequest, err := buildCanonicalRequest(r, signedHeaders, payloadHash)
 	if err != nil {
-		return "", errors.New("could not build canonical request")
+		return nil, errors.New("could not build canonical request")
 	}
 	logger.Log.Debug("Canonical request: " + canonicalRequest)
 
@@ -108,27 +116,35 @@ func VerifyAWSSigV4(r *http.Request) (string, error) {
 
 	recomputedSignature, err := computeSignature(secretKey, scope, stringToSign)
 	if err != nil {
-		return "", errors.New("could not compute signature")
+		return nil, errors.New("could not compute signature")
 	}
 
 	logger.Log.Debug("Signature (recomputed): " + recomputedSignature)
 
 	byteSignature, err := hex.DecodeString(signature)
 	if err != nil {
-		return "", errors.New("could not decode original signature")
+		return nil, errors.New("could not decode original signature")
 	}
 
 	byteRecomputedSignature, err := hex.DecodeString((recomputedSignature))
 	if err != nil {
-		return "", errors.New("could not decode recomputed signature")
+		return nil, errors.New("could not decode recomputed signature")
 	}
 
 	if hmac.Equal(byteSignature, byteRecomputedSignature) {
-		return accessKey, nil
+		isStreaming := payloadHash == StreamingPayload
+
+		res := &SigV4Result{
+			AccessKey:   accessKey,
+			Signature:   recomputedSignature,
+			IsStreaming: isStreaming,
+		}
+
+		return res, nil
 	}
 
 	logger.Log.Error("Original and recomputed signatures differ")
-	return "", errors.New("signatures do not match")
+	return nil, errors.New("signatures do not match")
 }
 
 func buildCanonicalRequest(
@@ -172,7 +188,7 @@ func buildCanonicalRequest(
 
 	var recomputedPayloadHash string
 
-	if payloadHash == unsignedPayload {
+	if payloadHash == UnsignedPayload {
 		recomputedPayloadHash = payloadHash
 	} else {
 		body, err := io.ReadAll(r.Body)
