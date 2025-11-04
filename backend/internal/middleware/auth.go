@@ -27,13 +27,20 @@ func GetRequestAccessKey(r *http.Request) string {
 // Must come before middleware that changes the request (e.g., NormalizeMiddleware)
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessKey, err := auth.VerifyAWSSigV4(r)
+		res, err := auth.VerifySigV4(r)
 		if err != nil {
 			core.HandleError(w, err)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), accessKeyCtx, accessKey)
+		if res.IsStreaming {
+			r.Body = &auth.SigV4ChunkedReader{
+				Body:    r.Body,
+				PrevSig: res.Signature,
+			}
+		}
+
+		ctx := context.WithValue(r.Context(), accessKeyCtx, res.AccessKey)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
