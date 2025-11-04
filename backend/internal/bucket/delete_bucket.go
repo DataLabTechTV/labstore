@@ -1,12 +1,12 @@
 package bucket
 
 import (
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/gofiber/fiber/v2"
 )
 
 func DeleteBucket(bucket string) error {
@@ -21,12 +21,13 @@ func DeleteBucket(bucket string) error {
 }
 
 // DeleteBucketHandler: DELETE /:bucket
-func DeleteBucketHandler(c *fiber.Ctx) error {
-	bucket := c.Params("bucket")
+func DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
+	bucket := r.PathValue("bucket")
+
 	if err := DeleteBucket(bucket); err != nil {
-		core.HandleError(c, err)
-		return err
+		core.HandleError(w, err)
+		return
 	}
 
-	return c.SendStatus(fiber.StatusNoContent)
+	w.WriteHeader(http.StatusNoContent)
 }

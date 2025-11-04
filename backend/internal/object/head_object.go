@@ -1,33 +1,37 @@
 package object
 
 import (
-	"mime"
-	"path/filepath"
+	"io"
+	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/gofiber/fiber/v2"
 )
 
 // HeadObjectHandler: Head /:bucket/:key
-func HeadObjectHandler(c *fiber.Ctx) error {
-	bucket := c.Params("bucket")
-	key := c.Params("+")
+func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
+	bucket := r.PathValue("bucket")
+	key := r.PathValue("key")
 
-	file, size, err := GetObject(bucket, key)
+	res, err := GetObject(bucket, key)
 	if err != nil {
-		core.HandleError(c, err)
-		return err
+		core.HandleError(w, err)
+		return
 	}
-	defer file.Close()
+	defer res.Content.Close()
 
-	ext := filepath.Ext(key)
-	mimeType := mime.TypeByExtension(ext)
-	c.Type(mimeType)
+	buf := make([]byte, 512)
 
-	c.Response().Header.SetLastModified(time.Now())
-	c.Response().Header.Set("Content-Length", strconv.Itoa(size))
+	n, err := res.Content.Read(buf)
+	if err != nil {
+		core.HandleError(w, err)
+		return
+	}
+	res.Content.Seek(0, io.SeekStart)
 
-	return c.SendStatus(fiber.StatusOK)
+	w.Header().Set("Content-Type", http.DetectContentType(buf[:n]))
+	w.Header().Set("Last-Modified", res.DateModified.UTC().Format(http.TimeFormat))
+	w.Header().Set("Content-Length", strconv.Itoa(res.ObjectSize))
+
+	w.WriteHeader(http.StatusOK)
 }
