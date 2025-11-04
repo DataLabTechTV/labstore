@@ -4,8 +4,9 @@ FRONTEND_DIR := web
 BACKEND_CMD := $(BIN_DIR)/labstore-server
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/dist
 BENCHMARK_DIR := benchmark
+BENCHMARK_BUCKET := warp-benchmark-bucket
 
-.PHONY: all backend frontend build run benchmark clean
+.PHONY: all backend frontend build run benchmark-bucket benchmark clean
 
 all: build
 
@@ -30,8 +31,13 @@ run: build
 	(cd $(BACKEND_DIR) && ../$(BACKEND_CMD) serve --debug)# && \
 	# (cd $(FRONTEND_DIR) && npm start)
 
-benchmark:
-	set -a; . $(BENCHMARK_DIR)/.env; \
+benchmark-bucket:
+	set -a; . $(BACKEND_DIR)/.env; set +a; \
+	export MC_HOST_local=http:\/\/$${LS_ADMIN_ACCESS_KEY}:$${LS_ADMIN_SECRET_KEY}@$${LS_HOST}:$${LS_PORT}; \
+	mc ls local/$(BENCHMARK_BUCKET) 2>&1 >/dev/null || mc mb local/$(BENCHMARK_BUCKET)
+
+benchmark: benchmark-bucket
+	set -a; . $(BENCHMARK_DIR)/.env; set +a; \
 	(cd $(BENCHMARK_DIR) && mkdir -p output/ && cd output/ && warp run ../config.yml)
 
 clean:
