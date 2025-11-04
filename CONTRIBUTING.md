@@ -12,6 +12,15 @@ feature/<issue-number>-<short-description>
 
 Example: `feature/123-add-login-page`
 
+### Bugfix branches
+
+```
+bugfix/<issue-number>-<short-description>
+```
+
+Example: `bugfix/456-compression-handling`
+
+
 ### Hotfix branches
 
 ```
@@ -19,6 +28,22 @@ hotfix/<short-description>
 ```
 
 Example: `hotfix/fix-login-bug`
+
+### Chore branches
+
+```
+chore/<issue-number>-<short-description>
+```
+
+Example: `docs/123-update-building-workflow`
+
+### Documentation branches
+
+```
+docs/<issue-number>-<short-description>
+```
+
+Example: `docs/17-update-branch-naming-scheme`
 
 ### Release branches
 
