@@ -65,7 +65,7 @@ func (e *S3Error) WithHostID(hostID string) *S3Error {
 }
 
 func HandleError(w http.ResponseWriter, err error) {
-	logger.Log.Error(err.Error())
+	logger.Log.Errorf("Server error: %s", err.Error())
 
 	var s3Error *S3Error
 

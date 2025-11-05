@@ -35,8 +35,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		if res.IsStreaming {
 			r.Body = &auth.SigV4ChunkedReader{
-				Body:    r.Body,
-				PrevSig: res.Signature,
+				Body:      r.Body,
+				PrevSig:   res.Signature,
+				SecretKey: res.SecretKey,
+				Timestamp: res.Timestamp,
+				Scope:     res.Scope,
 			}
 		}
 
