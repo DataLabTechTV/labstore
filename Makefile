@@ -3,11 +3,8 @@ BACKEND_DIR := backend
 FRONTEND_DIR := web
 BACKEND_CMD := $(BIN_DIR)/labstore-server
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/dist
-BENCHMARK_DIR := benchmark
-BENCHMARK_BUCKET := warp-benchmark-bucket
-SANDBOX_BUCKET := sandbox
 
-.PHONY: all backend frontend build run benchmark-bucket benchmark sandbox-bucket test-mc test-rclone test-s3cmd clean
+.PHONY: all backend frontend build run clean
 
 all: build
 
