@@ -92,7 +92,7 @@ test-s5cmd: sandbox-bucket
     dd if=/dev/urandom of=$tmpfile bs=1M count=10
 
     echo "==> Sending temporary file: $tmpfile"
-    s5cmd --endpoint-url $endpoint_url cp $tmpfile s3://{{sandbox_bucket}}/$(basename $tmpfile).s5cmd
+    s5cmd --log trace --endpoint-url $endpoint_url cp $tmpfile s3://{{sandbox_bucket}}/$(basename $tmpfile).s5cmd
 
     echo "==> Cleaning up temporary file: $tmpfile"
     rm -f $tmpfile
