@@ -5,8 +5,9 @@ BACKEND_CMD := $(BIN_DIR)/labstore-server
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/dist
 BENCHMARK_DIR := benchmark
 BENCHMARK_BUCKET := warp-benchmark-bucket
+SANDBOX_BUCKET := sandbox
 
-.PHONY: all backend frontend build run benchmark-bucket benchmark clean
+.PHONY: all backend frontend build run benchmark-bucket benchmark sandbox-bucket test-mc test-rclone test-s3cmd clean
 
 all: build
 
@@ -27,20 +28,10 @@ frontend:
 build: backend frontend
 
 run: build
-	set -a; . $(BACKEND_DIR)/.env; set +a; \
+	set -a; . ./.env; set +a; \
 	(cd $(BACKEND_DIR) && ../$(BACKEND_CMD) serve --debug)# && \
 	# (cd $(FRONTEND_DIR) && npm start)
-
-benchmark-bucket:
-	set -a; . $(BACKEND_DIR)/.env; set +a; \
-	export MC_HOST_local=http:\/\/$${LS_ADMIN_ACCESS_KEY}:$${LS_ADMIN_SECRET_KEY}@$${LS_HOST}:$${LS_PORT}; \
-	mc ls local/$(BENCHMARK_BUCKET) 2>&1 >/dev/null || mc mb local/$(BENCHMARK_BUCKET)
-
-benchmark: benchmark-bucket
-	set -a; . $(BENCHMARK_DIR)/.env; set +a; \
-	(cd $(BENCHMARK_DIR) && mkdir -p output/ && cd output/ && warp run ../config.yml)
 
 clean:
 	rm -rf $(BIN_DIR)
 	rm -rf $(FRONTEND_DIR)/node_modules $(FRONTEND_BUILD_DIR)
-	rm -rf $(BENCHMARK_DIR)/output
