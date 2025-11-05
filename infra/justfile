@@ -1,0 +1,14 @@
+set shell := ["bash", "-uc"]
+
+set dotenv-load
+set dotenv-required
+set dotenv-path := "../.env"
+
+default:
+    just -l
+
+create:
+    docker compose --env-file ../.env up -d
+
+destroy:
+    docker compose --env-file ../.env down
