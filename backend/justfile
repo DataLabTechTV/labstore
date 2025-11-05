@@ -1,0 +1,60 @@
+set shell := ["bash", "-uc"]
+
+set dotenv-load
+set dotenv-required
+set dotenv-path := "../.env"
+
+benchmark_dir := "benchmarks/warp/"
+
+benchmark_bucket := "warp-benchmark-bucket"
+sandbox_bucket := "sandbox"
+
+ls_host := env("LS_HOST")
+ls_port := env("LS_PORT")
+ls_admin_access_key := env("LS_ADMIN_ACCESS_KEY")
+ls_admin_secret_key := env("LS_ADMIN_SECRET_KEY")
+
+default:
+    just -l
+
+create-bucket bucket:
+    #!/bin/bash
+    MC_HOST_local="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+    mc mb local/{{bucket}}
+
+benchmark-bucket:
+    just create-bucket {{benchmark_bucket}}
+
+benchmark: benchmark-bucket
+    #!/bin/bash
+    cd {{benchmark_dir}}
+    mkdir -p output/
+    cd output/
+    warp run ../config.yml
+
+sandbox-bucket:
+    just create-bucket {{sandbox_bucket}}
+
+# test-mc: sandbox-bucket
+# 	. $(BACKEND_DIR)/.env; \
+# 	export MC_HOST_local=http:\/\/$${LS_ADMIN_ACCESS_KEY}:$${LS_ADMIN_SECRET_KEY}@$${LS_HOST}:$${LS_PORT}; \
+# 	tmpfile=$$(mktemp); \
+# 	dd if=/dev/urandom of=$$tmpfile bs=1M count=10; \
+# 	mc --debug cp --disable-multipart $$tmpfile local/$(SANDBOX_BUCKET)/; \
+# 	rm -f $$tmpfile
+
+# test-rclone:
+# 	. $(BACKEND_DIR)/.env; \
+# 	tmpfile=$$(mktemp); \
+# 	rclone copy $$tmpfile :s3:$(SANDBOX_BUCKET)/rclone.data \
+# 		--s3-provider Minio \
+# 		--s3-endpoint http:\/\/$${LS_HOST}:$${LS_PORT} \
+# 		--s3-access-key-id $${LS_ADMIN_ACCESS_KEY} \
+# 		--s3-secret-access-key $${LS_ADMIN_SECRET_KEY} \
+# 		--s3-force-path-style; \
+# 	rm -f $$tmpfile
+
+# test-s3cmd:
+
+# clean:
+#     rm -rf $(BENCHMARK_DIR)/output
