@@ -32,7 +32,7 @@ warp:
     prefix:
     no-prefix: false
     md5: false
-    disable-multipart: false
+    disable-multipart: true
     disable-sha256-payload: false
     sse-s3-encrypt: false
     sse-c-encrypt: false
