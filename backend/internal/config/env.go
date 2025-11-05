@@ -21,8 +21,8 @@ type ServerConfig struct {
 	Host           string `env:"LS_HOST" envDefault:"localhost"`
 	Port           uint16 `env:"LS_PORT" envDefault:"6789"`
 	StorageRoot    string `env:"LS_STORAGE_ROOT" envDefault:"../data"`
-	AdminAccessKey string `env:"LS_ADMIN_ACCESS_KEY" envDefault:"admin"`
-	AdminSecretKey string `env:"LS_ADMIN_SECRET_KEY" envDefault:"admin"`
+	AdminAccessKey string `env:"LS_ADMIN_ACCESS_KEY" envDefault:"default"`
+	AdminSecretKey string `env:"LS_ADMIN_SECRET_KEY" envDefault:"default_pass"`
 }
 
 func Load() {
