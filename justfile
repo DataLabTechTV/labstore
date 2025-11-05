@@ -8,3 +8,6 @@ mod infra "infra/justfile"
 
 default:
     just -l
+
+clean:
+    just backend clean
