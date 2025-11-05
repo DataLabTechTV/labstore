@@ -163,7 +163,8 @@ func buildCanonicalRequest(
 	canonicalRequest.WriteString(r.Method)
 	canonicalRequest.WriteString("\n")
 
-	canonicalRequest.WriteString(r.URL.Path)
+	uri := buildCanonicalURI(r.URL.Path)
+	canonicalRequest.WriteString(uri)
 	canonicalRequest.WriteString("\n")
 
 	queryString := buildQueryString(r.URL.RawQuery)
@@ -216,6 +217,18 @@ func buildCanonicalRequest(
 	canonicalRequest.WriteString(recomputedPayloadHash)
 
 	return canonicalRequest.String(), nil
+}
+
+func buildCanonicalURI(path string) string {
+	parts := strings.Split(path, "/")
+
+	for i, part := range parts {
+		parts[i] = url.PathEscape(part)
+	}
+
+	canonicalURI := strings.Join(parts, "/")
+
+	return canonicalURI
 }
 
 func buildQueryString(rawQuery string) string {
