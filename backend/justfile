@@ -19,8 +19,8 @@ default:
 
 create-bucket bucket:
     #!/bin/bash
-    MC_HOST_local="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
-    mc mb local/{{bucket}}
+    export MC_HOST_labstore="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+    mc mb -p labstore/{{bucket}}
 
 benchmark-bucket:
     just create-bucket {{benchmark_bucket}}
@@ -35,26 +35,49 @@ benchmark: benchmark-bucket
 sandbox-bucket:
     just create-bucket {{sandbox_bucket}}
 
-# test-mc: sandbox-bucket
-# 	. $(BACKEND_DIR)/.env; \
-# 	export MC_HOST_local=http:\/\/$${LS_ADMIN_ACCESS_KEY}:$${LS_ADMIN_SECRET_KEY}@$${LS_HOST}:$${LS_PORT}; \
-# 	tmpfile=$$(mktemp); \
-# 	dd if=/dev/urandom of=$$tmpfile bs=1M count=10; \
-# 	mc --debug cp --disable-multipart $$tmpfile local/$(SANDBOX_BUCKET)/; \
-# 	rm -f $$tmpfile
+test-mc: sandbox-bucket
+    #!/bin/bash
+    MC_HOST_labstore="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
 
-# test-rclone:
-# 	. $(BACKEND_DIR)/.env; \
-# 	tmpfile=$$(mktemp); \
-# 	rclone copy $$tmpfile :s3:$(SANDBOX_BUCKET)/rclone.data \
-# 		--s3-provider Minio \
-# 		--s3-endpoint http:\/\/$${LS_HOST}:$${LS_PORT} \
-# 		--s3-access-key-id $${LS_ADMIN_ACCESS_KEY} \
-# 		--s3-secret-access-key $${LS_ADMIN_SECRET_KEY} \
-# 		--s3-force-path-style; \
-# 	rm -f $$tmpfile
+    tmpfile=$(mktemp)
+
+    echo "==> Generating temporary file with 10 MiB: $tmpfile"
+    dd if=/dev/urandom of=$tmpfile bs=1M count=10
+
+    echo "==> Sending temporary file: $tmpfile"
+    mc --debug cp --disable-multipart $tmpfile labstore/{{sandbox_bucket}}/$(basename $tmpfile).mc
+
+    echo "==> Cleaning up temporary file: $tmpfile"
+    rm -f $tmpfile
+
+test-rclone: sandbox-bucket
+    #!/bin/bash
+
+    tmpfile=$(mktemp)
+
+    echo "==> Generating temporary file with 10 MiB: $tmpfile"
+    dd if=/dev/urandom of=$tmpfile bs=1M count=10
+
+    tmpconfig=$(mktemp)
+
+    echo "==> Creating temporary rclone config: $tmpconfig"
+    cat <<EOF >$tmpconfig
+    [labstore]
+    type = s3
+    provider = Other
+    access_key_id = {{ls_admin_access_key}}
+    secret_access_key = {{ls_admin_secret_key}}
+    endpoint = http://{{ls_host}}:{{ls_port}}
+    acl = private
+    EOF
+
+    echo "==> Sending temporary file: $tmpfile"
+    rclone copyto $tmpfile labstore:/{{sandbox_bucket}}/$(basename $tmpfile).rclone --config $tmpconfig
+
+    echo "==> Cleaning up temporary files: $tmpfile, $tmpconfig"
+    rm -f $tmpfile $tmpconfig
 
 # test-s3cmd:
 
-# clean:
-#     rm -rf $(BENCHMARK_DIR)/output
+clean:
+    rm -rf {{join(benchmark_dir, "output")}}
