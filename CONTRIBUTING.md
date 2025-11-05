@@ -2,41 +2,13 @@
 
 ## Branch Naming
 
-Please use the following naming conventions for branches. Remember that there are feature branches, but no fix branches or similar—those should be commits within a branch. Hotfix branches are to be created post-release, in emergencies, and release branches handle integration, testing and fixes pre-release, usually for a single project within the monorepo (e.g., `web/` or `backend/`). The stable version is always under the `main` branch.
-
-### Feature branches
+The stable version is always under the `main` branch. Please use the following naming convention for any other branches, which is the default behavior for GitHub Projects.
 
 ```
-feature/<issue-number>-<short-description>
+<issue-number>-<issue-title>
 ```
 
-Example: `feature/123-add-login-page`
-
-### Hotfix branches
-
-```
-hotfix/<short-description>
-```
-
-Example: `hotfix/fix-login-bug`
-
-### Release branches
-
-If multiple projects are combined in a single release, use the global unified version:
-
-```
-release/<version>
-```
-
-Example: `release/v1.0.0`
-
-If a release is being done for a single project, then use the project-specific name and version:
-
-```
-release/<project>/<version>
-```
-
-Example: `release/web/v0.0.1`
+Example: `123-add-login-page`
 
 ## Commit Messages
 
