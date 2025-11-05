@@ -21,7 +21,10 @@ const UnsignedPayload = "UNSIGNED-PAYLOAD"
 
 type SigV4Result struct {
 	AccessKey   string
+	SecretKey   string
 	Signature   string
+	Timestamp   string
+	Scope       string
 	IsStreaming bool
 }
 
@@ -136,7 +139,10 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 
 		res := &SigV4Result{
 			AccessKey:   accessKey,
+			SecretKey:   secretKey,
 			Signature:   recomputedSignature,
+			Timestamp:   timestamp,
+			Scope:       scope,
 			IsStreaming: isStreaming,
 		}
 
@@ -188,7 +194,7 @@ func buildCanonicalRequest(
 
 	var recomputedPayloadHash string
 
-	if payloadHash == UnsignedPayload {
+	if payloadHash == UnsignedPayload || payloadHash == StreamingPayload {
 		recomputedPayloadHash = payloadHash
 	} else {
 		body, err := io.ReadAll(r.Body)
