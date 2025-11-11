@@ -6,6 +6,7 @@ import (
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/helper"
+	"github.com/DataLabTechTV/labstore/backend/pkg/constants"
 	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
 	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 	"github.com/spf13/cobra"
@@ -13,12 +14,16 @@ import (
 
 func NewRootCmd() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   strings.ToLower(config.Name),
-		Short: config.Description,
-		Long:  fmt.Sprintln(config.Description, "created by", config.Author),
+		Use:   fmt.Sprintf("%s-server", strings.ToLower(constants.Name)),
+		Short: fmt.Sprintf("%s, by %s", constants.Name, constants.Author),
+		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
+
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("🚀 Welcome to %s, by %s\n\n", constants.Name, constants.Author)
+
 			debug := helper.Must(cmd.Flags().GetBool("debug"))
 			logger.Init(logger.WithDebugFlag(debug))
+
 			config.Load()
 			iam.Load()
 		},

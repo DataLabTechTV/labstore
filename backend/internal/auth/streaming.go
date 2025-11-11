@@ -8,10 +8,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
+	"log/slog"
 	"strconv"
 	"strings"
 
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
+	"github.com/DataLabTechTV/labstore/backend/internal/security"
 )
 
 const StreamingPayload = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
@@ -102,7 +103,7 @@ func (r *SigV4ChunkedReader) readChunkHeader() error {
 		signature: sig,
 	}
 
-	logger.Log.Debugf("Read chunk header: %d bytes, signature %s", r.header.size, r.header.signature)
+	slog.Debug("Read chunk header", "size", r.header.size, "signature", security.Trunc(r.header.signature))
 
 	return nil
 }
@@ -114,7 +115,7 @@ func (r *SigV4ChunkedReader) readChunkData() error {
 		return err
 	}
 
-	logger.Log.Debugf("Read chunk data: %d bytes", len(r.data))
+	slog.Debug("Read chunk data", "length", len(r.data))
 
 	return nil
 }
@@ -126,7 +127,7 @@ func (r *SigV4ChunkedReader) readTrailingCRLF() error {
 		return errors.New("invalid chunk termination")
 	}
 
-	logger.Log.Debug("Read chunk CRLF")
+	slog.Debug("Read chunk CRLF")
 
 	return nil
 }
@@ -149,10 +150,10 @@ func (r *SigV4ChunkedReader) verifyChunkSigV4() error {
 		return errors.New("could not decode recomputed signature")
 	}
 
-	logger.Log.Debugf(
-		"Comparing chunk signatures: %s (original), %s (recomputed)",
-		r.header.signature,
-		recomputedSignature,
+	slog.Debug(
+		"Comparing chunk signatures",
+		"original", security.Trunc(r.header.signature),
+		"recomputed", security.Trunc(recomputedSignature),
 	)
 
 	if hmac.Equal(byteSignature, byteRecomputedSignature) {

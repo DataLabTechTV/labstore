@@ -1,62 +1,60 @@
 package logger
 
 import (
+	"log/slog"
 	"os"
+	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/mattn/go-isatty"
+
+	"github.com/lmittmann/tint"
 )
 
-const defaultLogLevel = logrus.InfoLevel
+const defaultLogLevel = slog.LevelInfo
 
-var (
-	defaultLogOutput    = os.Stdout
-	defaultLogFormatter = &logrus.TextFormatter{
-		FullTimestamp: true,
-	}
-)
+var defaultLogOutput = os.Stderr
+var defaultTimeFormat = time.Kitchen
 
-var Log *logrus.Logger
+var Level slog.LevelVar
+var AppLogger *slog.Logger
 
-type Option func(*logrus.Logger)
+type Option func(*slog.Logger)
 
 func Init(opts ...Option) {
-	Log = logrus.New()
+	Level.Set(defaultLogLevel)
 
-	Log.SetOutput(defaultLogOutput)
-	Log.SetLevel(defaultLogLevel)
-	Log.SetFormatter(defaultLogFormatter)
+	AppLogger = slog.New(
+		tint.NewHandler(
+			defaultLogOutput,
+			&tint.Options{
+				Level:      &Level,
+				TimeFormat: defaultTimeFormat,
+				NoColor:    !isatty.IsTerminal(defaultLogOutput.Fd()),
+			},
+		),
+	)
 
 	for _, opt := range opts {
-		opt(Log)
+		opt(AppLogger)
 	}
+
+	slog.SetDefault(AppLogger)
 }
 
 func WithDebugFlag(debug bool) Option {
 	if debug {
-		return WithLevel(logrus.DebugLevel)
+		return WithLevel(slog.LevelDebug)
 	}
 
 	return WithLevel(defaultLogLevel)
 }
 
-func WithLevel(level logrus.Level) Option {
-	return func(logger *logrus.Logger) {
-		if level == logrus.DebugLevel {
-			Log.Debug("Debug mode: on")
+func WithLevel(level slog.Level) Option {
+	return func(logger *slog.Logger) {
+		Level.Set(level)
+
+		if level == slog.LevelDebug {
+			logger.Debug("Debug mode: on")
 		}
-
-		logger.SetLevel(level)
-	}
-}
-
-func WithFormatter(formatter logrus.Formatter) Option {
-	return func(logger *logrus.Logger) {
-		logger.SetFormatter(formatter)
-	}
-}
-
-func WithOutput(output *os.File) Option {
-	return func(logger *logrus.Logger) {
-		logger.SetOutput(output)
 	}
 }
