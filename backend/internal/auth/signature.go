@@ -342,27 +342,6 @@ func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
 	return nil, errors.New("signatures do not match")
 }
 
-func computeSignature(cred *SigV4Credential, stringToSign string) (string, error) {
-	scopeParts := strings.Split(cred.Scope, "/")
-
-	if len(scopeParts) != 4 {
-		return "", errors.New("scope must contain 4 parts")
-	}
-
-	date := scopeParts[0]
-	region := scopeParts[1]
-	service := scopeParts[2]
-
-	dateKey := hmacSHA256([]byte("AWS4"+cred.SecretKey), []byte(date))
-	dateRegionKey := hmacSHA256(dateKey, []byte(region))
-	dateRegionServiceKey := hmacSHA256(dateRegionKey, []byte(service))
-	signingKey := hmacSHA256(dateRegionServiceKey, []byte("aws4_request"))
-	signature := hmacSHA256(signingKey, []byte(stringToSign))
-	signatureString := hex.EncodeToString(signature)
-
-	return signatureString, nil
-}
-
 func (req *SigV4Request) buildCanonicalRequest() (string, error) {
 	var canonicalRequest strings.Builder
 
@@ -408,6 +387,27 @@ func (req *SigV4Request) buildStringToSign(canonicalRequest string) string {
 	stringToSign.WriteString(hex.EncodeToString(hash[:]))
 
 	return stringToSign.String()
+}
+
+func computeSignature(cred *SigV4Credential, stringToSign string) (string, error) {
+	scopeParts := strings.Split(cred.Scope, "/")
+
+	if len(scopeParts) != 4 {
+		return "", errors.New("scope must contain 4 parts")
+	}
+
+	date := scopeParts[0]
+	region := scopeParts[1]
+	service := scopeParts[2]
+
+	dateKey := hmacSHA256([]byte("AWS4"+cred.SecretKey), []byte(date))
+	dateRegionKey := hmacSHA256(dateKey, []byte(region))
+	dateRegionServiceKey := hmacSHA256(dateRegionKey, []byte(service))
+	signingKey := hmacSHA256(dateRegionServiceKey, []byte("aws4_request"))
+	signature := hmacSHA256(signingKey, []byte(stringToSign))
+	signatureString := hex.EncodeToString(signature)
+
+	return signatureString, nil
 }
 
 func hmacSHA256(key, value []byte) []byte {
