@@ -8,13 +8,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 
+	"github.com/DataLabTechTV/labstore/backend/internal/security"
 	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 )
 
 const UnsignedPayload = "UNSIGNED-PAYLOAD"
@@ -32,10 +33,10 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 	// !FIXME: Could we refactor this into a few more functions?
 
 	auth := r.Header.Get("Authorization")
-	logger.Log.Debug("Authorization: " + auth)
+	slog.Debug("Processing SigV4 request", "Authorization", security.TruncParamHeader(auth, "Signature"))
 
 	payloadHash := r.Header.Get("X-Amz-Content-SHA256")
-	logger.Log.Debug("X-Amz-Content-SHA256: " + payloadHash)
+	slog.Debug("Received payload hash", "X-Amz-Content-SHA256", security.Trunc(payloadHash))
 
 	// Remove prefix
 
@@ -52,7 +53,7 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 
 	parts := strings.Split(auth, ",")
 
-	var credentials string
+	var credential string
 	var signedHeaders []string
 	var signature string
 
@@ -60,7 +61,7 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 		p = strings.TrimSpace(p)
 
 		if after, ok := strings.CutPrefix(p, "Credential="); ok {
-			credentials = after
+			credential = after
 		}
 
 		if after, ok := strings.CutPrefix(p, "SignedHeaders="); ok {
@@ -72,8 +73,8 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 		}
 	}
 
-	if credentials == "" {
-		return nil, errors.New("header Credentials is empty")
+	if credential == "" {
+		return nil, errors.New("header Credential is empty")
 	}
 
 	if len(signedHeaders) == 0 {
@@ -84,16 +85,19 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 		return nil, errors.New("header Signature is empty")
 	}
 
-	logger.Log.Debug("Credentials: " + credentials)
-	logger.Log.Debug("SignedHeaders: " + strings.Join(signedHeaders, ";"))
-	logger.Log.Debug("Signature: " + signature)
+	slog.Debug(
+		"Extracted authorization header parts",
+		"Credential", credential,
+		"SignedHeaders", strings.Join(signedHeaders, ";"),
+		"Signature", security.Trunc(signature),
+	)
 
 	// Extract access key and scope
 
-	credentialParts := strings.Split(credentials, "/")
+	credentialParts := strings.Split(credential, "/")
 
 	accessKey := credentialParts[0]
-	logger.Log.Debug("Access key: " + accessKey)
+	slog.Debug("Extracted access key from credential", "accessKey", accessKey)
 
 	secretKey, ok := iam.Users[accessKey]
 	if !ok {
@@ -101,7 +105,7 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
-	logger.Log.Debug("Scope: " + scope)
+	slog.Debug("Extracted scope from credential", "scope", scope)
 
 	// Compute signature
 
@@ -109,20 +113,18 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 	if err != nil {
 		return nil, errors.New("could not build canonical request")
 	}
-	logger.Log.Debug("Canonical request: " + canonicalRequest)
+	slog.Debug("Built canonical request", "canonicalRequest", security.TruncLastLine(canonicalRequest))
 
 	timestamp := r.Header.Get("X-Amz-Date")
-	logger.Log.Debug("Timestamp: " + timestamp)
+	slog.Debug("Received timestamp", "X-Amz-Date", timestamp)
 
 	stringToSign := buildStringToSign(timestamp, scope, canonicalRequest)
-	logger.Log.Debug("String to sign: " + stringToSign)
+	slog.Debug("Built string to sign", "stringToSign", security.TruncLastLine(stringToSign))
 
 	recomputedSignature, err := computeSignature(secretKey, scope, stringToSign)
 	if err != nil {
 		return nil, errors.New("could not compute signature")
 	}
-
-	logger.Log.Debug("Signature (recomputed): " + recomputedSignature)
 
 	byteSignature, err := hex.DecodeString(signature)
 	if err != nil {
@@ -133,6 +135,12 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 	if err != nil {
 		return nil, errors.New("could not decode recomputed signature")
 	}
+
+	slog.Debug(
+		"Comparing signatures",
+		"original", security.Trunc(signature),
+		"recomputed", security.Trunc(recomputedSignature),
+	)
 
 	if hmac.Equal(byteSignature, byteRecomputedSignature) {
 		isStreaming := payloadHash == StreamingPayload
@@ -149,7 +157,7 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 		return res, nil
 	}
 
-	logger.Log.Error("Original and recomputed signatures differ")
+	slog.Error("Original and recomputed signatures differ")
 	return nil, errors.New("signatures do not match")
 }
 
@@ -164,11 +172,12 @@ func buildCanonicalRequest(
 	canonicalRequest.WriteString("\n")
 
 	uri := buildCanonicalURI(r.URL.Path)
+	slog.Debug("Built canonical URI", "uri", uri)
 	canonicalRequest.WriteString(uri)
 	canonicalRequest.WriteString("\n")
 
 	queryString := buildQueryString(r.URL.RawQuery)
-	logger.Log.Debug("Canonical query string: " + queryString)
+	slog.Debug("Built canonical query string", "queryString", queryString)
 	canonicalRequest.WriteString(queryString)
 	canonicalRequest.WriteString("\n")
 
@@ -203,7 +212,7 @@ func buildCanonicalRequest(
 			return "", errors.New("could not read body")
 		}
 
-		logger.Log.Debugf("Body length: %d", len(body))
+		slog.Debug("Read body", "length", len(body))
 
 		// Restore body
 		r.Body = io.NopCloser(bytes.NewBuffer(body))
@@ -211,7 +220,7 @@ func buildCanonicalRequest(
 		hash := sha256.Sum256(body)
 		recomputedPayloadHash = hex.EncodeToString(hash[:])
 
-		logger.Log.Debugln("Body SHA256:", recomputedPayloadHash)
+		slog.Debug("Recomputed payload hash", "sha256", security.Trunc(recomputedPayloadHash))
 	}
 
 	canonicalRequest.WriteString(recomputedPayloadHash)
@@ -305,8 +314,9 @@ func computeSignature(
 	dateRegionServiceKey := hmacSHA256(dateRegionKey, []byte(service))
 	signingKey := hmacSHA256(dateRegionServiceKey, []byte("aws4_request"))
 	signature := hmacSHA256(signingKey, []byte(stringToSign))
+	signatureString := hex.EncodeToString(signature)
 
-	return hex.EncodeToString(signature), nil
+	return signatureString, nil
 }
 
 func hmacSHA256(key, value []byte) []byte {
