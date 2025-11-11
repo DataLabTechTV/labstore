@@ -4,9 +4,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 )
 
 func ErrorAccessDenied() *S3Error {
@@ -65,13 +64,14 @@ func (e *S3Error) WithHostID(hostID string) *S3Error {
 }
 
 func HandleError(w http.ResponseWriter, err error) {
-	logger.Log.Errorf("Server error: %s", err.Error())
 
 	var s3Error *S3Error
 
 	if errors.As(err, &s3Error) {
+		slog.Error("HTTP: S3 error", "error", s3Error)
 		WriteXML(w, s3Error.StatusCode, s3Error)
 	} else {
+		slog.Error("HTTP: Internal Server Error", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
