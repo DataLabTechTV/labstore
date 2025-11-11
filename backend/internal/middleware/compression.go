@@ -3,9 +3,9 @@ package middleware
 import (
 	"compress/gzip"
 	"io"
+	"log/slog"
 	"net/http"
 
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -15,7 +15,7 @@ func CompressionMiddleware(next http.Handler) http.Handler {
 
 		switch r.Header.Get("Content-Encoding") {
 		case "gzip":
-			logger.Log.Debug("Decompressing gzip request")
+			slog.Debug("Decompressing gzip request")
 
 			gz, err := gzip.NewReader(r.Body)
 			if err != nil {
@@ -27,7 +27,7 @@ func CompressionMiddleware(next http.Handler) http.Handler {
 			reader = gz
 
 		case "zstd":
-			logger.Log.Debug("Decompressing zstd request")
+			slog.Debug("Decompressing zstd request")
 
 			zr, err := zstd.NewReader(r.Body)
 			if err != nil {
