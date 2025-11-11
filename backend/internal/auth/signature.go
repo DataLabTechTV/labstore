@@ -55,7 +55,7 @@ func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 		return nil, fmt.Errorf("could not parse request: %w", err)
 	}
 
-	res, err := validateSignature(req)
+	res, err := req.validateSignature()
 	if err != nil {
 		return nil, fmt.Errorf("could not validate signature: %w", err)
 	}
@@ -294,14 +294,14 @@ func buildCanonicalHeaders(r *http.Request, auth *Sigv4Authorization) map[string
 }
 
 // Recompute and validate SigV4 signature
-func validateSignature(req *SigV4Request) (*SigV4Result, error) {
-	canonicalRequest, err := buildCanonicalRequest(req)
+func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
+	canonicalRequest, err := req.buildCanonicalRequest()
 	if err != nil {
 		return nil, errors.New("could not build canonical request")
 	}
 	slog.Debug("Built canonical request", "canonicalRequest", security.TruncLastLine(canonicalRequest))
 
-	stringToSign := buildStringToSign(req, canonicalRequest)
+	stringToSign := req.buildStringToSign(canonicalRequest)
 	slog.Debug("Built string to sign", "stringToSign", security.TruncLastLine(stringToSign))
 
 	signature, err := computeSignature(req.Authorization.Credential, stringToSign)
@@ -363,7 +363,7 @@ func computeSignature(cred *SigV4Credential, stringToSign string) (string, error
 	return signatureString, nil
 }
 
-func buildCanonicalRequest(req *SigV4Request) (string, error) {
+func (req *SigV4Request) buildCanonicalRequest() (string, error) {
 	var canonicalRequest strings.Builder
 
 	canonicalRequest.WriteString(req.Method)
@@ -392,7 +392,7 @@ func buildCanonicalRequest(req *SigV4Request) (string, error) {
 	return canonicalRequest.String(), nil
 }
 
-func buildStringToSign(req *SigV4Request, canonicalRequest string) string {
+func (req *SigV4Request) buildStringToSign(canonicalRequest string) string {
 	var stringToSign strings.Builder
 
 	stringToSign.WriteString("AWS4-HMAC-SHA256")
