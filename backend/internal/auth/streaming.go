@@ -18,11 +18,10 @@ import (
 const StreamingPayload = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
 
 type SigV4ChunkedReader struct {
-	Body      io.ReadCloser
-	PrevSig   string
-	SecretKey string
-	Timestamp string
-	Scope     string
+	Body       io.ReadCloser
+	PrevSig    string
+	Credential *SigV4Credential
+	Timestamp  string
 
 	reader *bufio.Reader
 	header *SigV4ChunkHeader
@@ -134,7 +133,7 @@ func (r *SigV4ChunkedReader) readTrailingCRLF() error {
 
 func (r *SigV4ChunkedReader) verifyChunkSigV4() error {
 	stringToSign := r.buildChunkStringToSign()
-	recomputedSignature, err := computeSignature(r.SecretKey, r.Scope, stringToSign)
+	recomputedSignature, err := computeSignature(r.Credential, stringToSign)
 
 	if err != nil {
 		return err
@@ -172,7 +171,7 @@ func (r *SigV4ChunkedReader) buildChunkStringToSign() string {
 	stringToSign.WriteString(r.Timestamp)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.Scope)
+	stringToSign.WriteString(r.Credential.Scope)
 	stringToSign.WriteString("\n")
 
 	stringToSign.WriteString(r.PrevSig)
