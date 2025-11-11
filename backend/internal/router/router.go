@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -11,7 +13,6 @@ import (
 	"github.com/DataLabTechTV/labstore/backend/internal/object"
 	"github.com/DataLabTechTV/labstore/backend/internal/service"
 	"github.com/DataLabTechTV/labstore/backend/pkg/iam"
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 )
 
 func Start() {
@@ -32,8 +33,13 @@ func Start() {
 	mux.Handle("HEAD /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.HeadBucketHandler)))
 	mux.Handle("HEAD /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.HeadObjectHandler)))
 
+	slog.Info(
+		"Starting S3-compatible server",
+		"host", config.Env.Host,
+		"port", config.Env.Port,
+	)
+
 	addr := fmt.Sprintf("%s:%d", config.Env.Host, config.Env.Port)
-	logger.Log.Infoln("Starting minimal S3-compatible server on", addr)
 
 	server := http.Server{
 		Addr: addr,
@@ -46,7 +52,9 @@ func Start() {
 		),
 	}
 
-	logger.Log.Fatal(server.ListenAndServe())
+	fmt.Printf("\n🌐 Backend listening on http://%s\n\n", addr)
+
+	log.Fatal(server.ListenAndServe())
 }
 
 func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {

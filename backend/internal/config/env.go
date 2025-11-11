@@ -2,13 +2,15 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/helper"
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
+	"github.com/DataLabTechTV/labstore/backend/internal/security"
+	"github.com/DataLabTechTV/labstore/backend/pkg/constants"
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
@@ -31,9 +33,9 @@ func Load() {
 
 func loadEnv() {
 	if err := godotenv.Load(dotenvPath); err != nil {
-		logger.Log.Debug("No .env file found, skipping...")
+		slog.Debug("No .env file found, skipping...")
 	} else {
-		logger.Log.Debugln("Environment source:", dotenvPath)
+		slog.Debug("Loaded .env file", "path", dotenvPath)
 	}
 
 	Env = helper.Must(env.ParseAs[ServerConfig]())
@@ -54,12 +56,12 @@ func loadEnv() {
 
 		if strings.Contains(env_var_name, "SECRET") {
 			if len(env_var_value) > 0 {
-				env_var_value = "[REDACTED]"
+				env_var_value = security.Redacted
 			} else {
-				env_var_value = "[EMPTY]"
+				env_var_value = constants.Empty
 			}
 		}
 
-		logger.Log.Debugf("%s: %s", env_var_name, env_var_value)
+		slog.Debug("Env var set", "name", env_var_name, "value", env_var_value)
 	}
 }
