@@ -124,5 +124,19 @@ test-list-obj-rclone: sandbox-bucket
     echo "==> Listing keys in {{sandbox_bucket}}"
     rclone lsf local:/{{sandbox_bucket}}/ --config $tmpconfig
 
+    echo "==> Cleaning up temporary config: $tmpconfig"
+    rm -f $tmpconfig
+
+test-list-obj-s5cmd: sandbox-bucket
+    #!/bin/bash
+
+    endpoint_url="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+
+    export AWS_ACCESS_KEY_ID={{ls_admin_access_key}}
+    export AWS_SECRET_ACCESS_KEY={{ls_admin_secret_key}}
+
+    echo "==> Listing keys in {{sandbox_bucket}}"
+    s5cmd --log trace --endpoint-url $endpoint_url ls s3://{{sandbox_bucket}}/
+
 clean:
     rm -rf {{join(benchmark_dir, "output")}}
