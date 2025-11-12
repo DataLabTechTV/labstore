@@ -16,40 +16,29 @@ import (
 )
 
 func Start() {
-	os.MkdirAll(config.Env.StorageRoot, 0755)
+	ensureDirectories()
 
-	mux := http.NewServeMux()
+	router := http.NewServeMux()
+	loadRoutes(router)
 
-	mux.Handle("PUT /{bucket}", middleware.WithIAM(iam.CreateBucket, http.HandlerFunc(bucket.PutBucketHandler)))
-	mux.Handle("PUT /{bucket}/{key...}", middleware.WithIAM(iam.PutObject, http.HandlerFunc(object.PutObjectHandler)))
+	addr := fmt.Sprintf("%s:%d", config.Env.Host, config.Env.Port)
 
-	mux.Handle("GET /", middleware.WithIAM(iam.ListAllMyBuckets, http.HandlerFunc(service.ListBucketsHandler)))
-	mux.Handle("GET /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.ListObjectsHandler)))
-	mux.Handle("GET /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.GetObjectHandler)))
-
-	mux.Handle("DELETE /{bucket}", middleware.WithIAM(iam.DeleteBucket, http.HandlerFunc(bucket.DeleteBucketHandler)))
-	mux.Handle("DELETE /{bucket}/{key...}", middleware.WithIAM(iam.DeleteObject, http.HandlerFunc(object.DeleteObjectHandler)))
-
-	mux.Handle("HEAD /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.HeadBucketHandler)))
-	mux.Handle("HEAD /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.HeadObjectHandler)))
+	middleware := Middleware.Stack(
+		middleware.CompressionMiddleware,
+		middleware.AuthMiddleware,
+		middleware.IAMMiddleware,
+		middleware.NormalizeMiddleware,
+	)
 
 	slog.Info(
-		"Starting S3-compatible server",
+		"Starting S3-compatible object store server",
 		"host", config.Env.Host,
 		"port", config.Env.Port,
 	)
 
-	addr := fmt.Sprintf("%s:%d", config.Env.Host, config.Env.Port)
-
 	server := http.Server{
-		Addr: addr,
-		Handler: chain(
-			mux,
-			middleware.CompressionMiddleware,
-			middleware.AuthMiddleware,
-			middleware.IAMMiddleware,
-			middleware.NormalizeMiddleware,
-		),
+		Addr:    addr,
+		Handler: middleware(router),
 	}
 
 	fmt.Printf("\n🌐 Backend listening on http://%s\n\n", addr)
@@ -57,9 +46,26 @@ func Start() {
 	log.Fatal(server.ListenAndServe())
 }
 
-func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
-	for i := len(middlewares) - 1; i >= 0; i-- {
-		h = middlewares[i](h)
-	}
-	return h
+func ensureDirectories() {
+	slog.Debug("Ensuring directories")
+	os.MkdirAll(config.Env.StorageRoot, 0755)
+}
+
+func loadRoutes(router *http.ServeMux) {
+	slog.Debug("Loading routes")
+
+	// Service
+	router.Handle("GET /", middleware.WithIAM(iam.ListAllMyBuckets, http.HandlerFunc(service.ListBucketsHandler)))
+
+	// Bucket
+	router.Handle("HEAD /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.HeadBucketHandler)))
+	router.Handle("GET /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.ListObjectsHandler)))
+	router.Handle("PUT /{bucket}", middleware.WithIAM(iam.CreateBucket, http.HandlerFunc(bucket.PutBucketHandler)))
+	router.Handle("DELETE /{bucket}", middleware.WithIAM(iam.DeleteBucket, http.HandlerFunc(bucket.DeleteBucketHandler)))
+
+	// Object
+	router.Handle("HEAD /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.HeadObjectHandler)))
+	router.Handle("GET /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.GetObjectHandler)))
+	router.Handle("PUT /{bucket}/{key...}", middleware.WithIAM(iam.PutObject, http.HandlerFunc(object.PutObjectHandler)))
+	router.Handle("DELETE /{bucket}/{key...}", middleware.WithIAM(iam.DeleteObject, http.HandlerFunc(object.DeleteObjectHandler)))
 }
