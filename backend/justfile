@@ -35,7 +35,7 @@ benchmark: benchmark-bucket
 sandbox-bucket:
     just create-bucket {{sandbox_bucket}}
 
-test-mc: sandbox-bucket
+test-put-obj-mc: sandbox-bucket
     #!/bin/bash
 
     export MC_HOST_local="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
@@ -51,7 +51,7 @@ test-mc: sandbox-bucket
     echo "==> Cleaning up temporary file: $tmpfile"
     rm -f $tmpfile
 
-test-rclone: sandbox-bucket
+test-put-obj-rclone: sandbox-bucket
     #!/bin/bash
 
     tmpfile=$(mktemp)
@@ -63,7 +63,7 @@ test-rclone: sandbox-bucket
 
     echo "==> Creating temporary rclone config: $tmpconfig"
     cat <<EOF >$tmpconfig
-    [labstore]
+    [local]
     type = s3
     provider = Other
     access_key_id = {{ls_admin_access_key}}
@@ -73,12 +73,12 @@ test-rclone: sandbox-bucket
     EOF
 
     echo "==> Sending temporary file: $tmpfile"
-    rclone copyto $tmpfile labstore:/{{sandbox_bucket}}/$(basename $tmpfile).rclone --config $tmpconfig
+    rclone copyto $tmpfile local:/{{sandbox_bucket}}/$(basename $tmpfile).rclone --config $tmpconfig
 
     echo "==> Cleaning up temporary files: $tmpfile, $tmpconfig"
     rm -f $tmpfile $tmpconfig
 
-test-s5cmd: sandbox-bucket
+test-put-obj-s5cmd: sandbox-bucket
     #!/bin/bash
 
     endpoint_url="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
@@ -96,6 +96,33 @@ test-s5cmd: sandbox-bucket
 
     echo "==> Cleaning up temporary file: $tmpfile"
     rm -f $tmpfile
+
+test-list-obj-mc: sandbox-bucket
+    #!/bin/bash
+
+    export MC_HOST_local="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+
+    echo "==> Listing keys in {{sandbox_bucket}}"
+    mc --debug ls local/{{sandbox_bucket}}/
+
+test-list-obj-rclone: sandbox-bucket
+    #!/bin/bash
+
+    tmpconfig=$(mktemp)
+
+    echo "==> Creating temporary rclone config: $tmpconfig"
+    cat <<EOF >$tmpconfig
+    [local]
+    type = s3
+    provider = Other
+    access_key_id = {{ls_admin_access_key}}
+    secret_access_key = {{ls_admin_secret_key}}
+    endpoint = http://{{ls_host}}:{{ls_port}}
+    acl = private
+    EOF
+
+    echo "==> Listing keys in {{sandbox_bucket}}"
+    rclone lsf local:/{{sandbox_bucket}}/ --config $tmpconfig
 
 clean:
     rm -rf {{join(benchmark_dir, "output")}}
