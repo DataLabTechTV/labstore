@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"github.com/gofiber/fiber/v2"
+
 	"github.com/DataLabTechTV/labstore/backend/internal/auth"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/gofiber/fiber/v2"
 )
 
 var ErrorInvalidAccessKey = &core.S3Error{
@@ -16,7 +17,8 @@ func AuthMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessKey, err := auth.VerifyAWSSigV4(c)
 		if err != nil {
-			core.HandleError(c, err)
+			// logger.Log.Error(err.Error()) // if we need to save error to logs
+			core.HandleError(c, core.ErrorSignatureDoesNotMatch())
 			return c.Next()
 		}
 
