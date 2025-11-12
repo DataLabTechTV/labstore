@@ -40,6 +40,14 @@ func ErrorNoSuchBucket() *S3Error {
 	}
 }
 
+func ErrSignatureDoesNotMatch() *S3Error {
+	return &S3Error{
+		Code:       "SignatureDoesNotMatch",
+		Message:    "The request signature we calculate does not match the signature you provided.",
+		StatusCode: http.StatusForbidden,
+	}
+}
+
 type S3Error struct {
 	XMLName    xml.Name `xml:"Error"`
 	Code       string
