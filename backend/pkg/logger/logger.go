@@ -13,7 +13,7 @@ import (
 const defaultLogLevel = slog.LevelInfo
 
 var defaultLogOutput = os.Stderr
-var defaultTimeFormat = time.Kitchen
+var defaultTimeFormat = time.StampMilli
 
 var Level slog.LevelVar
 var AppLogger *slog.Logger
