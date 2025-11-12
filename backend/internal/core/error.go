@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/DataLabTechTV/labstore/backend/pkg/logger"
 )
 
 func ErrorAccessDenied() *S3Error {
@@ -30,6 +31,14 @@ func ErrorInternalError(message string) *S3Error {
 		Code:       "InternalError",
 		Message:    message,
 		StatusCode: fiber.StatusInternalServerError,
+	}
+}
+
+func ErrorSignatureDoesNotMatch() *S3Error {
+	return &S3Error{
+		Code:		"SignatureDoesNotMatch",
+		Message:	"The request signature does not match the signature you provide",
+		StatusCode:	403,
 	}
 }
 
