@@ -40,7 +40,7 @@ func ErrorNoSuchBucket() *S3Error {
 	}
 }
 
-func ErrSignatureDoesNotMatch() *S3Error {
+func ErrorSignatureDoesNotMatch() *S3Error {
 	return &S3Error{
 		Code:       "SignatureDoesNotMatch",
 		Message:    "The request signature we calculate does not match the signature you provided.",
