@@ -52,12 +52,12 @@ type SigV4Result struct {
 func VerifySigV4(r *http.Request) (*SigV4Result, error) {
 	req, err := parseRequest(r)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse request: %w", err)
+		return nil, fmt.Errorf("sigv4: %w", err)
 	}
 
 	res, err := req.validateSignature()
 	if err != nil {
-		return nil, fmt.Errorf("could not validate signature: %w", err)
+		return nil, fmt.Errorf("sigv4: %w", err)
 	}
 
 	return res, nil
@@ -69,12 +69,12 @@ func parseRequest(r *http.Request) (*SigV4Request, error) {
 
 	auth, err := parseAuthorization(authorization)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse authorization header: %w", err)
+		return nil, err
 	}
 
 	payloadHash, err := validatePayloadHash(r)
 	if err != nil {
-		return nil, fmt.Errorf("could not validate body payload hash: %w", err)
+		return nil, err
 	}
 
 	timestamp := r.Header.Get("X-Amz-Date")
@@ -152,7 +152,7 @@ func parseAuthorization(authorization string) (*Sigv4Authorization, error) {
 
 	cred, err := parseCredential(credential)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse credential: %w", err)
+		return nil, err
 	}
 
 	res := &Sigv4Authorization{
@@ -173,7 +173,7 @@ func parseCredential(credential string) (*SigV4Credential, error) {
 
 	secretKey, ok := iam.Users[accessKey]
 	if !ok {
-		return nil, fmt.Errorf("no secret key found for access key %s", accessKey)
+		return nil, errors.New("invalid access key")
 	}
 
 	scope := strings.Join(credentialParts[1:], "/")
