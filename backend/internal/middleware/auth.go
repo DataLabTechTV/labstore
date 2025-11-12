@@ -29,7 +29,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		res, err := auth.VerifySigV4(r)
 		if err != nil {
-			core.HandleError(w, core.ErrSignatureDoesNotMatch())
+			core.HandleError(w, core.ErrorSignatureDoesNotMatch())
 			return
 		}
 
