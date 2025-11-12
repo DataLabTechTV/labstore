@@ -26,16 +26,24 @@
 
 **Docs:** https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations_Amazon_Simple_Storage_Service.html
 
+### SigV4
+
+**Priority:** 🟥 P0 – Critical
+
+| Spec            | Docs                                                                          |
+| --------------- | ----------------------------------------------------------------------------- |
+| Single Chunk    | https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html |
+| Multiple Chunks | https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-streaming.html          |
+
 ### Service
 
 **Priority:** 🟥 P0 – Critical
 
-| S3 Action                                                                           | Method | Path | Description                | Status |
-| ----------------------------------------------------------------------------------- | ------ | ---- | -------------------------- | ------ |
-| [ListBuckets](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html) | GET    | `/`  | List all buckets           | 🟡     |
-| [HeadBucket](https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadBucket.html)   | HEAD   | `/`  | Check service availability | 🟡     |
+| S3 Action                                                                           | Method | Path | Description      | Status |
+| ----------------------------------------------------------------------------------- | ------ | ---- | ---------------- | ------ |
+| [ListBuckets](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html) | GET    | `/`  | List all buckets | 🟡     |
 
-### Buckets
+### Bucket
 
 **Priority:** 🟥 P0 – Critical
 
@@ -51,11 +59,11 @@
 
 **Priority:** 🟧 P1 – High
 
-| S3 Action                                                                                                                                                                                                                                                                                 | Method         | Path                     | Description                   | Status |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------ | ----------------------------- | ------ |
-| [GetBucketAcl](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAcl.html) / [PutBucketAcl](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAcl.html)                                                                                                               | GET/PUT        | `/{bucket}?acl`          | User/group permissions        | 🔴     |
+| S3 Action                                                                                                                                                                                                                                                                                     | Method         | Path                     | Description                   | Status |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------ | ----------------------------- | ------ |
+| [GetBucketAcl](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAcl.html) / [PutBucketAcl](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAcl.html)                                                                                                                 | GET/PUT        | `/{bucket}?acl`          | User/group permissions        | 🔴     |
 | [GetBucketPolicy](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketPolicy.html) / [PutBucketPolicy](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketPolicy.html) / [DeleteBucketPolicy](https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketPolicy.html) | GET/PUT/DELETE | `/{bucket}?policy`       | IAM-style JSON policy         | 🔴     |
-| [GetBucketPolicyStatus](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketPolicyStatus.html)                                                                                                                                                                                   | GET            | `/{bucket}?policyStatus` | Check if the bucket is public | 🔴     |
+| [GetBucketPolicyStatus](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketPolicyStatus.html)                                                                                                                                                                                       | GET            | `/{bucket}?policyStatus` | Check if the bucket is public | 🔴     |
 
 **Priority:** 🟨 P2 – Medium
 
@@ -81,7 +89,7 @@
 |           | GET/PUT/DELETE | `/{bucket}?accelerate`   |                                                              |        |
 |           | GET/PUT/DELETE | `/{bucket}?analytics`    |                                                              |        |
 
-### Objects
+### Object
 
 **Priority:** 🟥 P0 – Critical
 
@@ -121,16 +129,26 @@
 |           | POST   | `/{bucket}/{key}?restore`              |             |        |
 |           | POST   | `/{bucket}/{key}?select&select-type=2` |             |        |
 
-### Multipart Uploads
+#### Presigned URLs
 
-**Priority:** 🟥 P0 – Critical
+**Priority:** 🟩 P3 – Low
+
+| S3 Action | Method | Path                                                                                                                | Description                                                       | Status |
+| --------- | ------ | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------ |
+|           | GET    | `https://{bucket}.s3.amazonaws.com/{key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...&X-Amz-Signature=...` | Temporary access to an object without creating system credentials |        |
+
+### Multipart Uploading
+
+**Priority:** 🟧 P1 – High
+
+Multipart uploading covers both the bucket and object scopes.
 
 | S3 Action                                                                                                   | Method | Path                                           | Description                    | Status |
 | ----------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------- | ------------------------------ | ------ |
 | [ListMultipartUploads](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html)       | GET    | `/{bucket}?uploads`                            | List ongoing multipart uploads | 🔴     |
 | [CreateMultipartUpload](https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html)     | POST   | `/{bucket}/{key}?uploads`                      | Initiate upload                | 🔴     |
 | [UploadPart](https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html)                           | PUT    | `/{bucket}/{key}?partNumber={n}&uploadId={id}` | Upload part                    | 🔴     |
-|                                                                                                             | GET    | `/{bucket}?uploadId={id}`                      | List parts                     | 🔴     |
+| [ListParts](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListParts.html)                             | GET    | `/{bucket}?uploadId={id}`                      | List parts                     | 🔴     |
 | [CompleteMultipartUpload](https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html) | POST   | `/{bucket}/{key}?uploadId={id}`                | Complete upload                | 🔴     |
 | [AbortMultipartUpload](https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html)       | DELETE | `/{bucket}/{key}?uploadId={id}`                | Abort upload                   | 🔴     |
 
@@ -139,14 +157,6 @@
 | S3 Action                                                                                 | Method | Path                                           | Description                                                                 | Status |
 | ----------------------------------------------------------------------------------------- | ------ | ---------------------------------------------- | --------------------------------------------------------------------------- | ------ |
 | [UploadPartCopy](https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPartCopy.html) | PUT    | `/{bucket}/{key}?partNumber={n}&uploadId={id}` | Upload part, extended with additional headers, to copy from existing bucket |        |
-|                                                                                           |        |                                                |                                                                             |        |
-### Presigned URLs
-
-**Priority:** 🟩 P3 – Low
-
-| S3 Action | Method | Path                                                                                                                | Description                                                       | Status |
-| --------- | ------ | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------ |
-|           | GET    | `https://{bucket}.s3.amazonaws.com/{key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...&X-Amz-Signature=...` | Temporary access to an object without creating system credentials |        |
 
 ## IAM REST API Endpoints
 
