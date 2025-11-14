@@ -22,7 +22,7 @@ import (
 )
 
 const DefaultMaxKeys = 250
-const MaxKeysLimit = 5
+const MaxKeysLimit = 1000
 const DefaultDelimiter = "/"
 
 type BaseListObjectsRequest struct {
