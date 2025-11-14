@@ -137,9 +137,14 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 		res, err = ListObjectsV2(r)
 	} else {
+		marker := q.Get("marker")
+		rBase.afterKey = marker
+
 		r := &ListObjectsRequest{
 			BaseListObjectsRequest: rBase,
+			Marker:                 marker,
 		}
+
 		res, err = ListObjects(r)
 	}
 
@@ -178,6 +183,10 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 		return nil, err
 	}
 
+	res.MaxKeys = r.MaxKeys
+	res.Marker = r.Marker
+	res.NextMarker = res.untilKey
+
 	return res, nil
 }
 
@@ -205,6 +214,7 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
 		return nil, err
 	}
 
+	res.MaxKeys = r.MaxKeys
 	res.StartAfter = r.StartAfter
 	res.ContinuationToken = r.ContinuationToken
 	res.NextContinuationToken = base64.StdEncoding.EncodeToString([]byte(res.untilKey))
