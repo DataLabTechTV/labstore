@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
-	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,78 +15,107 @@ import (
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
-	"github.com/DataLabTechTV/labstore/backend/internal/object"
 )
 
 const DefaultMaxKeys = 1000
 
 type ListObjectsRequest struct {
-	Bucket  string
-	Prefix  string
-	MaxKeys int
+	Bucket    string
+	Prefix    string
+	Delimiter string
+	MaxKeys   int
 	// TODO: ...
 }
 
 type ListBucketResult struct {
-	XMLName     xml.Name `xml:"ListBucketResult"`
-	Name        string
-	Prefix      string
-	Marker      string
-	MaxKeys     int
-	IsTruncated bool
-	Contents    []object.Object
+	XMLName        xml.Name `xml:"ListBucketResult"`
+	Name           string
+	Prefix         string
+	Marker         string
+	MaxKeys        int
+	IsTruncated    bool
+	Contents       []core.Object
+	CommonPrefixes []CommonPrefixes
+}
+
+type CommonPrefixes struct {
+	Prefix string
 }
 
 func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
-	slog.Debug("Processing ListObjects")
+	slog.Debug("Processing ListObjects", "request", r)
+
+	if !core.BucketExists(r.Bucket) {
+		return nil, core.ErrorNoSuchBucket()
+	}
+
+	if r.Delimiter != "/" {
+		return nil, errors.New("only '/' delimiters are supported by LabStore")
+	}
 
 	res := &ListBucketResult{
 		Name:        r.Bucket,
 		MaxKeys:     r.MaxKeys,
-		Contents:    []object.Object{},
+		Contents:    []core.Object{},
 		IsTruncated: false,
 	}
 
 	hash := md5.New()
 	keyCount := 0
-	basePath := filepath.Join(config.Env.StorageRoot, r.Bucket, r.Prefix)
+	bucketPath := filepath.Join(config.Env.StorageRoot, r.Bucket)
+	basePath := filepath.Join(bucketPath, r.Prefix)
 
-	err := filepath.WalkDir(basePath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+	if !helper.FileExists(basePath) {
+		return res, nil
+	}
+
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		return nil, errors.New("failed to list objects")
+	}
+
+	for _, e := range entries {
+		if e.IsDir() {
+			path := filepath.Join(basePath, e.Name())
+			key, err := filepath.Rel(bucketPath, path)
+			if err != nil {
+				return nil, errors.New("could not resolve key")
+			}
+			key += "/"
+			res.CommonPrefixes = append(res.CommonPrefixes, CommonPrefixes{Prefix: key})
+			continue
 		}
 
-		if d.IsDir() {
-			return nil
+		name := e.Name()
+		path := filepath.Join(basePath, name)
+		key, err := filepath.Rel(bucketPath, path)
+		if err != nil {
+			return nil, errors.New("could not resolve key")
 		}
 
-		file, err := os.Open(path)
+		info, err := e.Info()
 		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		info, err := file.Stat()
-		if err != nil {
-			return err
-		}
-
-		key, err := filepath.Rel(basePath, path)
-		if err != nil {
-			return err
+			return nil, fmt.Errorf("could not retrieve metadata: %s", key)
 		}
 
 		lastModified := core.Timestamp(info.ModTime())
 
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, fmt.Errorf("could not read file: %s", key)
+		}
+		defer file.Close()
+
 		if _, err := io.Copy(hash, file); err != nil {
-			return err
+			return nil, fmt.Errorf("could not compute hash: %s", key)
 		}
 		eTag := hex.EncodeToString(hash.Sum(nil))
 
 		size := info.Size()
 
-		obj := object.Object{
+		obj := core.Object{
 			Key:          key,
 			LastModified: lastModified,
 			ETag:         eTag,
@@ -97,15 +126,9 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 		res.Contents = append(res.Contents, obj)
 
 		if keyCount++; keyCount >= res.MaxKeys {
-			// res.IsTruncated = true
-			return nil
+			res.IsTruncated = true
+			return res, nil
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, errors.New("failed to list objects")
 	}
 
 	return res, nil
@@ -125,6 +148,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
 	prefix := q.Get("prefix")
+	delimiter := q.Get("delimiter")
 
 	var err error
 	var maxKeys int
@@ -143,9 +167,10 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		res, err = ListObjectsV2(bucket)
 	} else {
 		r := &ListObjectsRequest{
-			Bucket:  bucket,
-			Prefix:  prefix,
-			MaxKeys: maxKeys,
+			Bucket:    bucket,
+			Prefix:    prefix,
+			Delimiter: delimiter,
+			MaxKeys:   maxKeys,
 		}
 		res, err = ListObjects(r)
 	}
