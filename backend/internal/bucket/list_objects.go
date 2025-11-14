@@ -2,6 +2,7 @@ package bucket
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -19,7 +21,8 @@ import (
 	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
 )
 
-const DefaultMaxKeys = 1000
+const DefaultMaxKeys = 250
+const MaxKeysLimit = 5
 const DefaultDelimiter = "/"
 
 type BaseListObjectsRequest struct {
@@ -27,6 +30,7 @@ type BaseListObjectsRequest struct {
 	Prefix    string
 	Delimiter string
 	MaxKeys   int
+	afterKey  string
 }
 
 type ListObjectsRequest struct {
@@ -49,6 +53,7 @@ type BaseListBucketResult struct {
 	Contents       []core.Object
 	CommonPrefixes []CommonPrefixes
 	IsTruncated    bool
+	untilKey       string
 }
 
 type ListBucketResult struct {
@@ -98,6 +103,11 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if maxKeys > MaxKeysLimit {
+		slog.Warn("MaxKeys limited", "requested", maxKeys, "limited", MaxKeysLimit)
+		maxKeys = MaxKeysLimit
+	}
+
 	rBase := BaseListObjectsRequest{
 		Bucket:    bucket,
 		Prefix:    prefix,
@@ -106,11 +116,26 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if q.Get("list-type") == "2" {
+		continuationToken := q.Get("continuation-token")
+		startAfter := q.Get("start-after")
+		fetchOwner := q.Get("fetch-owner") == "true"
+
+		var token []byte
+		token, err = base64.StdEncoding.DecodeString(continuationToken)
+		if err != nil {
+			core.HandleError(w, core.ErrorInternalError("Invalid continuation token"))
+			return
+		}
+		rBase.afterKey = string(token)
+
 		r := &ListObjectsRequestV2{
 			BaseListObjectsRequest: rBase,
+			ContinuationToken:      continuationToken,
+			StartAfter:             startAfter,
+			FetchOwner:             fetchOwner,
 		}
-		res, err = ListObjectsV2(r)
 
+		res, err = ListObjectsV2(r)
 	} else {
 		r := &ListObjectsRequest{
 			BaseListObjectsRequest: rBase,
@@ -148,9 +173,7 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 		},
 	}
 
-	bucketPath := filepath.Join(config.Env.StorageRoot, r.Bucket)
-
-	err := res.list(bucketPath, r.Prefix, r.Delimiter)
+	err := res.list(&r.BaseListObjectsRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -177,25 +200,30 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
 		},
 	}
 
-	bucketPath := filepath.Join(config.Env.StorageRoot, r.Bucket)
-
-	err := res.list(bucketPath, r.Prefix, r.Delimiter)
+	err := res.list(&r.BaseListObjectsRequest)
 	if err != nil {
 		return nil, err
 	}
+
+	res.StartAfter = r.StartAfter
+	res.ContinuationToken = r.ContinuationToken
+	res.NextContinuationToken = base64.StdEncoding.EncodeToString([]byte(res.untilKey))
+	res.KeyCount = len(res.Contents)
 
 	return res, nil
 }
 
 // Lists objects as Contents, and directories as CommonPrefixes, for a given fs path
-func (res *BaseListBucketResult) list(bucketPath, prefix, delimiter string) error {
+func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
+	bucketPath := filepath.Join(config.Env.StorageRoot, r.Bucket)
+
 	var paths []string
 	var basePath string
 
-	if strings.HasSuffix(prefix, delimiter) {
+	if strings.HasSuffix(r.Prefix, r.Delimiter) {
 		// full prefix
 		var entries []os.DirEntry
-		basePath = filepath.Join(bucketPath, prefix)
+		basePath = filepath.Join(bucketPath, r.Prefix)
 		entries, err := os.ReadDir(basePath)
 
 		if err != nil && !os.IsNotExist(err) {
@@ -205,10 +233,13 @@ func (res *BaseListBucketResult) list(bucketPath, prefix, delimiter string) erro
 		for _, e := range entries {
 			paths = append(paths, filepath.Join(basePath, e.Name()))
 		}
+
+		slices.Sort(paths)
 	} else {
 		// partial prefix
 		basePath = bucketPath
-		filter := fmt.Sprintf("%s/%s*", bucketPath, prefix)
+		filter := fmt.Sprintf("%s/%s*", bucketPath, r.Prefix)
+
 		var err error
 		paths, err = filepath.Glob(filter)
 		if err != nil {
@@ -230,8 +261,13 @@ func (res *BaseListBucketResult) list(bucketPath, prefix, delimiter string) erro
 			return errors.New("could not resolve key")
 		}
 
+		if r.afterKey > key {
+			continue
+		}
+
 		if info.IsDir() {
-			key += delimiter
+			// !FIXME: MaxKeys should affect CommonPrefixes as well
+			key += r.Delimiter
 			res.CommonPrefixes = append(res.CommonPrefixes, CommonPrefixes{Prefix: key})
 			continue
 		}
@@ -261,7 +297,8 @@ func (res *BaseListBucketResult) list(bucketPath, prefix, delimiter string) erro
 
 		res.Contents = append(res.Contents, obj)
 
-		if keyCount++; keyCount >= res.MaxKeys {
+		if keyCount++; keyCount > res.MaxKeys {
+			res.untilKey = key
 			res.IsTruncated = true
 			return nil
 		}
