@@ -12,21 +12,33 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/config"
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
-	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 	"github.com/DataLabTechTV/labstore/backend/internal/middleware"
 )
 
 const DefaultMaxKeys = 1000
+const DefaultDelimiter = "/"
 
-type ListObjectsRequest struct {
+type BaseListObjectsRequest struct {
 	Bucket    string
 	Prefix    string
 	Delimiter string
 	MaxKeys   int
-	// TODO: ...
+}
+
+type ListObjectsRequest struct {
+	BaseListObjectsRequest
+	Marker string
+}
+
+type ListObjectsRequestV2 struct {
+	BaseListObjectsRequest
+	ContinuationToken string
+	StartAfter        string
+	FetchOwner        bool
 }
 
 type BaseListBucketResult struct {
@@ -40,17 +52,17 @@ type BaseListBucketResult struct {
 }
 
 type ListBucketResult struct {
+	BaseListBucketResult
 	Marker     string
 	NextMarker string
-	BaseListBucketResult
 }
 
 type ListBucketResultV2 struct {
+	BaseListBucketResult
 	KeyCount              int
 	ContinuationToken     string
 	NextContinuationToken string
 	StartAfter            string
-	BaseListBucketResult
 }
 
 type CommonPrefixes struct {
@@ -59,17 +71,23 @@ type CommonPrefixes struct {
 
 // ListObjectsHandler: GET /:bucket
 func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
+	var res any
+	var err error
+	var delimiter string
+	var maxKeys int
+
 	bucket := r.PathValue("bucket")
 	requestID := middleware.NewRequestID()
 
 	q := r.URL.Query()
 
 	prefix := q.Get("prefix")
-	delimiter := q.Get("delimiter")
 
-	var err error
-	var maxKeys int
-	var res *ListBucketResult
+	if d := q.Get("delimiter"); d == "" {
+		delimiter = DefaultDelimiter
+	} else {
+		delimiter = d
+	}
 
 	if mk := q.Get("maxKeys"); mk == "" {
 		maxKeys = DefaultMaxKeys
@@ -80,14 +98,22 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	rBase := BaseListObjectsRequest{
+		Bucket:    bucket,
+		Prefix:    prefix,
+		Delimiter: delimiter,
+		MaxKeys:   maxKeys,
+	}
+
 	if q.Get("list-type") == "2" {
-		res, err = ListObjectsV2(bucket)
+		r := &ListObjectsRequestV2{
+			BaseListObjectsRequest: rBase,
+		}
+		res, err = ListObjectsV2(r)
+
 	} else {
 		r := &ListObjectsRequest{
-			Bucket:    bucket,
-			Prefix:    prefix,
-			Delimiter: delimiter,
-			MaxKeys:   maxKeys,
+			BaseListObjectsRequest: rBase,
 		}
 		res, err = ListObjects(r)
 	}
@@ -123,13 +149,8 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 	}
 
 	bucketPath := filepath.Join(config.Env.StorageRoot, r.Bucket)
-	basePath := filepath.Join(bucketPath, r.Prefix)
 
-	if !helper.FileExists(basePath) {
-		return res, nil
-	}
-
-	err := res.list(bucketPath, basePath)
+	err := res.list(bucketPath, r.Prefix, r.Delimiter)
 	if err != nil {
 		return nil, err
 	}
@@ -137,44 +158,82 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 	return res, nil
 }
 
-func ListObjectsV2(bucket string) (*ListBucketResult, error) {
-	// TODO: implement
-	slog.Debug("Processing ListObjectsV2")
-	return &ListBucketResult{}, nil
+func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
+	slog.Debug("Processing ListObjectsV2", "request", r)
+
+	if !core.BucketExists(r.Bucket) {
+		return nil, core.ErrorNoSuchBucket()
+	}
+
+	if r.Delimiter != "/" {
+		return nil, errors.New("only '/' delimiters are supported by LabStore")
+	}
+
+	res := &ListBucketResultV2{
+		BaseListBucketResult: BaseListBucketResult{
+			Name:        r.Bucket,
+			MaxKeys:     r.MaxKeys,
+			IsTruncated: false,
+		},
+	}
+
+	bucketPath := filepath.Join(config.Env.StorageRoot, r.Bucket)
+
+	err := res.list(bucketPath, r.Prefix, r.Delimiter)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // Lists objects as Contents, and directories as CommonPrefixes, for a given fs path
-func (res *BaseListBucketResult) list(bucketPath, basePath string) error {
-	entries, err := os.ReadDir(basePath)
-	if err != nil {
-		return errors.New("failed to list objects")
+func (res *BaseListBucketResult) list(bucketPath, prefix, delimiter string) error {
+	var paths []string
+	var basePath string
+
+	if strings.HasSuffix(prefix, delimiter) {
+		// full prefix
+		var entries []os.DirEntry
+		basePath = filepath.Join(bucketPath, prefix)
+		entries, err := os.ReadDir(basePath)
+
+		if err != nil && !os.IsNotExist(err) {
+			return errors.New("could not read files")
+		}
+
+		for _, e := range entries {
+			paths = append(paths, filepath.Join(basePath, e.Name()))
+		}
+	} else {
+		// partial prefix
+		basePath = bucketPath
+		filter := fmt.Sprintf("%s/%s*", bucketPath, prefix)
+		var err error
+		paths, err = filepath.Glob(filter)
+		if err != nil {
+			return errors.New("could not filter files")
+		}
 	}
 
 	hash := md5.New()
 	keyCount := 0
 
-	for _, e := range entries {
-		if e.IsDir() {
-			path := filepath.Join(basePath, e.Name())
-			key, err := filepath.Rel(bucketPath, path)
-			if err != nil {
-				return errors.New("could not resolve key")
-			}
-			key += "/"
-			res.CommonPrefixes = append(res.CommonPrefixes, CommonPrefixes{Prefix: key})
-			continue
+	for _, path := range paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("could not read metadata")
 		}
 
-		name := e.Name()
-		path := filepath.Join(basePath, name)
 		key, err := filepath.Rel(bucketPath, path)
 		if err != nil {
 			return errors.New("could not resolve key")
 		}
 
-		info, err := e.Info()
-		if err != nil {
-			return fmt.Errorf("could not retrieve metadata: %s", key)
+		if info.IsDir() {
+			key += delimiter
+			res.CommonPrefixes = append(res.CommonPrefixes, CommonPrefixes{Prefix: key})
+			continue
 		}
 
 		lastModified := core.Timestamp(info.ModTime())
