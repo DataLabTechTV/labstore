@@ -6,12 +6,24 @@ import (
 	"strconv"
 
 	"github.com/DataLabTechTV/labstore/backend/internal/core"
+	"github.com/DataLabTechTV/labstore/backend/internal/helper"
 )
 
 // HeadObjectHandler: Head /:bucket/:key
 func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 	key := r.PathValue("key")
+
+	if !core.BucketExists(bucket) {
+		core.HandleError(w, core.ErrorNoSuchBucket())
+		return
+	}
+
+	path := core.BucketKeyPath(bucket, key)
+	if helper.IsDir(path) {
+		core.HandleError(w, ErrorNoSuchKey())
+		return
+	}
 
 	res, err := GetObject(bucket, key)
 	if err != nil {
@@ -30,8 +42,8 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	res.Content.Seek(0, io.SeekStart)
 
 	w.Header().Set("Content-Type", http.DetectContentType(buf[:n]))
-	w.Header().Set("Last-Modified", res.DateModified.UTC().Format(http.TimeFormat))
 	w.Header().Set("Content-Length", strconv.Itoa(res.ObjectSize))
+	w.Header().Set("Last-Modified", res.DateModified.UTC().Format(http.TimeFormat))
 
 	w.WriteHeader(http.StatusOK)
 }
