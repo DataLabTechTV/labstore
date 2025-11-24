@@ -27,7 +27,7 @@ func GetObject(bucket, key string) (*GetObjectResult, error) {
 
 	info, err := file.Stat()
 	if err != nil {
-		return nil, core.ErrorInternalError("Couldn't compute file size")
+		return nil, core.ErrInternalError("Couldn't compute file size")
 	}
 
 	res := &GetObjectResult{

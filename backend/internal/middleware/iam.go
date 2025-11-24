@@ -10,21 +10,6 @@ import (
 
 const iamActionCtx ContextKey = "iamAction"
 
-func WithIAM(action iam.Action, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), iamActionCtx, action)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func GetRequestAction(r *http.Request) string {
-	if action := r.Context().Value(iamActionCtx); action != nil {
-		return action.(string)
-	}
-
-	return ""
-}
-
 func IAMMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		action := GetRequestAction(r)
@@ -43,10 +28,33 @@ func IAMMiddleware(next http.Handler) http.Handler {
 
 		if !iam.CheckPolicy(accessKey, bucket, action) {
 			// !FIXME: AWS compliant error handling?
-			core.HandleError(w, core.ErrorAccessDenied())
+			core.HandleError(w, ErrAccessDenied())
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func WithIAM(action iam.Action, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), iamActionCtx, action)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func GetRequestAction(r *http.Request) string {
+	if action := r.Context().Value(iamActionCtx); action != nil {
+		return action.(string)
+	}
+
+	return ""
+}
+
+func ErrAccessDenied() *core.S3Error {
+	return &core.S3Error{
+		Code:       "AccessDenied",
+		Message:    "AccessDenied",
+		StatusCode: 403,
+	}
 }

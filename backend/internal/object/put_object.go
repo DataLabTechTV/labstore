@@ -14,7 +14,7 @@ import (
 func PutObject(bucket string, key string, data []byte) error {
 	bucketPath := filepath.Join(config.Env.StorageRoot, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
-		return core.ErrorNoSuchBucket()
+		return core.ErrNoSuchBucket()
 	}
 
 	objPath := filepath.Join(bucketPath, key)
@@ -23,13 +23,13 @@ func PutObject(bucket string, key string, data []byte) error {
 
 	f, err := os.Create(objPath)
 	if err != nil {
-		return core.ErrorInternalError("Failed to create object")
+		return core.ErrInternalError("Failed to create object")
 	}
 	defer f.Close()
 
 	_, err = io.Copy(f, bytes.NewReader(data))
 	if err != nil {
-		return core.ErrorInternalError("Failed to write object")
+		return core.ErrInternalError("Failed to write object")
 	}
 
 	return nil
