@@ -1,0 +1,4 @@
+FROM dxflrs/garage:v2.1.0
+
+COPY infra/garage.toml /etc/garage.toml
+
