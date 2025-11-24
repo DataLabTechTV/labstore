@@ -1,5 +1,5 @@
 services:
-  labstore-web:
+  web:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
@@ -16,7 +16,7 @@ services:
       - labstore
       - minio
 
-  labstore-backend:
+  backend:
     build:
       context: ..
       dockerfile: infra/Dockerfile.backend
@@ -34,14 +34,14 @@ services:
       - labstore
     command: ["serve", "--debug"]
 
-  minio:
+  bench-minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_ROOT_USER=${BENCHMARK_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${BENCHMARK_SECRET_KEY}
     volumes:
       - minio:/data
     networks:
@@ -53,19 +53,19 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
 
-  garage:
-    image: dxflrs/garage:v2.1.0
-    container_name: garage
+  bench-garage:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.garage
     volumes:
-      - ./garage.toml:/etc/garage.toml
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
-    restart: unless-stopped
     ports:
        - 3900:3900
        - 3901:3901
        - 3902:3903
        - 3903:3903
+    restart: unless-stopped
 
 volumes:
   minio:

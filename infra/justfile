@@ -11,4 +11,4 @@ create:
     cd .. && docker compose -p labstore -f infra/compose.yml up --build -d
 
 destroy:
-    cd .. && docker compose -p labstore -f infra/compose.yml down
+    cd .. && docker compose -p labstore -f infra/compose.yml down -v

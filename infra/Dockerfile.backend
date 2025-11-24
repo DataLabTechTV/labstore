@@ -16,15 +16,21 @@ COPY backend .
 
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o bin/labstore-server ./cmd/labstore-server
 
-FROM alpine:3.22
-
 # =================
 # LabStore backend
 # =================
 
+FROM alpine:3.22
+
 COPY --from=builder /labstore/backend/bin/labstore-server /usr/local/bin/labstore-server
 
 RUN addgroup -S labstore && adduser -S labstore -G labstore
+
+RUN mkdir /data
+RUN chown -R labstore:labstore /data
+
+VOLUME /data
+
 USER labstore
 
 ENTRYPOINT ["labstore-server"]
