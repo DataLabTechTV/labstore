@@ -14,7 +14,7 @@ func DeleteBucket(bucket string) error {
 
 	err := os.RemoveAll(path)
 	if err != nil {
-		return core.ErrorNoSuchBucket()
+		return core.ErrNoSuchBucket()
 	}
 
 	return nil
