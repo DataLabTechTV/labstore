@@ -53,9 +53,25 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
 
+  garage:
+    image: dxflrs/garage:v2.1.0
+    container_name: garage
+    volumes:
+      - ./garage.toml:/etc/garage.toml
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    restart: unless-stopped
+    ports:
+       - 3900:3900
+       - 3901:3901
+       - 3902:3903
+       - 3903:3903
+
 volumes:
   minio:
   labstore:
+  garage_meta:
+  garage_data:
 
 networks:
   minio:
