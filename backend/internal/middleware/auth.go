@@ -10,10 +10,12 @@ import (
 
 const accessKeyCtx ContextKey = "accessKey"
 
-var ErrorInvalidAccessKey = &core.S3Error{
-	Code:       "InvalidAccessKeyId",
-	Message:    "Signature or access key invalid",
-	StatusCode: http.StatusForbidden,
+func ErrSignatureDoesNotMatch() *core.S3Error {
+	return &core.S3Error{
+		Code:       "SignatureDoesNotMatch",
+		Message:    "The request signature we calculate does not match the signature you provided.",
+		StatusCode: http.StatusForbidden,
+	}
 }
 
 func GetRequestAccessKey(r *http.Request) string {
@@ -29,7 +31,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		res, err := auth.VerifySigV4(r)
 		if err != nil {
-			core.HandleError(w, core.ErrorSignatureDoesNotMatch())
+			core.HandleError(w, ErrSignatureDoesNotMatch())
 			return
 		}
 

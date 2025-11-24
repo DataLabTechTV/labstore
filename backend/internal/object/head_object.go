@@ -15,7 +15,7 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 
 	if !core.BucketExists(bucket) {
-		core.HandleError(w, core.ErrorNoSuchBucket())
+		core.HandleError(w, core.ErrNoSuchBucket())
 		return
 	}
 
