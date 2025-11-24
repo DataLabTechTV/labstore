@@ -115,6 +115,16 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		MaxKeys:   maxKeys,
 	}
 
+	if !core.BucketExists(rBase.Bucket) {
+		core.HandleError(w, core.ErrNoSuchBucket(rBase.Bucket))
+		return
+	}
+
+	if rBase.Delimiter != "/" {
+		core.HandleError(w, errors.New("only '/' delimiters are supported by LabStore"))
+		return
+	}
+
 	if q.Get("list-type") == "2" {
 		continuationToken := q.Get("continuation-token")
 		startAfter := q.Get("start-after")
@@ -162,14 +172,6 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 	slog.Debug("list objects", "request", r)
 
-	if !core.BucketExists(r.Bucket) {
-		return nil, core.ErrNoSuchBucket()
-	}
-
-	if r.Delimiter != "/" {
-		return nil, errors.New("only '/' delimiters are supported by LabStore")
-	}
-
 	res := &ListBucketResult{
 		BaseListBucketResult: BaseListBucketResult{
 			Name:        r.Bucket,
@@ -192,14 +194,6 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 
 func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
 	slog.Debug("list objects v2", "request", r)
-
-	if !core.BucketExists(r.Bucket) {
-		return nil, core.ErrNoSuchBucket()
-	}
-
-	if r.Delimiter != "/" {
-		return nil, errors.New("only '/' delimiters are supported by LabStore")
-	}
 
 	res := &ListBucketResultV2{
 		BaseListBucketResult: BaseListBucketResult{
