@@ -40,7 +40,7 @@ type RestoreStatus struct {
 
 type Timestamp time.Time
 
-func (t Timestamp) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (t Timestamp) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	formatted := time.Time(t).Format(ISO8601)
-	return e.EncodeElement(formatted, start)
+	return enc.EncodeElement(formatted, start)
 }

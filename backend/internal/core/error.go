@@ -10,13 +10,15 @@ import (
 
 type S3Error struct {
 	XMLName    xml.Name `xml:"Error"`
-	Key        string
 	Code       string
 	Message    string
+	Resource   string
+	BucketName string
+	Key        string
 	VersionId  string
-	RequestId  string `xml:"-"`
-	HostId     string `xml:"-"`
-	StatusCode int    `xml:"-"`
+	RequestId  string
+	HostId     string
+	StatusCode int `xml:"-"`
 }
 
 func (e *S3Error) Error() string {
@@ -34,6 +36,11 @@ func (e *S3Error) WithRequestID(requestID string) *S3Error {
 
 func (e *S3Error) WithHostID(hostID string) *S3Error {
 	e.HostId = hostID
+	return e
+}
+
+func (e *S3Error) WithResource(resource string) *S3Error {
+	e.Resource = resource
 	return e
 }
 
@@ -57,10 +64,11 @@ func ErrInternalError(message string) *S3Error {
 	}
 }
 
-func ErrNoSuchBucket() *S3Error {
+func ErrNoSuchBucket(bucket string) *S3Error {
 	return &S3Error{
-		Code:       "NoSuckBucket",
+		Code:       "NoSuchBucket",
 		Message:    "Bucket does not exist",
+		BucketName: bucket,
 		StatusCode: http.StatusNotFound,
 	}
 }
