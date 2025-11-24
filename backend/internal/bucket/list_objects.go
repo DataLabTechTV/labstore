@@ -123,7 +123,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		var token []byte
 		token, err = base64.StdEncoding.DecodeString(continuationToken)
 		if err != nil {
-			core.HandleError(w, core.ErrorInternalError("Invalid continuation token"))
+			core.HandleError(w, core.ErrInternalError("Invalid continuation token"))
 			return
 		}
 		rBase.afterKey = string(token)
@@ -163,7 +163,7 @@ func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
 	slog.Debug("list objects", "request", r)
 
 	if !core.BucketExists(r.Bucket) {
-		return nil, core.ErrorNoSuchBucket()
+		return nil, core.ErrNoSuchBucket()
 	}
 
 	if r.Delimiter != "/" {
@@ -194,7 +194,7 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
 	slog.Debug("list objects v2", "request", r)
 
 	if !core.BucketExists(r.Bucket) {
-		return nil, core.ErrorNoSuchBucket()
+		return nil, core.ErrNoSuchBucket()
 	}
 
 	if r.Delimiter != "/" {

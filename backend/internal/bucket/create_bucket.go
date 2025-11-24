@@ -10,7 +10,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 )
 
-func ErrorBucketAlreadyExists() *core.S3Error {
+func ErrBucketAlreadyExists() *core.S3Error {
 	return &core.S3Error{
 		Code:       "BucketAlreadyExists",
 		Message:    "Could not create bucket, because it already exists",
@@ -22,7 +22,7 @@ func CreateBucket(bucket string) error {
 	path := filepath.Join(config.Env.StorageRoot, bucket)
 
 	if _, err := os.Stat(path); err == nil {
-		return ErrorBucketAlreadyExists()
+		return ErrBucketAlreadyExists()
 	}
 
 	if err := os.MkdirAll(path, 0755); err != nil {
