@@ -7,8 +7,8 @@ set dotenv-path := "../.env"
 default:
     just -l
 
-create:
+up:
     cd .. && docker compose -p labstore -f infra/compose.yml up --build -d
 
-destroy:
+down:
     cd .. && docker compose -p labstore -f infra/compose.yml down -v
