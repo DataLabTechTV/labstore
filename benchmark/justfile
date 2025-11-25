@@ -15,6 +15,7 @@ warp_bucket := "warp-benchmark-bucket"
 labstore_host := env("BENCHMARK_LABSTORE_HOST")
 minio_host := env("BENCHMARK_MINIO_HOST")
 garage_host := env("BENCHMARK_GARAGE_HOST")
+seaweedfs_host := env("BENCHMARK_SEAWEEDFS_HOST")
 
 store_access_key := env("BENCHMARK_ACCESS_KEY")
 store_secret_key := env("BENCHMARK_SECRET_KEY")
@@ -121,6 +122,7 @@ garage host:
 all-stores:
     just store {{labstore_host}}
     just store {{minio_host}}
+    just store {{seaweedfs_host}}
 
     just garage-init
     just garage {{garage_host}}
