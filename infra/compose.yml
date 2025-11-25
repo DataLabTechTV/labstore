@@ -60,8 +60,7 @@ services:
       context: ..
       dockerfile: infra/Dockerfile.garage
     volumes:
-      - garage_meta:/var/lib/garage/meta
-      - garage_data:/var/lib/garage/data
+      - garage:/var/lib/garage
     ports:
        - 3900:3900
        - 3901:3901
@@ -87,8 +86,7 @@ services:
 volumes:
   minio:
   labstore:
-  garage_meta:
-  garage_data:
+  garage:
   seaweedfs:
 
 networks:
