@@ -10,6 +10,9 @@ iperf3_host := env("BENCHMARK_IPERF3_HOST")
 warp_dir := "warp/"
 warp_bucket := "warp-benchmark-bucket"
 
+analysis_dir := "analysis/"
+analysis_db := join(analysis_dir, "output/analysis.duckdb")
+
 labstore_host := env("BENCHMARK_LABSTORE_HOST")
 minio_host := env("BENCHMARK_MINIO_HOST")
 garage_host := env("BENCHMARK_GARAGE_HOST")
@@ -129,8 +132,13 @@ bandwidth:
     mkdir -p {{join(iperf3_dir, "output")}}
     iperf3 -c {{iperf3_host}} -t 30 -J > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json
 
+analysis:
+    mkdir -p {{join(analysis_dir, "output")}}
+    cat {{join(analysis_dir, "load.sql")}} | duckdb {{analysis_db}}
+
 all: bandwidth stores
 
 clean:
     rm -rf {{join(warp_dir, "output")}}
     rm -rf {{join(iperf3_dir, "output")}}
+    rm -rf {{join(analysis_dir, "output")}}
