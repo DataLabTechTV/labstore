@@ -4,10 +4,8 @@ set dotenv-load
 set dotenv-required
 set dotenv-path := "../.env"
 
-ls_host := env("LS_HOST")
-ls_port := env("LS_PORT")
-ls_admin_access_key := env("LS_ADMIN_ACCESS_KEY")
-ls_admin_secret_key := env("LS_ADMIN_SECRET_KEY")
+iperf3_dir := "iperf3/"
+iperf3_host := env("BENCHMARK_IPERF3_HOST")
 
 warp_dir := "warp/"
 warp_bucket := "warp-benchmark-bucket"
@@ -119,7 +117,7 @@ garage host:
     cd $OUTPUT_DIR
     warp run ../../config.yml
 
-all-stores:
+stores:
     just store {{labstore_host}}
     just store {{minio_host}}
     just store {{seaweedfs_host}}
@@ -127,7 +125,12 @@ all-stores:
     just garage-init
     just garage {{garage_host}}
 
-all: all-stores
+bandwidth:
+    mkdir -p {{join(iperf3_dir, "output")}}
+    iperf3 -c {{iperf3_host}} -t 30 -J > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json
+
+all: bandwidth stores
 
 clean:
     rm -rf {{join(warp_dir, "output")}}
+    rm -rf {{join(iperf3_dir, "output")}}
