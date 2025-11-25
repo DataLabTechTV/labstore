@@ -15,6 +15,7 @@ services:
     networks:
       - labstore
       - minio
+    restart: unless-stopped
 
   backend:
     build:
@@ -33,6 +34,7 @@ services:
     networks:
       - labstore
     command: ["serve", "--debug"]
+    restart: unless-stopped
 
   bench-minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
