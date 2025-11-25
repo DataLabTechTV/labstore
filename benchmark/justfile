@@ -1,0 +1,131 @@
+set shell := ["bash", "-uc"]
+
+set dotenv-load
+set dotenv-required
+set dotenv-path := "../.env"
+
+ls_host := env("LS_HOST")
+ls_port := env("LS_PORT")
+ls_admin_access_key := env("LS_ADMIN_ACCESS_KEY")
+ls_admin_secret_key := env("LS_ADMIN_SECRET_KEY")
+
+warp_dir := "warp/"
+warp_bucket := "warp-benchmark-bucket"
+
+labstore_host := env("BENCHMARK_LABSTORE_HOST")
+minio_host := env("BENCHMARK_MINIO_HOST")
+garage_host := env("BENCHMARK_GARAGE_HOST")
+
+store_access_key := env("BENCHMARK_ACCESS_KEY")
+store_secret_key := env("BENCHMARK_SECRET_KEY")
+store_region := env("BENCHMARK_REGION")
+store_tls := env("BENCHMARK_TLS")
+
+default:
+    just -l
+
+store host:
+    #!/bin/bash
+    echo "Benchmarking store at {{host}}..."
+
+    export MC_HOST_bench="http://{{store_access_key}}:{{store_secret_key}}@{{host}}"
+    mc mb -p bench/{{warp_bucket}}
+
+    export WARP_HOST="{{host}}"
+    export WARP_ACCESS_KEY="{{store_access_key}}"
+    export WARP_SECRET_KEY="{{store_secret_key}}"
+    export WARP_REGION="{{store_region}}"
+    export WARP_TLS="{{store_tls}}"
+
+    OUTPUT_DIR=output/$(echo "{{host}}" | sed 's/:/_/g')
+    echo "Output dir set to ${OUTPUT_DIR}."
+
+    cd {{warp_dir}}
+    mkdir -p $OUTPUT_DIR
+    cd $OUTPUT_DIR
+    warp run ../../config.yml
+
+garage-init:
+    #!/bin/bash
+    garage_cmd="docker exec labstore-bench-garage-1 /garage"
+
+    echo "Waiting for Garage to be ready..." >&2
+    while ! $garage_cmd status >/dev/null 2>&1; do
+        sleep 1
+    done
+
+    if $garage_cmd status 2>/dev/null | grep -q "NO ROLE ASSIGNED"; then
+        echo "Applying initial layout..." >&2
+        node_id=$($garage_cmd status 2>/dev/null | tail -n1 | awk '{print $1}')
+        $garage_cmd layout assign $node_id --capacity 5G -z {{store_region}} >/dev/null 2>&1
+        $garage_cmd layout apply --version 1 >/dev/null 2>&1
+    else
+        echo "Layout already applied; skipping." >&2
+    fi
+
+    admin_key_list=$($garage_cmd key list 2>/dev/null \
+        | grep -w "{{store_access_key}}" \
+        | tail -n+1 | awk '{print $1}')
+
+    if [ -n "$admin_key_list" ]; then
+        echo "Deleting existing admin access keys..." >&2
+        for admin_key in $admin_key_list; do
+            $garage_cmd key delete --yes $admin_key >/dev/null 2>&1
+        done
+    else
+        echo "No admin keys to delete; skipping." >&2
+    fi
+
+    echo "Creating admin access key..." >&2
+    create_key_output=$($garage_cmd key create admin 2>/dev/null)
+    store_access_key=$(printf "%s\n" "$create_key_output" | grep "Key ID:" | awk '{print $3}')
+    store_secret_key=$(printf "%s\n" "$create_key_output" | grep "Secret key:" | awk '{print $3}')
+
+    if $garage_cmd bucket list 2>/dev/null | grep -q -w "{{warp_bucket}}"; then
+        echo "Warp bucket exists; skipping." >&2
+    else
+        echo "Creating warp bucket..." >&2
+        $garage_cmd bucket create "{{warp_bucket}}" >/dev/null 2>&1
+    fi
+
+    echo "Granting read/write permissions to admin..." >&2
+    $garage_cmd bucket allow --read --write --owner "{{warp_bucket}}" --key "$store_access_key" >/dev/null 2>&1
+
+    printf "%s %s\n" "$store_access_key" "$store_secret_key"
+
+garage host:
+    #!/bin/bash
+    echo "Benchmarking garage at {{host}}..."
+
+    credentials=$(just garage-init 2>/dev/null)
+    access_key=$(echo $credentials | cut -d' ' -f1)
+    secret_key=$(echo $credentials | cut -d' ' -f2)
+
+    export MC_HOST_bench="http://${access_key}:${secret_key}@{{host}}"
+    mc mb -p bench/{{warp_bucket}}
+
+    export WARP_HOST="{{host}}"
+    export WARP_ACCESS_KEY="$access_key"
+    export WARP_SECRET_KEY="$secret_key"
+    export WARP_REGION="{{store_region}}"
+    export WARP_TLS="{{store_tls}}"
+
+    OUTPUT_DIR=output/$(echo "{{host}}" | sed 's/:/_/g')
+    echo "Output dir set to ${OUTPUT_DIR}."
+
+    cd {{warp_dir}}
+    mkdir -p $OUTPUT_DIR
+    cd $OUTPUT_DIR
+    warp run ../../config.yml
+
+all-stores:
+    just store {{labstore_host}}
+    just store {{minio_host}}
+
+    just garage-init
+    just garage {{garage_host}}
+
+all: all-stores
+
+clean:
+    rm -rf {{join(warp_dir, "output")}}

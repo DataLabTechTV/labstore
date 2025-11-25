@@ -11,7 +11,7 @@ rpc_public_addr = "localhost:3901"
 rpc_secret = "6864f83ced8f82b688eabfd49ce67687892776908e3f8d47145227e869f9cbee"
 
 [s3_api]
-s3_region = "garage"
+s3_region = "eu-west-1"
 api_bind_addr = "[::]:3900"
 root_domain = ".s3.domain.com"
 
