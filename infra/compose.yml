@@ -97,6 +97,14 @@ services:
       - RUST_BACKTRACE=1
     restart: unless-stopped
 
+  iperf3-server:
+    image: networkstatic/iperf3
+    ports:
+      - 5201:5201/tcp
+      - 5201:5201/udp
+    command: ["-s"]
+    restart: unless-stopped
+
 volumes:
   minio:
   labstore:
