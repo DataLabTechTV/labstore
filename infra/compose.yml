@@ -83,11 +83,26 @@ services:
     command: server -dir=/data -s3 -s3.port=8333
     restart: unless-stopped
 
+  bench-rustfs:
+    image: rustfs/rustfs:1.0.0-alpha.69
+    volumes:
+      - rustfs:/data
+    ports:
+      - 10000:9000
+      - 10001:9001
+    environment:
+      - RUSTFS_ACCESS_KEY=${BENCHMARK_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${BENCHMARK_SECRET_KEY}
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUST_BACKTRACE=1
+    restart: unless-stopped
+
 volumes:
   minio:
   labstore:
   garage:
   seaweedfs:
+  rustfs:
 
 networks:
   minio:
