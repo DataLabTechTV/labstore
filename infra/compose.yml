@@ -69,11 +69,27 @@ services:
        - 3903:3903
     restart: unless-stopped
 
+  bench-seaweedfs:
+    image: chrislusf/seaweedfs:4.00
+    volumes:
+      - seaweedfs:/data
+    ports:
+      - 9333:9333
+      - 8080:8080
+      - 8888:8888
+      - 8333:8333
+    environment:
+      - AWS_ACCESS_KEY_ID=${BENCHMARK_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${BENCHMARK_SECRET_KEY}
+    command: server -dir=/data -s3 -s3.port=8333
+    restart: unless-stopped
+
 volumes:
   minio:
   labstore:
   garage_meta:
   garage_data:
+  seaweedfs:
 
 networks:
   minio:
