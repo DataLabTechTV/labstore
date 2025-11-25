@@ -11,108 +11,8 @@ ls_port := env("LS_PORT")
 ls_admin_access_key := env("LS_ADMIN_ACCESS_KEY")
 ls_admin_secret_key := env("LS_ADMIN_SECRET_KEY")
 
-benchmark_dir := "benchmarks/warp/"
-benchmark_bucket := "warp-benchmark-bucket"
-
-benchmark_labstore_host := env("BENCHMARK_LABSTORE_HOST")
-benchmark_minio_host := env("BENCHMARK_MINIO_HOST")
-benchmark_garage_host := env("BENCHMARK_GARAGE_HOST")
-
-benchmark_access_key := env("BENCHMARK_ACCESS_KEY")
-benchmark_secret_key := env("BENCHMARK_SECRET_KEY")
-benchmark_region := env("BENCHMARK_REGION")
-benchmark_tls := env("BENCHMARK_TLS")
-
 default:
     just -l
-
-benchmark host:
-    #!/bin/bash
-    export MC_HOST_bench="http://{{benchmark_access_key}}:{{benchmark_secret_key}}@{{host}}"
-    mc mb -p bench/{{benchmark_bucket}}
-
-    export WARP_HOST="{{host}}"
-    export WARP_ACCESS_KEY="{{benchmark_access_key}}"
-    export WARP_SECRET_KEY="{{benchmark_secret_key}}"
-    export WARP_REGION="{{benchmark_region}}"
-    export WARP_TLS="{{benchmark_tls}}"
-
-    OUTPUT_DIR=output/$(echo "{{host}}" | sed 's/:/_/g')
-
-    cd {{benchmark_dir}}
-    mkdir -p $OUTPUT_DIR
-    cd $OUTPUT_DIR
-    warp run ../../config.yml
-
-benchmark-garage-init:
-    #!/bin/bash
-    garage_cmd="docker exec labstore-bench-garage-1 /garage"
-
-    echo "Waiting for Garage to be ready..." >/dev/stderr
-    while ! $garage_cmd status >/dev/null 2>&1; do
-        sleep 1
-    done
-
-    if $garage_cmd status 2>/dev/null | grep -q "NO ROLE ASSIGNED"; then
-        echo "Applying initial layout..." >/dev/stderr
-        node_id=$($garage_cmd status 2>/dev/null | tail -n1 | awk '{print $1}')
-        $garage_cmd layout assign $node_id --capacity 5G -z {{benchmark_region}} 2>/dev/null
-        $garage_cmd layout apply --version 1 2>/dev/null
-    else
-        echo "Layout already applied; skipping." >/dev/stderr
-    fi
-
-    admin_key_list=$($garage_cmd key list 2>/dev/null \
-        | grep -w "{{benchmark_access_key}}" \
-        | tail -n+2 | awk '{print $1}')
-
-    if [ -n "$admin_key_list" ]; then
-        echo "Deleting existing admin access keys..." >/dev/stderr
-        for admin_key in $admin_key_list; do
-            $garage_cmd key delete --yes $admin_key >/dev/null 2>&1
-        done
-    else
-        echo "No admin keys to delete; skipping." >/dev/stderr
-    fi
-
-    echo "Creating admin access key..." >/dev/stderr
-    create_key_output=$($garage_cmd key create admin 2>/dev/null)
-    benchmark_access_key=$(printf "%s\n" "$create_key_output" | grep "Key ID:" | awk '{print $3}')
-    benchmark_secret_key=$(printf "%s\n" "$create_key_output" | grep "Secret key:" | awk '{print $3}')
-
-    echo "Setting permissions to create bucket..." >/dev/stderr
-    $garage_cmd key allow --create-bucket "$benchmark_access_key" >/dev/null 2>&1
-
-    printf "%s %s\n" "$benchmark_access_key" "$benchmark_secret_key"
-
-benchmark-garage host:
-    #!/bin/bash
-    credentials=$(just benchmark-garage-init 2>/dev/null)
-    access_key=$(echo $credentials | cut -d' ' -f1)
-    secret_key=$(echo $credentials | cut -d' ' -f2)
-
-    export MC_HOST_bench="http://${access_key}:${secret_key}@{{host}}"
-    mc mb -p bench/{{benchmark_bucket}}
-
-    export WARP_HOST="{{host}}"
-    export WARP_ACCESS_KEY="$access_key"
-    export WARP_SECRET_KEY="$secret_key"
-    export WARP_REGION="{{benchmark_region}}"
-    export WARP_TLS="{{benchmark_tls}}"
-
-    OUTPUT_DIR=output/$(echo "{{host}}" | sed 's/:/_/g')
-
-    cd {{benchmark_dir}}
-    mkdir -p $OUTPUT_DIR
-    cd $OUTPUT_DIR
-    warp run ../../config.yml
-
-benchmark-all:
-    just benchmark {{benchmark_labstore_host}}
-    just benchmark {{benchmark_minio_host}}
-
-    just benchmark-garage-init
-    just benchmark {{benchmark_garage_host}}
 
 create-bucket bucket:
     #!/bin/bash
@@ -224,6 +124,3 @@ test-list-obj-s5cmd prefix: sandbox-bucket
 
     echo "==> Listing keys in {{sandbox_bucket}}"
     s5cmd --log trace --endpoint-url $endpoint_url ls s3://{{sandbox_bucket}}/{{prefix}}
-
-clean:
-    rm -rf {{join(benchmark_dir, "output")}}
