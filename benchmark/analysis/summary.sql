@@ -30,7 +30,25 @@ SELECT * FROM summary_stats WHERE op = 'GET';
 SELECT * FROM summary_stats WHERE op = 'PUT';
 SELECT * FROM summary_stats WHERE op = 'STAT';
 
-COPY (SELECT * FROM summary_stats WHERE op = 'DELETE') TO 'analysis/output/op_stats-delete.dat' (DELIMITER '\t');
-COPY (SELECT * FROM summary_stats WHERE op = 'GET') TO 'analysis/output/op_stats-get.dat' (DELIMITER '\t');
-COPY (SELECT * FROM summary_stats WHERE op = 'PUT') TO 'analysis/output/op_stats-put.dat' (DELIMITER '\t');
-COPY (SELECT * FROM summary_stats WHERE op = 'STAT') TO 'analysis/output/op_stats-stat.dat' (DELIMITER '\t');
+COPY (SELECT * FROM summary_stats WHERE op = 'DELETE') TO 'analysis/output/op_stats-delete.csv';
+COPY (SELECT * FROM summary_stats WHERE op = 'GET') TO 'analysis/output/op_stats-get.csv';
+COPY (SELECT * FROM summary_stats WHERE op = 'PUT') TO 'analysis/output/op_stats-put.csv';
+COPY (SELECT * FROM summary_stats WHERE op = 'STAT') TO 'analysis/output/op_stats-stat.csv';
+
+COPY (
+    SELECT op, LabStore, MinIO, Garage, SeaweedFS, RustFS
+    FROM (
+        PIVOT (
+            SELECT op, store, median_obj_per_sec
+            FROM summary_stats
+        )
+        ON store
+        USING max(median_obj_per_sec)
+        ORDER BY op
+    )
+) TO 'analysis/output/op_stats.dat' (
+    HEADER false,
+    DELIMITER '\t',
+    PREFIX '@ LabStore,MinIO,Garage,SeaweedFS,RustFS' || e'\n',
+    SUFFIX e'\n'
+);
