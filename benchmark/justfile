@@ -5,7 +5,20 @@ set dotenv-required
 set dotenv-path := "../.env"
 
 iperf3_dir := "iperf3/"
-iperf3_host := env("BENCHMARK_IPERF3_HOST")
+iperf3_port := env("BENCHMARK_IPERF3_PORT", "5201")
+
+host := env("BENCHMARK_HOST", "localhost")
+
+store_access_key := env("BENCHMARK_STORE_ACCESS_KEY")
+store_secret_key := env("BENCHMARK_STORE_SECRET_KEY")
+store_region := env("BENCHMARK_STORE_REGION", "eu-west-1")
+store_tls := env("BENCHMARK_STORE_TLS", "true")
+
+labstore_port := env("BENCHMARK_LABSTORE_PORT", "6789")
+minio_port := env("BENCHMARK_MINIO_PORT", "9000")
+garage_port := env("BENCHMARK_GARAGE_PORT", "3900")
+seaweedfs_port := env("BENCHMARK_SEAWEEDFS_PORT", "8333")
+rustfs_port := env("BENCHMARK_RUSTFS_PORT", "10000")
 
 warp_dir := "warp/"
 warp_bucket := "warp-benchmark-bucket"
@@ -13,41 +26,13 @@ warp_bucket := "warp-benchmark-bucket"
 analysis_dir := "analysis/"
 analysis_db := join(analysis_dir, "output/analysis.duckdb")
 
-labstore_host := env("BENCHMARK_LABSTORE_HOST")
-minio_host := env("BENCHMARK_MINIO_HOST")
-garage_host := env("BENCHMARK_GARAGE_HOST")
-seaweedfs_host := env("BENCHMARK_SEAWEEDFS_HOST")
-rustfs_host := env("BENCHMARK_RUSTFS_HOST")
-
-store_access_key := env("BENCHMARK_ACCESS_KEY")
-store_secret_key := env("BENCHMARK_SECRET_KEY")
-store_region := env("BENCHMARK_REGION")
-store_tls := env("BENCHMARK_TLS")
-
 default:
     just -l
 
-store host:
-    #!/bin/bash
-    echo "Benchmarking store at {{host}}..."
-
-    export MC_HOST_bench="http://{{store_access_key}}:{{store_secret_key}}@{{host}}"
-    mc mb -p bench/{{warp_bucket}}
-
-    export WARP_HOST="{{host}}"
-    export WARP_ACCESS_KEY="{{store_access_key}}"
-    export WARP_SECRET_KEY="{{store_secret_key}}"
-    export WARP_REGION="{{store_region}}"
-    export WARP_TLS="{{store_tls}}"
-
-    OUTPUT_DIR=output/$(echo "{{host}}" | sed 's/:/_/g')
-    echo "Output dir set to ${OUTPUT_DIR}."
-
-    cd {{warp_dir}}
-    mkdir -p $OUTPUT_DIR
-    cd $OUTPUT_DIR
-    warp run ../../config.yml
-    echo
+bandwidth:
+    mkdir -p {{join(iperf3_dir, "output")}}
+    iperf3 -c {{host}} -p {{iperf3_port}} -t 30 -J \
+        | gzip > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json.gz
 
 garage-init:
     #!/bin/bash
@@ -97,24 +82,72 @@ garage-init:
 
     printf "%s %s\n" "$store_access_key" "$store_secret_key"
 
-garage host:
+garage:
     #!/bin/bash
-    echo "Benchmarking garage at {{host}}..."
+    host="{{host}}:{{garage_port}}"
+    echo "Benchmarking Garage at ${host}..."
 
     credentials=$(just garage-init 2>/dev/null)
     access_key=$(echo $credentials | cut -d' ' -f1)
     secret_key=$(echo $credentials | cut -d' ' -f2)
 
-    export MC_HOST_bench="http://${access_key}:${secret_key}@{{host}}"
+    export MC_HOST_bench="http://${access_key}:${secret_key}@${host}"
     mc mb -p bench/{{warp_bucket}}
 
-    export WARP_HOST="{{host}}"
+    export WARP_HOST="${host}"
     export WARP_ACCESS_KEY="$access_key"
     export WARP_SECRET_KEY="$secret_key"
     export WARP_REGION="{{store_region}}"
     export WARP_TLS="{{store_tls}}"
 
-    OUTPUT_DIR=output/$(echo "{{host}}" | sed 's/:/_/g')
+    OUTPUT_DIR="output/garage"
+    echo "Output dir set to ${OUTPUT_DIR}."
+
+    cd {{warp_dir}}
+    mkdir -p $OUTPUT_DIR
+    cd $OUTPUT_DIR
+    warp run ../../config.yml
+    echo
+
+store id:
+    #!/bin/bash
+
+    case {{lowercase(id)}} in
+        labstore)
+            port={{labstore_port}}
+            ;;
+        minio)
+            port={{minio_port}}
+            ;;
+        garage)
+            just garage-init
+            just garage
+            exit 0
+            ;;
+        seaweedfs)
+            port={{seaweedfs_port}}
+            ;;
+        rustfs)
+            port={{rustfs_port}}
+            ;;
+        *)
+            echo "Invalid ID {{id}}; exiting..."
+            exit 2
+    esac
+
+    host="{{host}}:${port}"
+    echo "Benchmarking {{id}} at ${host}..."
+
+    export MC_HOST_bench="http://{{store_access_key}}:{{store_secret_key}}@${host}"
+    mc mb -p bench/{{warp_bucket}}
+
+    export WARP_HOST="${host}"
+    export WARP_ACCESS_KEY="{{store_access_key}}"
+    export WARP_SECRET_KEY="{{store_secret_key}}"
+    export WARP_REGION="{{store_region}}"
+    export WARP_TLS="{{store_tls}}"
+
+    OUTPUT_DIR="output/{{lowercase(id)}}"
     echo "Output dir set to ${OUTPUT_DIR}."
 
     cd {{warp_dir}}
@@ -124,25 +157,11 @@ garage host:
     echo
 
 stores:
-    echo "Benchmarking LabStore..."
-    just store {{labstore_host}}
-
-    echo "Benchmarking MinIO..."
-    just store {{minio_host}}
-
-    echo "Benchmarking SeaweedFS..."
-    just store {{seaweedfs_host}}
-
-    echo "Benchmarking RustFS..."
-    just store {{rustfs_host}}
-
-    echo "Benchmarking Garage..."
-    just garage-init
-    just garage {{garage_host}}
-
-bandwidth:
-    mkdir -p {{join(iperf3_dir, "output")}}
-    iperf3 -c {{iperf3_host}} -t 30 -J | gzip > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json.gz
+    just store LabStore
+    just store MinIO
+    just store Garage
+    just store SeaweedFS
+    just store RustFS
 
 analysis-sql model:
     cat {{join(analysis_dir, model + ".sql")}} | duckdb {{analysis_db}}
