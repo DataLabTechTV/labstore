@@ -42,7 +42,7 @@ func Start() {
 		Handler: middleware(router),
 	}
 
-	fmt.Printf("\n🌐 Backend listening on http://%s\n\n", addr)
+	fmt.Printf("🌐 Backend listening on http://%s\n", addr)
 
 	log.Fatal(server.ListenAndServe())
 }
