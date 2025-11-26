@@ -124,11 +124,19 @@ garage host:
     echo
 
 stores:
+    echo "Benchmarking LabStore..."
     just store {{labstore_host}}
+
+    echo "Benchmarking MinIO..."
     just store {{minio_host}}
+
+    echo "Benchmarking SeaweedFS..."
     just store {{seaweedfs_host}}
+
+    echo "Benchmarking RustFS..."
     just store {{rustfs_host}}
 
+    echo "Benchmarking Garage..."
     just garage-init
     just garage {{garage_host}}
 
@@ -142,10 +150,17 @@ analysis-sql model:
 analysis-view op:
     @column -s, -t {{join(analysis_dir, "output/op_stats-" + lowercase(op) + ".csv")}}
 
+analysis-plot:
+    termgraph {{join(analysis_dir, "output/op_stats.dat")}} \
+        --color black red yellow cyan blue \
+        --title "Operations per second" \
+        --space-between
+
 analysis:
     mkdir -p {{join(analysis_dir, "output")}}
     just analysis-sql load
     just analysis-sql summary
+    just analysis-plot
 
 analysis-db:
     duckdb {{analysis_db}}
