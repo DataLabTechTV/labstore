@@ -7,7 +7,10 @@ FRONTEND_DIR := web
 FRONTEND_SRC_DIRS := $(FRONTEND_DIR)/src $(FRONTEND_DIR)/static
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/build
 
-.PHONY: all backend frontend build run clean
+GO_BUILD_FLAGS ?=
+DEBUG_FLAGS := -gcflags="all=-N -l"
+
+.PHONY: all backend frontend build run profile clean
 
 all: build
 
@@ -35,8 +38,18 @@ run: build
 	npx dotenv-cli -- npx concurrently \
 		-n backend,web \
 		-c blue,green \
-		"bin/labstore-server serve" \
-		"cd web/ && npm run preview -- --port 5123"
+		"$(BACKEND_CMD) serve" \
+		"cd $(FRONTEND_DIR) && npm run preview -- --port 5123"
+
+profile:
+	$(MAKE) GO_BUILD_FLAGS="$(DEBUG_FLAGS)" backend
+	npx dotenv-cli -- npx concurrently \
+		-n backend,pprof \
+		-c blue,red \
+		"$(BACKEND_CMD) --pprof serve" \
+		"go tool pprof \
+			-focus=github.com/IllumiKnowLabs/labstore/backend \
+			-http=:8081 http:\/\/localhost:6060/debug/pprof/profile?seconds=60"
 
 clean:
 	rm -rf $(BIN_DIR)
