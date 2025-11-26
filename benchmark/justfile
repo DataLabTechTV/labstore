@@ -17,6 +17,7 @@ labstore_host := env("BENCHMARK_LABSTORE_HOST")
 minio_host := env("BENCHMARK_MINIO_HOST")
 garage_host := env("BENCHMARK_GARAGE_HOST")
 seaweedfs_host := env("BENCHMARK_SEAWEEDFS_HOST")
+rustfs_host := env("BENCHMARK_RUSTFS_HOST")
 
 store_access_key := env("BENCHMARK_ACCESS_KEY")
 store_secret_key := env("BENCHMARK_SECRET_KEY")
@@ -46,6 +47,7 @@ store host:
     mkdir -p $OUTPUT_DIR
     cd $OUTPUT_DIR
     warp run ../../config.yml
+    echo
 
 garage-init:
     #!/bin/bash
@@ -119,24 +121,36 @@ garage host:
     mkdir -p $OUTPUT_DIR
     cd $OUTPUT_DIR
     warp run ../../config.yml
+    echo
 
 stores:
     just store {{labstore_host}}
     just store {{minio_host}}
     just store {{seaweedfs_host}}
+    just store {{rustfs_host}}
 
     just garage-init
     just garage {{garage_host}}
 
 bandwidth:
     mkdir -p {{join(iperf3_dir, "output")}}
-    iperf3 -c {{iperf3_host}} -t 30 -J > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json
+    iperf3 -c {{iperf3_host}} -t 30 -J | gzip > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json.gz
+
+analysis-sql model:
+    cat {{join(analysis_dir, model + ".sql")}} | duckdb {{analysis_db}}
+
+analysis-view op:
+    @column -s, -t {{join(analysis_dir, "output/op_stats-" + lowercase(op) + ".csv")}}
 
 analysis:
     mkdir -p {{join(analysis_dir, "output")}}
-    cat {{join(analysis_dir, "load.sql")}} | duckdb {{analysis_db}}
+    just analysis-sql load
+    just analysis-sql summary
 
-all: bandwidth stores
+analysis-db:
+    duckdb {{analysis_db}}
+
+all: bandwidth stores analysis
 
 clean:
     rm -rf {{join(warp_dir, "output")}}
