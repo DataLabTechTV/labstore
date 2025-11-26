@@ -1,5 +1,5 @@
 services:
-  web:
+  labstore-web:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
@@ -17,12 +17,12 @@ services:
       - minio
     restart: unless-stopped
 
-  backend:
+  labstore-backend:
     build:
       context: ..
       dockerfile: infra/Dockerfile.backend
     ports:
-      - 6789:6789
+      - ${BENCHMARK_LABSTORE_PORT:-6789}:6789
     environment:
       - LS_STORAGE_ROOT=/data
       - LS_HOST=${LS_HOST}
@@ -33,17 +33,17 @@ services:
       - labstore:/data
     networks:
       - labstore
-    command: ["serve", "--debug"]
+    command: serve
     restart: unless-stopped
 
   bench-minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     ports:
-      - 9000:9000
+      - ${BENCHMARK_MINIO_PORT:-9000}:9000
       - 9001:9001
     environment:
-      - MINIO_ROOT_USER=${BENCHMARK_ACCESS_KEY}
-      - MINIO_ROOT_PASSWORD=${BENCHMARK_SECRET_KEY}
+      - MINIO_ROOT_USER=${BENCHMARK_STORE_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${BENCHMARK_STORE_SECRET_KEY}
     volumes:
       - minio:/data
     networks:
@@ -62,7 +62,7 @@ services:
     volumes:
       - garage:/var/lib/garage
     ports:
-       - 3900:3900
+       - ${BENCHMARK_GARAGE_PORT:-3900}:3900
        - 3901:3901
        - 3902:3903
        - 3903:3903
@@ -76,10 +76,10 @@ services:
       - 9333:9333
       - 8080:8080
       - 8888:8888
-      - 8333:8333
+      - ${BENCHMARK_SEAWEEDFS_PORT:-8333}:8333
     environment:
-      - AWS_ACCESS_KEY_ID=${BENCHMARK_ACCESS_KEY}
-      - AWS_SECRET_ACCESS_KEY=${BENCHMARK_SECRET_KEY}
+      - AWS_ACCESS_KEY_ID=${BENCHMARK_STORE_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${BENCHMARK_STORE_SECRET_KEY}
     command: server -dir=/data -s3 -s3.port=8333
     restart: unless-stopped
 
@@ -88,20 +88,19 @@ services:
     volumes:
       - rustfs:/data
     ports:
-      - 10000:9000
+      - ${BENCHMARK_RUSTFS_PORT:-10000}:9000
       - 10001:9001
     environment:
-      - RUSTFS_ACCESS_KEY=${BENCHMARK_ACCESS_KEY}
-      - RUSTFS_SECRET_KEY=${BENCHMARK_SECRET_KEY}
+      - RUSTFS_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
       - RUSTFS_CONSOLE_ENABLE=true
-      - RUST_BACKTRACE=1
     restart: unless-stopped
 
-  iperf3-server:
+  bench-iperf3-server:
     image: networkstatic/iperf3
     ports:
-      - 5201:5201/tcp
-      - 5201:5201/udp
+      - ${BENCHMARK_IPERF3_PORT:-5201}:5201/tcp
+      - ${BENCHMARK_IPERF3_PORT:-5201}:5201/udp
     command: ["-s"]
     restart: unless-stopped
 
