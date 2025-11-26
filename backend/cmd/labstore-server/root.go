@@ -6,6 +6,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/profiler"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
@@ -19,17 +20,32 @@ func NewRootCmd() *cobra.Command {
 		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("🚀 Welcome to %s, by %s\n\n", constants.Name, constants.Author)
+			helper.Box(fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author))
 
 			debug := helper.Must(cmd.Flags().GetBool("debug"))
 			logger.Init(logger.WithDebugFlag(debug))
 
 			config.Load()
 			iam.Load()
+
+			if run_pprof := helper.Must(cmd.Flags().GetBool("pprof")); run_pprof {
+				pprof_host := helper.Must(cmd.Flags().GetString("pprof-host"))
+				pprof_port := helper.Must(cmd.Flags().GetInt("pprof-port"))
+
+				pprof := profiler.NewProfiler(
+					profiler.WithHost(pprof_host),
+					profiler.WithPort(pprof_port),
+				)
+
+				pprof.Start()
+			}
 		},
 	}
 
 	cmd.PersistentFlags().Bool("debug", false, "Set debug level for logging")
+	cmd.PersistentFlags().Bool("pprof", false, "Enable profiler")
+	cmd.PersistentFlags().String("pprof-host", "localhost", "Profiler host")
+	cmd.PersistentFlags().Int("pprof-port", 6060, "Profiler port")
 
 	cmd.AddCommand(NewServeCmd())
 
