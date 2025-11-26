@@ -113,11 +113,14 @@ store id:
     #!/bin/bash
 
     case {{lowercase(id)}} in
+        dev)
+            host="localhost:6789"
+            ;;
         labstore)
-            port={{labstore_port}}
+            host="{{host}}:{{labstore_port}}"
             ;;
         minio)
-            port={{minio_port}}
+            host="{{host}}:{{minio_port}}"
             ;;
         garage)
             just garage-init
@@ -125,17 +128,16 @@ store id:
             exit 0
             ;;
         seaweedfs)
-            port={{seaweedfs_port}}
+            host="{{host}}:{{seaweedfs_port}}"
             ;;
         rustfs)
-            port={{rustfs_port}}
+            host="{{host}}:{{rustfs_port}}"
             ;;
         *)
             echo "Invalid ID {{id}}; exiting..."
             exit 2
     esac
 
-    host="{{host}}:${port}"
     echo "Benchmarking {{id}} at ${host}..."
 
     export MC_HOST_bench="http://{{store_access_key}}:{{store_secret_key}}@${host}"
