@@ -15,19 +15,19 @@ FROM
 
 CREATE OR REPLACE TABLE warp_stats AS
 SELECT 'LabStore' AS store, labstore.*,
-FROM warp_load('warp/output/docker-apps_6789') labstore
+FROM warp_load('warp/output/labstore') labstore
 UNION
 SELECT 'MinIO' AS store, minio.*
-FROM warp_load('warp/output/docker-apps_9000') minio
+FROM warp_load('warp/output/minio') minio
 UNION
 SELECT 'Garage' AS store, garage.*
-FROM warp_load('warp/output/docker-apps_3900') garage
+FROM warp_load('warp/output/garage') garage
 UNION
 SELECT 'SeaweedFS' AS store, seaweedfs.*
-FROM warp_load('warp/output/docker-apps_8333') seaweedfs
+FROM warp_load('warp/output/seaweedfs') seaweedfs
 UNION
 SELECT 'RustFS' AS store, rustfs.*
-FROM warp_load('warp/output/docker-apps_10000') rustfs
+FROM warp_load('warp/output/rustfs') rustfs
 ORDER BY store, op, start;
 
 -- =============================================
