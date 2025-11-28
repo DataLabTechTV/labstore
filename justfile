@@ -35,5 +35,15 @@ check-port host port:
         || (echo "failed ({{host}}:{{port}} closed)"; exit 1)
     @echo ok
 
+check-repo-deps:
+    @just check pre-commit
+    @just check golangci-lint
+
+check-deps:
+    @just check-repo-deps
+    @just backend check-deps
+    @just infra check-deps
+    @just benchmark check-deps
+
 clean:
     just benchmark clean
