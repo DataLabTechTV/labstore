@@ -45,13 +45,13 @@ func (e *S3Error) WithResource(resource string) *S3Error {
 }
 
 func HandleError(w http.ResponseWriter, err error) {
-	var s3Error *S3Error
+	var s3Err *S3Error
 
-	if errors.As(err, &s3Error) {
-		slog.Error("s3 error", "error", s3Error)
-		WriteXML(w, s3Error.StatusCode, s3Error)
+	if errors.As(err, &s3Err) {
+		slog.Error("s3 error", "err", s3Err)
+		WriteXML(w, s3Err.StatusCode, s3Err)
 	} else {
-		slog.Error("internal server error", "error", err)
+		slog.Error("internal server error", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
 type GetObjectResult struct {
@@ -49,7 +50,7 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 		core.HandleError(w, err)
 		return
 	}
-	defer res.Content.Close()
+	defer helper.CloseWithErr(res.Content, &err)
 
 	http.ServeContent(w, r, r.URL.Path, res.DateModified, res.Content)
 }

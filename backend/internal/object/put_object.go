@@ -9,6 +9,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
 func PutObject(bucket string, key string, data []byte) error {
@@ -19,13 +20,15 @@ func PutObject(bucket string, key string, data []byte) error {
 
 	objPath := filepath.Join(bucketPath, key)
 	objDir := filepath.Dir(objPath)
-	os.MkdirAll(objDir, 0755)
+	if err := os.MkdirAll(objDir, 0755); err != nil {
+		return core.ErrInternalError("Failed to create object directory")
+	}
 
 	f, err := os.Create(objPath)
 	if err != nil {
 		return core.ErrInternalError("Failed to create object")
 	}
-	defer f.Close()
+	defer helper.CloseWithErr(f, &err)
 
 	_, err = io.Copy(f, bytes.NewReader(data))
 	if err != nil {
