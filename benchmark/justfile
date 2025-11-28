@@ -29,12 +29,35 @@ analysis_db := join(analysis_dir, "output/analysis.duckdb")
 default:
     just -l
 
-bandwidth:
+[working-directory: ".."]
+check-deps:
+    @echo "Checking system binary dependencies for benchmark..."
+    @just check docker
+    @just check iperf3
+    @just check warp
+    @just check duckdb
+    @just check termgraph
+
+[working-directory: ".."]
+check-garage:
+    @just check-container labstore-bench-garage-1
+
+[working-directory: ".."]
+check-services:
+    @just check-port {{host}} {{labstore_port}}
+    @just check-port {{host}} {{minio_port}}
+    @just check-port {{host}} {{garage_port}}
+    @just check-port {{host}} {{seaweedfs_port}}
+    @just check-port {{host}} {{rustfs_port}}
+
+[group("bandwidth")]
+bandwidth: check-deps
     mkdir -p {{join(iperf3_dir, "output")}}
     iperf3 -c {{host}} -p {{iperf3_port}} -t 30 -J \
         | gzip > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json.gz
 
-garage-init:
+[group("helpers")]
+garage-init: check-deps check-garage
     #!/bin/bash
     garage_cmd="docker exec labstore-bench-garage-1 /garage"
 
@@ -82,7 +105,8 @@ garage-init:
 
     printf "%s %s\n" "$store_access_key" "$store_secret_key"
 
-garage:
+[group("helpers")]
+garage: check-deps check-services
     #!/bin/bash
     host="{{host}}:{{garage_port}}"
     echo "Benchmarking Garage at ${host}..."
@@ -109,7 +133,8 @@ garage:
     warp run ../../config.yml
     echo
 
-store id:
+[group("main")]
+store id: check-deps check-services
     #!/bin/bash
 
     case {{lowercase(id)}} in
@@ -158,6 +183,7 @@ store id:
     warp run ../../config.yml
     echo
 
+[group("main")]
 stores:
     just store LabStore
     just store MinIO
@@ -165,25 +191,30 @@ stores:
     just store SeaweedFS
     just store RustFS
 
-analysis-sql model:
+[group("analysis")]
+analysis-sql model: check-deps
     cat {{join(analysis_dir, model + ".sql")}} | duckdb {{analysis_db}}
 
+[group("analysis")]
 analysis-view op:
     @column -s, -t {{join(analysis_dir, "output/op_stats-" + lowercase(op) + ".csv")}}
 
-analysis-plot:
+[group("analysis")]
+analysis-plot: check-deps
     termgraph {{join(analysis_dir, "output/op_stats.dat")}} \
         --color black red yellow cyan blue \
         --title "Operations per second" \
         --space-between
 
+[group("analysis")]
 analysis:
     mkdir -p {{join(analysis_dir, "output")}}
     just analysis-sql load
     just analysis-sql summary
     just analysis-plot
 
-analysis-db:
+[group("analysis")]
+analysis-db: check-deps
     duckdb {{analysis_db}}
 
 all: bandwidth stores analysis
