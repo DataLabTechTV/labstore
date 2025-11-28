@@ -7,8 +7,17 @@ set dotenv-path := "../.env"
 default:
     just -l
 
-up:
-    cd .. && docker compose -p labstore -f infra/compose.yml up --build -d
+[working-directory: ".."]
+check-deps:
+    @echo "Checking system binary dependencies for infra..."
+    @just check docker
 
-down:
-    cd .. && docker compose -p labstore -f infra/compose.yml down -v
+[group("provisioning")]
+[working-directory: ".."]
+up: check-deps
+    docker compose -p labstore -f infra/compose.yml up --build -d
+
+[group("provisioning")]
+[working-directory: ".."]
+down: check-deps
+    docker compose -p labstore -f infra/compose.yml down -v
