@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -22,7 +23,7 @@ func CompressionMiddleware(next http.Handler) http.Handler {
 				http.Error(w, "invalid gzip", http.StatusBadRequest)
 				return
 			}
-			defer gz.Close()
+			defer helper.CloseWithErr(gz, &err)
 
 			reader = gz
 

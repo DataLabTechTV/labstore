@@ -2,6 +2,7 @@ package object
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -30,7 +31,7 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 		core.HandleError(w, err)
 		return
 	}
-	defer res.Content.Close()
+	defer helper.CloseWithErr(res.Content, &err)
 
 	buf := make([]byte, 512)
 
@@ -39,7 +40,10 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 		core.HandleError(w, err)
 		return
 	}
-	res.Content.Seek(0, io.SeekStart)
+
+	if _, err := res.Content.Seek(0, io.SeekStart); err != nil {
+		slog.Warn("body seek", "err", err)
+	}
 
 	w.Header().Set("Content-Type", http.DetectContentType(buf[:n]))
 	w.Header().Set("Content-Length", strconv.Itoa(res.ObjectSize))

@@ -18,6 +18,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 )
 
@@ -241,7 +242,6 @@ func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
 		slices.Sort(paths)
 	} else {
 		// partial prefix
-		basePath = bucketPath
 		filter := fmt.Sprintf("%s/%s*", bucketPath, r.Prefix)
 
 		var err error
@@ -282,7 +282,7 @@ func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
 		if err != nil {
 			return fmt.Errorf("could not read file: %s", key)
 		}
-		defer file.Close()
+		defer helper.CloseWithErr(file, &err)
 
 		if _, err := io.Copy(hash, file); err != nil {
 			return fmt.Errorf("could not compute hash: %s", key)
