@@ -16,7 +16,10 @@ import (
 )
 
 func Start() {
-	ensureDirectories()
+	if err := ensureDirectories(); err != nil {
+		slog.Error("could not create directory structure", "err", err)
+		os.Exit(1)
+	}
 
 	router := http.NewServeMux()
 	loadRoutes(router)
@@ -47,9 +50,14 @@ func Start() {
 	log.Fatal(server.ListenAndServe())
 }
 
-func ensureDirectories() {
+func ensureDirectories() error {
 	slog.Debug("ensuring directories")
-	os.MkdirAll(config.Env.StorageRoot, 0755)
+
+	if err := os.MkdirAll(config.Env.StorageRoot, 0755); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func loadRoutes(router *http.ServeMux) {
