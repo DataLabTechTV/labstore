@@ -45,5 +45,11 @@ check-deps:
     @just infra check-deps
     @just benchmark check-deps
 
+lint: check-repo-deps
+    pre-commit run --all-files
+
+install-hooks: check-repo-deps
+    pre-commit install
+
 clean:
     just benchmark clean
