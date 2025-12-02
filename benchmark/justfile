@@ -111,7 +111,8 @@ garage: check-deps check-services
     host="{{host}}:{{garage_port}}"
     echo "Benchmarking Garage at ${host}..."
 
-    credentials=$(just garage-init 2>/dev/null)
+    credentials=$(just garage-init 2>/dev/null | tail -n1)
+    echo $credentials
     access_key=$(echo $credentials | cut -d' ' -f1)
     secret_key=$(echo $credentials | cut -d' ' -f2)
 
