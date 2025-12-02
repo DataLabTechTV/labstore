@@ -6,7 +6,7 @@ services:
     ports:
       - 6790:6790
     environment:
-      - S3_ENDPOINT=labstore-backend:6789
+      - S3_ENDPOINT=labstore-backend:${LS_PORT}
       - S3_ACCESS_KEY=${LS_ADMIN_ACCESS_KEY}
       - S3_SECRET_KEY=${LS_ADMIN_SECRET_KEY}
       - S3_REGION=eu-west-1
@@ -22,7 +22,7 @@ services:
       context: ..
       dockerfile: infra/Dockerfile.backend
     ports:
-      - ${BENCHMARK_LABSTORE_PORT:-6789}:6789
+      - ${BENCHMARK_LABSTORE_PORT:-$LS_PORT}:${LS_PORT}
     environment:
       - LS_STORAGE_ROOT=/data
       - LS_HOST=${LS_HOST}
