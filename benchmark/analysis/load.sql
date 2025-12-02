@@ -36,7 +36,7 @@ ORDER BY store, op, start;
 
 CREATE OR REPLACE TABLE iperf3_stats AS
 SELECT
-    make_timestamp_ms(j.start.timestamp.timemillisecs) AS start,
+    make_timestamp_ms(j.start.timestamp.timesecs * 1000) AS start,
     j.end.sum_received.bits_per_second / 8 AS down_bytes_per_sec,
     j.end.sum_sent.bits_per_second / 8 AS up_bytes_per_sec
 FROM
