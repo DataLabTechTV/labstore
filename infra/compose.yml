@@ -62,10 +62,10 @@ services:
     volumes:
       - garage:/var/lib/garage
     ports:
-       - ${BENCHMARK_GARAGE_PORT:-3900}:3900
-       - 3901:3901
-       - 3902:3903
-       - 3903:3903
+      - ${BENCHMARK_GARAGE_PORT:-3900}:3900
+      - 3901:3901
+      - 3902:3903
+      - 3903:3903
     restart: unless-stopped
 
   bench-seaweedfs:
