@@ -38,7 +38,7 @@ run: build
 		"$(BACKEND_CMD) serve" \
 		"cd $(FRONTEND_DIR) && npm run preview -- --port 5123"
 
-profile:
+profile: backend
 	npx dotenv-cli -- npx concurrently \
 		-n backend,pprof \
 		-c blue,red \
