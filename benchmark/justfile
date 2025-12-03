@@ -42,14 +42,6 @@ check-deps:
 check-garage:
     @just check-container labstore-bench-garage-1
 
-[working-directory: ".."]
-check-services:
-    @just check-port {{host}} {{labstore_port}}
-    @just check-port {{host}} {{minio_port}}
-    @just check-port {{host}} {{garage_port}}
-    @just check-port {{host}} {{seaweedfs_port}}
-    @just check-port {{host}} {{rustfs_port}}
-
 [group("bandwidth")]
 bandwidth: check-deps
     mkdir -p {{join(iperf3_dir, "output")}}
@@ -58,7 +50,7 @@ bandwidth: check-deps
 
 [group("helpers")]
 garage-init: check-deps check-garage
-    #!/bin/bash
+    #!/bin/bash -e
     garage_cmd="docker exec labstore-bench-garage-1 /garage"
 
     echo "Waiting for Garage to be ready..." >&2
@@ -106,20 +98,23 @@ garage-init: check-deps check-garage
     printf "%s %s\n" "$store_access_key" "$store_secret_key"
 
 [group("helpers")]
-garage: check-deps check-services
-    #!/bin/bash
-    host="{{host}}:{{garage_port}}"
-    echo "Benchmarking Garage at ${host}..."
+garage: check-deps
+    #!/bin/bash -e
+    host="{{host}}"
+    port={{garage_port}}
+
+    (cd .. && just check-port "${host}" "${port}")
+
+    echo "Benchmarking Garage at ${host}:${port}..."
 
     credentials=$(just garage-init 2>/dev/null | tail -n1)
-    echo $credentials
     access_key=$(echo $credentials | cut -d' ' -f1)
     secret_key=$(echo $credentials | cut -d' ' -f2)
 
-    export MC_HOST_bench="http://${access_key}:${secret_key}@${host}"
+    export MC_HOST_bench="http://${access_key}:${secret_key}@${host}:${port}"
     mc mb -p bench/{{warp_bucket}}
 
-    export WARP_HOST="${host}"
+    export WARP_HOST="${host}:${port}"
     export WARP_ACCESS_KEY="$access_key"
     export WARP_SECRET_KEY="$secret_key"
     export WARP_REGION="{{store_region}}"
@@ -135,18 +130,21 @@ garage: check-deps check-services
     echo
 
 [group("main")]
-store id: check-deps check-services
-    #!/bin/bash
+store id: check-deps
+    #!/bin/bash -e
 
     case {{lowercase(id)}} in
         dev)
-            host="localhost:6789"
+            host="localhost"
+            port=6789
             ;;
         labstore)
-            host="{{host}}:{{labstore_port}}"
+            host="{{host}}"
+            port={{labstore_port}}
             ;;
         minio)
-            host="{{host}}:{{minio_port}}"
+            host="{{host}}"
+            port={{minio_port}}
             ;;
         garage)
             just garage-init
@@ -154,22 +152,26 @@ store id: check-deps check-services
             exit 0
             ;;
         seaweedfs)
-            host="{{host}}:{{seaweedfs_port}}"
+            host="{{host}}"
+            port={{seaweedfs_port}}
             ;;
         rustfs)
-            host="{{host}}:{{rustfs_port}}"
+            host="{{host}}"
+            port={{rustfs_port}}
             ;;
         *)
             echo "Invalid ID {{id}}; exiting..."
             exit 2
     esac
 
-    echo "Benchmarking {{id}} at ${host}..."
+    (cd .. && just check-port "${host}" "${port}")
 
-    export MC_HOST_bench="http://{{store_access_key}}:{{store_secret_key}}@${host}"
+    echo "Benchmarking {{id}} at ${host}:${port}..."
+
+    export MC_HOST_bench="http://{{store_access_key}}:{{store_secret_key}}@${host}:${port}"
     mc mb -p bench/{{warp_bucket}}
 
-    export WARP_HOST="${host}"
+    export WARP_HOST="${host}:${port}"
     export WARP_ACCESS_KEY="{{store_access_key}}"
     export WARP_SECRET_KEY="{{store_secret_key}}"
     export WARP_REGION="{{store_region}}"
