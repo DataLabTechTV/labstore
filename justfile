@@ -32,7 +32,7 @@ check-port host port:
     @just check nc
     @echo -n "Checking for open port {{host}}:{{port}}... "
     @nc -z {{host}} {{port}} >/dev/null 2>&1 \
-        || (echo "failed ({{host}}:{{port}} closed)"; exit 1)
+        || (echo "failed (closed)"; exit 1)
     @echo ok
 
 check-repo-deps:
