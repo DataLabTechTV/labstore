@@ -39,13 +39,14 @@ run: build
 		"cd $(FRONTEND_DIR) && npm run preview -- --port 5123"
 
 profile: backend
-	npx dotenv-cli -- npx concurrently \
+	npx concurrently \
 		-n backend,pprof \
 		-c blue,red \
 		"$(BACKEND_CMD) --pprof serve" \
 		"go tool pprof \
 			-focus=github.com/IllumiKnowLabs/labstore/backend \
-			-http=:8081 http:\/\/localhost:6060/debug/pprof/profile?seconds=60"
+			-http=:8081 \
+			http://localhost:6060/debug/pprof/profile?seconds=60"
 
 clean:
 	rm -rf $(BIN_DIR)
