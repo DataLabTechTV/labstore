@@ -7,9 +7,6 @@ FRONTEND_DIR := web
 FRONTEND_SRC_DIRS := $(FRONTEND_DIR)/src $(FRONTEND_DIR)/static
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/build
 
-GO_BUILD_FLAGS ?=
-DEBUG_FLAGS := -gcflags="all=-N -l"
-
 .PHONY: all backend frontend build run profile clean
 
 all: build
@@ -42,7 +39,6 @@ run: build
 		"cd $(FRONTEND_DIR) && npm run preview -- --port 5123"
 
 profile:
-	$(MAKE) GO_BUILD_FLAGS="$(DEBUG_FLAGS)" backend
 	npx dotenv-cli -- npx concurrently \
 		-n backend,pprof \
 		-c blue,red \
