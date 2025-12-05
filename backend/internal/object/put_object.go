@@ -1,7 +1,7 @@
 package object
 
 import (
-	"bytes"
+	"bufio"
 	"io"
 	"net/http"
 	"os"
@@ -12,7 +12,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
-func PutObject(bucket string, key string, data []byte) error {
+func PutObject(bucket string, key string, reader io.Reader) error {
 	bucketPath := filepath.Join(config.Config.Server.Storage.Path, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
 		return core.ErrNoSuchBucket(bucket)
@@ -30,7 +30,9 @@ func PutObject(bucket string, key string, data []byte) error {
 	}
 	defer helper.CloseWithErr(f, &err)
 
-	_, err = io.Copy(f, bytes.NewReader(data))
+	writer := bufio.NewWriterSize(f, config.Config.Server.Performance.BufferSize)
+
+	_, err = io.CopyBuffer(writer, reader, make([]byte, config.Config.Server.Performance.BufferSize))
 	if err != nil {
 		return core.ErrInternalError("Failed to write object")
 	}
@@ -43,13 +45,7 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 	key := r.PathValue("key")
 
-	data, err := io.ReadAll(r.Body)
-	if err != nil {
-		core.HandleError(w, err)
-		return
-	}
-
-	if err := PutObject(bucket, key, data); err != nil {
+	if err := PutObject(bucket, key, r.Body); err != nil {
 		core.HandleError(w, err)
 		return
 	}
