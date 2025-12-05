@@ -1,15 +1,8 @@
 set shell := ["bash", "-uc"]
 
-set dotenv-load
-set dotenv-required
-set dotenv-path := "../.env"
+config_path := "../labstore.yml"
 
 sandbox_bucket := "sandbox"
-
-ls_host := env("LS_HOST")
-ls_port := env("LS_PORT")
-ls_admin_access_key := env("LS_ADMIN_ACCESS_KEY")
-ls_admin_secret_key := env("LS_ADMIN_SECRET_KEY")
 
 default:
     just -l
@@ -17,14 +10,46 @@ default:
 [working-directory: ".."]
 check-deps:
     @echo "Checking system binary dependencies for backend..."
+    @just check yq
     @just check mc
     @just check rclone
     @just check s5cmd
 
 [group("helpers")]
+print-mc-host:
+    #!/bin/bash
+
+    host=$(yq ".server.host" {{config_path}})
+    port=$(yq ".server.port" {{config_path}})
+    access_key=$(yq ".server.admin.access_key" {{config_path}})
+    secret_key=$(yq ".server.admin.secret_key" {{config_path}})
+
+    mc_host="http://${access_key}:${secret_key}@${host}:${port}"
+    echo $mc_host
+
+[group("helpers")]
+print-rclone-config:
+    #!/bin/bash
+
+    HOST=$(yq ".server.host" {{config_path}})
+    PORT=$(yq ".server.port" {{config_path}})
+    ACCESS_KEY=$(yq ".server.admin.access_key" {{config_path}})
+    SECRET_KEY=$(yq ".server.admin.secret_key" {{config_path}})
+
+    cat <<EOF
+    [local]
+    type = s3
+    provider = Other
+    access_key_id = ${ACCESS_KEY}
+    secret_access_key = ${SECRET_KEY}
+    endpoint = http://${HOST}:${PORT}
+    acl = private
+    EOF
+
+[group("helpers")]
 create-bucket bucket: check-deps
     #!/bin/bash
-    export MC_HOST_local="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+    export MC_HOST_local=$(just print-mc-host)
     mc mb -p local/{{bucket}}
 
 [group("helpers")]
@@ -34,15 +59,15 @@ sandbox-bucket:
 [group("test-put")]
 test-put-obj-mc: sandbox-bucket check-deps
     #!/bin/bash
-    tmpfile=$(mktemp)
 
-    export MC_HOST_local="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+    tmpfile=$(mktemp)
+    export MC_HOST_local=$(just print-mc-host)
 
     echo "==> Generating temporary file with 10 MiB: $tmpfile"
     dd if=/dev/urandom of=$tmpfile bs=1M count=10
 
     echo "==> Sending temporary file: $tmpfile"
-    mc --debug cp --disable-multipart $tmpfile local/{{sandbox_bucket}}/$(basename $tmpfile).mc
+    mc cp --disable-multipart $tmpfile local/{{sandbox_bucket}}/$(basename $tmpfile).mc
 
     echo "==> Cleaning up temporary file: $tmpfile"
     rm -f $tmpfile
@@ -50,6 +75,7 @@ test-put-obj-mc: sandbox-bucket check-deps
 [group("test-put")]
 test-put-obj-rclone: sandbox-bucket check-deps
     #!/bin/bash
+
     tmpfile=$(mktemp)
 
     echo "==> Generating temporary file with 10 MiB: $tmpfile"
@@ -57,15 +83,7 @@ test-put-obj-rclone: sandbox-bucket check-deps
     tmpconfig=$(mktemp)
 
     echo "==> Creating temporary rclone config: $tmpconfig"
-    cat <<EOF >$tmpconfig
-    [local]
-    type = s3
-    provider = Other
-    access_key_id = {{ls_admin_access_key}}
-    secret_access_key = {{ls_admin_secret_key}}
-    endpoint = http://{{ls_host}}:{{ls_port}}
-    acl = private
-    EOF
+    just print-rclone-config >$tmpconfig
 
     echo "==> Sending temporary file: $tmpfile"
     rclone copyto $tmpfile local:/{{sandbox_bucket}}/$(basename $tmpfile).rclone --config $tmpconfig
@@ -76,17 +94,19 @@ test-put-obj-rclone: sandbox-bucket check-deps
 [group("test-put")]
 test-put-obj-s5cmd: sandbox-bucket check-deps
     #!/bin/bash
-    tmpfile=$(mktemp)
-    endpoint_url="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
 
-    export AWS_ACCESS_KEY_ID={{ls_admin_access_key}}
-    export AWS_SECRET_ACCESS_KEY={{ls_admin_secret_key}}
+    tmpfile=$(mktemp)
+
+    endpoint_url=$(just print-mc-host)
+
+    export AWS_ACCESS_KEY_ID=$(yq ".server.admin.access_key" {{config_path}})
+    export AWS_SECRET_ACCESS_KEY=$(yq ".server.admin.secret_key" {{config_path}})
 
     echo "==> Generating temporary file with 10 MiB: $tmpfile"
     dd if=/dev/urandom of=$tmpfile bs=1M count=10
 
     echo "==> Sending temporary file: $tmpfile"
-    s5cmd --log trace --endpoint-url $endpoint_url cp $tmpfile s3://{{sandbox_bucket}}/$(basename $tmpfile).s5cmd
+    s5cmd --endpoint-url $endpoint_url cp $tmpfile s3://{{sandbox_bucket}}/$(basename $tmpfile).s5cmd
 
     echo "==> Cleaning up temporary file: $tmpfile"
     rm -f $tmpfile
@@ -94,25 +114,18 @@ test-put-obj-s5cmd: sandbox-bucket check-deps
 [group("test-list")]
 test-list-obj-mc: sandbox-bucket check-deps
     #!/bin/bash
-    export MC_HOST_local="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+    export MC_HOST_local=$(just print-mc-host)
     echo "==> Listing keys in {{sandbox_bucket}}"
-    mc --debug ls local/{{sandbox_bucket}}/
+    mc ls local/{{sandbox_bucket}}/
 
 [group("test-list")]
 test-list-obj-rclone: sandbox-bucket check-deps
     #!/bin/bash
+
     tmpconfig=$(mktemp)
 
     echo "==> Creating temporary rclone config: $tmpconfig"
-    cat <<EOF >$tmpconfig
-    [local]
-    type = s3
-    provider = Other
-    access_key_id = {{ls_admin_access_key}}
-    secret_access_key = {{ls_admin_secret_key}}
-    endpoint = http://{{ls_host}}:{{ls_port}}
-    acl = private
-    EOF
+    just print-rclone-config >$tmpconfig
 
     echo "==> Listing keys in {{sandbox_bucket}}"
     rclone lsf local:/{{sandbox_bucket}}/ --config $tmpconfig
@@ -123,10 +136,10 @@ test-list-obj-rclone: sandbox-bucket check-deps
 [group("test-list")]
 test-list-obj-s5cmd: sandbox-bucket check-deps
     #!/bin/bash
-    endpoint_url="http://{{ls_admin_access_key}}:{{ls_admin_secret_key}}@{{ls_host}}:{{ls_port}}"
+    endpoint_url=$(just print-mc-host)
 
-    export AWS_ACCESS_KEY_ID={{ls_admin_access_key}}
-    export AWS_SECRET_ACCESS_KEY={{ls_admin_secret_key}}
+    export AWS_ACCESS_KEY_ID=$(yq ".server.admin.access_key" {{config_path}})
+    export AWS_SECRET_ACCESS_KEY=$(yq ".server.admin.secret_key" {{config_path}})
 
     echo "==> Listing keys in {{sandbox_bucket}}"
-    s5cmd --log trace --endpoint-url $endpoint_url ls s3://{{sandbox_bucket}}/
+    s5cmd --endpoint-url $endpoint_url ls s3://{{sandbox_bucket}}/

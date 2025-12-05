@@ -8,7 +8,23 @@ server:
     secret_key: adminadmin
 
 web:
-  ...
+  host: 0.0.0.0
+  port: 6790
 
 shared:
   ...
+
+benchmark:
+  host: localhost
+  ports:
+    iperf3: 5201
+    labstore: 7789
+    minio: 9000
+    garage: 3900
+    seaweedfs: 8333
+    rustfs: 10000
+  store:
+    access_key: admin
+    secret_key: adminadmin
+    tls: false
+    region: eu-west-1

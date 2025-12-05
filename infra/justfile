@@ -1,9 +1,5 @@
 set shell := ["bash", "-uc"]
 
-set dotenv-load
-set dotenv-required
-set dotenv-path := "../.env"
-
 default:
     just -l
 
@@ -12,12 +8,44 @@ check-deps:
     @echo "Checking system binary dependencies for infra..."
     @just check docker
 
-[group("provisioning")]
+[group("labstore")]
 [working-directory: ".."]
 up: check-deps
-    docker compose -p labstore -f infra/compose.yml up --build -d
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile labstore up --build -d
 
-[group("provisioning")]
+[group("labstore")]
 [working-directory: ".."]
 down: check-deps
-    docker compose -p labstore -f infra/compose.yml down -v
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile labstore down -v
+
+[group("testing")]
+[working-directory: ".."]
+testing-up: check-deps
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile testing up --build -d
+
+[group("testing")]
+[working-directory: ".."]
+testing-down: check-deps
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile testing down -v
+
+[group("benchmark")]
+[working-directory: ".."]
+benchmark-up: check-deps
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile benchmark up --build -d
+
+[group("benchmark")]
+[working-directory: ".."]
+benchmark-down: check-deps
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile benchmark down -v
