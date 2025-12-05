@@ -2,6 +2,7 @@ package helper
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -27,4 +28,11 @@ func TildePath(path string) string {
 	}
 
 	return path
+}
+
+func MustResolveToRelativePath(path string) string {
+	cwd := Must(os.Getwd())
+	absPath := Must(filepath.Abs(path))
+	relPath := Must(filepath.Rel(cwd, absPath))
+	return relPath
 }
