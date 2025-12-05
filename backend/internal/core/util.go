@@ -8,12 +8,12 @@ import (
 )
 
 func BucketExists(bucket string) bool {
-	path := filepath.Join(config.Env.StorageRoot, bucket)
+	path := filepath.Join(config.Config.Storage.Path, bucket)
 	exists := helper.FileExists(path)
 	return exists
 }
 
 func BucketKeyPath(bucket, key string) string {
-	path := filepath.Join(config.Env.StorageRoot, bucket, key)
+	path := filepath.Join(config.Config.Storage.Path, bucket, key)
 	return path
 }

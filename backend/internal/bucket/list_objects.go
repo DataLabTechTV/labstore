@@ -220,7 +220,7 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
 
 // Lists objects as Contents, and directories as CommonPrefixes, for a given fs path
 func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
-	bucketPath := filepath.Join(config.Env.StorageRoot, r.Bucket)
+	bucketPath := filepath.Join(config.Config.Storage.Path, r.Bucket)
 
 	var paths []string
 	var basePath string
