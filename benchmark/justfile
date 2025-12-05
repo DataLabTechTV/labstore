@@ -1,24 +1,6 @@
 set shell := ["bash", "-uc"]
 
-set dotenv-load
-set dotenv-required
-set dotenv-path := "../.env"
-
 iperf3_dir := "iperf3/"
-iperf3_port := env("BENCHMARK_IPERF3_PORT", "5201")
-
-host := env("BENCHMARK_HOST", "localhost")
-
-store_access_key := env("BENCHMARK_STORE_ACCESS_KEY")
-store_secret_key := env("BENCHMARK_STORE_SECRET_KEY")
-store_region := env("BENCHMARK_STORE_REGION", "eu-west-1")
-store_tls := env("BENCHMARK_STORE_TLS", "true")
-
-labstore_port := env("BENCHMARK_LABSTORE_PORT", "6789")
-minio_port := env("BENCHMARK_MINIO_PORT", "9000")
-garage_port := env("BENCHMARK_GARAGE_PORT", "3900")
-seaweedfs_port := env("BENCHMARK_SEAWEEDFS_PORT", "8333")
-rustfs_port := env("BENCHMARK_RUSTFS_PORT", "10000")
 
 warp_dir := "warp/"
 warp_bucket := "warp-benchmark-bucket"
@@ -31,27 +13,37 @@ default:
 
 [working-directory: ".."]
 check-deps:
-    @echo "Checking system binary dependencies for benchmark..."
-    @just check docker
-    @just check iperf3
-    @just check warp
-    @just check duckdb
-    @just check termgraph
+    #!/bin/bash
+    echo "Checking system binary dependencies for benchmark..."
+    just check yq
+    just check docker
+    just check iperf3
+    just check warp
+    just check duckdb
+    just check termgraph
 
 [working-directory: ".."]
 check-garage:
-    @just check-container labstore-bench-garage-1
+    @just check-container labstore-benchmark-garage-1
 
 [group("bandwidth")]
 bandwidth: check-deps
+    #!/bin/bash
+
+    eval $(cd .. && just print-env)
+
+    echo -n "Measuring bandwidth with iperf3... "
+
     mkdir -p {{join(iperf3_dir, "output")}}
-    iperf3 -c {{host}} -p {{iperf3_port}} -t 30 -J \
+    iperf3 -c $BENCHMARK_HOST -p $BENCHMARK_PORTS_IPERF3 -t 30 -J \
         | gzip > {{join(iperf3_dir, "output")}}/$(date +%Y_%m_%d-%H_%M).json.gz
+
+    echo "done"
 
 [group("helpers")]
 garage-init: check-deps check-garage
     #!/bin/bash -e
-    garage_cmd="docker exec labstore-bench-garage-1 /garage"
+    garage_cmd="docker exec labstore-benchmark-garage-1 /garage"
 
     echo "Waiting for Garage to be ready..." >&2
     while ! $garage_cmd status >/dev/null 2>&1; do
@@ -61,14 +53,14 @@ garage-init: check-deps check-garage
     if $garage_cmd status 2>/dev/null | grep -q "NO ROLE ASSIGNED"; then
         echo "Applying initial layout..." >&2
         node_id=$($garage_cmd status 2>/dev/null | tail -n1 | awk '{print $1}')
-        $garage_cmd layout assign $node_id --capacity 5G -z {{store_region}} >/dev/null 2>&1
+        $garage_cmd layout assign $node_id --capacity 5G -z $BENCHMARK_STORE_REGION >/dev/null 2>&1
         $garage_cmd layout apply --version 1 >/dev/null 2>&1
     else
         echo "Layout already applied; skipping." >&2
     fi
 
     admin_key_list=$($garage_cmd key list 2>/dev/null \
-        | grep -w "{{store_access_key}}" \
+        | grep -w "$BENCHMARK_STORE_ACCESS_KEY" \
         | tail -n+1 | awk '{print $1}')
 
     if [ -n "$admin_key_list" ]; then
@@ -100,12 +92,15 @@ garage-init: check-deps check-garage
 [group("helpers")]
 garage: check-deps
     #!/bin/bash -e
-    host="{{host}}"
-    port={{garage_port}}
+
+    eval $(cd .. && just print-env)
+
+    host="$BENCHMARK_HOST"
+    port=$BENCHMARK_PORTS_GARAGE
 
     (cd .. && just check-port "${host}" "${port}")
 
-    echo "Benchmarking Garage at ${host}:${port}..."
+    echo "Benchmarking Garage..."
 
     credentials=$(just garage-init 2>/dev/null | tail -n1)
     access_key=$(echo $credentials | cut -d' ' -f1)
@@ -117,8 +112,8 @@ garage: check-deps
     export WARP_HOST="${host}:${port}"
     export WARP_ACCESS_KEY="$access_key"
     export WARP_SECRET_KEY="$secret_key"
-    export WARP_REGION="{{store_region}}"
-    export WARP_TLS="{{store_tls}}"
+    export WARP_REGION="$BENCHMARK_STORE_REGION"
+    export WARP_TLS="$BENCHMARK_STORE_TLS"
 
     OUTPUT_DIR="output/garage"
     echo "Output dir set to ${OUTPUT_DIR}."
@@ -133,18 +128,20 @@ garage: check-deps
 store id: check-deps
     #!/bin/bash -e
 
+    eval $(cd .. && just print-env)
+
     case {{lowercase(id)}} in
         dev)
             host="localhost"
             port=6789
             ;;
         labstore)
-            host="{{host}}"
-            port={{labstore_port}}
+            host="$BENCHMARK_HOST"
+            port=$BENCHMARK_PORTS_LABSTORE
             ;;
         minio)
-            host="{{host}}"
-            port={{minio_port}}
+            host="$BENCHMARK_HOST"
+            port=$BENCHMARK_PORTS_MINIO
             ;;
         garage)
             just garage-init
@@ -152,12 +149,12 @@ store id: check-deps
             exit 0
             ;;
         seaweedfs)
-            host="{{host}}"
-            port={{seaweedfs_port}}
+            host="$BENCHMARK_HOST"
+            port=$BENCHMARK_PORTS_SEAWEEDFS
             ;;
         rustfs)
-            host="{{host}}"
-            port={{rustfs_port}}
+            host="$BENCHMARK_HOST"
+            port=$BENCHMARK_PORTS_RUSTFS
             ;;
         *)
             echo "Invalid ID {{id}}; exiting..."
@@ -166,16 +163,19 @@ store id: check-deps
 
     (cd .. && just check-port "${host}" "${port}")
 
-    echo "Benchmarking {{id}} at ${host}:${port}..."
+    echo "Benchmarking {{id}}..."
 
-    export MC_HOST_bench="http://{{store_access_key}}:{{store_secret_key}}@${host}:${port}"
+    access_key="$BENCHMARK_STORE_ACCESS_KEY"
+    secret_key="$BENCHMARK_STORE_SECRET_KEY"
+
+    export MC_HOST_bench="http://${access_key}:${secret_key}@${host}:${port}"
     mc mb -p bench/{{warp_bucket}}
 
     export WARP_HOST="${host}:${port}"
-    export WARP_ACCESS_KEY="{{store_access_key}}"
-    export WARP_SECRET_KEY="{{store_secret_key}}"
-    export WARP_REGION="{{store_region}}"
-    export WARP_TLS="{{store_tls}}"
+    export WARP_ACCESS_KEY="$BENCHMARK_STORE_ACCESS_KEY"
+    export WARP_SECRET_KEY="$BENCHMARK_STORE_SECRET_KEY"
+    export WARP_REGION="$BENCHMARK_STORE_REGION"
+    export WARP_TLS="$BENCHMARK_STORE_TLS"
 
     OUTPUT_DIR="output/{{lowercase(id)}}"
     echo "Output dir set to ${OUTPUT_DIR}."
