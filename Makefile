@@ -32,7 +32,7 @@ frontend: $(FRONTEND_BUILD_DIR)
 build: backend frontend
 
 run: build
-	npx dotenv-cli -- npx concurrently \
+	npx concurrently \
 		-n backend,web \
 		-c blue,green \
 		"$(BACKEND_CMD) serve" \
