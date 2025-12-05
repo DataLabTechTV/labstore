@@ -118,11 +118,11 @@ func setOverrides(rootCmd *cobra.Command) {
 		return
 	}
 
-	viper.BindPFlag("server.host", serverCmd.Flags().Lookup("host"))
-	viper.BindPFlag("server.port", serverCmd.Flags().Lookup("port"))
-	viper.BindPFlag("server.storage.path", serverCmd.Flags().Lookup("storage-path"))
-	viper.BindPFlag("server.admin.access_key", serverCmd.Flags().Lookup("admin-user"))
-	viper.BindPFlag("server.admin.secret_key", serverCmd.Flags().Lookup("admin-pass"))
+	helper.CheckFatal(viper.BindPFlag("server.host", serverCmd.Flags().Lookup("host")))
+	helper.CheckFatal(viper.BindPFlag("server.port", serverCmd.Flags().Lookup("port")))
+	helper.CheckFatal(viper.BindPFlag("server.storage.path", serverCmd.Flags().Lookup("storage-path")))
+	helper.CheckFatal(viper.BindPFlag("server.admin.access_key", serverCmd.Flags().Lookup("admin-user")))
+	helper.CheckFatal(viper.BindPFlag("server.admin.secret_key", serverCmd.Flags().Lookup("admin-pass")))
 }
 
 func readConfig() {
