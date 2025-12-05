@@ -1,5 +1,10 @@
 package helper
 
+import (
+	"fmt"
+	"os"
+)
+
 func Must[T any](val T, err error) T {
 	CheckFatal(err)
 	return val
@@ -7,6 +12,7 @@ func Must[T any](val T, err error) T {
 
 func CheckFatal(err error) {
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
