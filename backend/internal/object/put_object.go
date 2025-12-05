@@ -13,7 +13,7 @@ import (
 )
 
 func PutObject(bucket string, key string, data []byte) error {
-	bucketPath := filepath.Join(config.Config.Storage.Path, bucket)
+	bucketPath := filepath.Join(config.Config.Server.Storage.Path, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
 		return core.ErrNoSuchBucket(bucket)
 	}
