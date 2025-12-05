@@ -10,7 +10,7 @@ import (
 )
 
 func DeleteObject(bucket, key string) error {
-	objPath := filepath.Join(config.Env.StorageRoot, bucket, key)
+	objPath := filepath.Join(config.Config.Storage.Path, bucket, key)
 
 	err := os.Remove(objPath)
 	if err != nil {
