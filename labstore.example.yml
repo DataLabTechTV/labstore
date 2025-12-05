@@ -6,6 +6,8 @@ server:
   admin:
     access_key: admin
     secret_key: adminadmin
+  performance:
+    buffer_size: 262144
 
 web:
   host: 0.0.0.0

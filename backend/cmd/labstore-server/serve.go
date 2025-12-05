@@ -27,6 +27,7 @@ func NewServeCmd() *cobra.Command {
 	cmd.Flags().String("storage-path", config.DefaultStoragePath, "Storage path for objects and internals")
 	cmd.Flags().String("admin-user", config.DefaultAdminAccessKey, "Admin username / access key")
 	cmd.Flags().String("admin-pass", config.DefaultAdminSecretKey, "Admin password / secret key")
+	cmd.Flags().Int("perf-buffer-size", config.DefaultPerfBufferSize, "Performance setting for buffer size in bytes")
 
 	return cmd
 }
