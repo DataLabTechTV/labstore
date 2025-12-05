@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
@@ -14,7 +15,6 @@ import (
 )
 
 const configBasename = "labstore"
-const configEnvPrefix = "LABSTORE"
 
 const DefaultHost = "0.0.0.0"
 const DefaultPort = 6789
@@ -22,7 +22,11 @@ const DefaultStoragePath = "./data"
 const DefaultAdminAccessKey = "admin"
 const DefaultAdminSecretKey = DefaultAdminAccessKey
 
-var Config ServerConfig
+var Config AppConfig
+
+type AppConfig struct {
+	Server ServerConfig `mapstructure:"server"`
+}
 
 type ServerConfig struct {
 	Host    string        `mapstructure:"host"`
@@ -103,7 +107,9 @@ func setDefaults() {
 func setOverrides(rootCmd *cobra.Command) {
 	slog.Debug("setting config env and cli overrides")
 
-	viper.SetEnvPrefix(configEnvPrefix)
+	viper.SetEnvPrefix(configBasename)
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 	viper.AutomaticEnv()
 
 	serverCmd, _, err := rootCmd.Find([]string{"server"})
@@ -131,14 +137,14 @@ func readConfig() {
 }
 
 func parseConfig() {
-	if err := viper.Sub("server").Unmarshal(&Config); err != nil {
+	if err := viper.Unmarshal(&Config); err != nil {
 		slog.Error("config parsing", "err", err)
 		return
 	}
 
-	Config.Debug()
+	Config.Server.Debug()
 
-	relStoragePath := helper.MustResolveToRelativePath(Config.Storage.Path)
-	Config.Storage.Path = relStoragePath
-	slog.Debug("storage path resolved", "from", Config.Storage.Path, "to", relStoragePath)
+	relStoragePath := helper.MustResolveToRelativePath(Config.Server.Storage.Path)
+	slog.Debug("storage path resolved", "from", Config.Server.Storage.Path, "to", relStoragePath)
+	Config.Server.Storage.Path = relStoragePath
 }
