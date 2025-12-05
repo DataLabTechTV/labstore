@@ -21,6 +21,7 @@ const DefaultPort = 6789
 const DefaultStoragePath = "./data"
 const DefaultAdminAccessKey = "admin"
 const DefaultAdminSecretKey = DefaultAdminAccessKey
+const DefaultPerfBufferSize = 256 * helper.KiB
 
 var Config AppConfig
 
@@ -29,10 +30,11 @@ type AppConfig struct {
 }
 
 type ServerConfig struct {
-	Host    string        `mapstructure:"host"`
-	Port    uint16        `mapstructure:"port"`
-	Storage StorageConfig `mapstructure:"storage"`
-	Admin   AdminConfig   `mapstructure:"admin"`
+	Host        string            `mapstructure:"host"`
+	Port        uint16            `mapstructure:"port"`
+	Storage     StorageConfig     `mapstructure:"storage"`
+	Admin       AdminConfig       `mapstructure:"admin"`
+	Performance PerformanceConfig `mapstructure:"performance"`
 }
 
 type StorageConfig struct {
@@ -44,11 +46,16 @@ type AdminConfig struct {
 	SecretKey string `mapstructure:"secret_key"`
 }
 
+type PerformanceConfig struct {
+	BufferSize int `mapstructure:"buffer_size"`
+}
+
 func (config *ServerConfig) Debug() {
 	slog.Debug("config set", "name", "server.host", "value", config.Host)
 	slog.Debug("config set", "name", "server.port", "value", config.Port)
 	slog.Debug("config set", "name", "server.storage.path", "value", config.Storage.Path)
 	slog.Debug("config set", "name", "server.admin.access_key", "value", config.Admin.AccessKey)
+	slog.Debug("config set", "name", "server.performance.buffer_size", "value", config.Performance.BufferSize)
 
 	var adminSecretKeyDisplay string
 	if len(config.Admin.SecretKey) > 0 {
@@ -102,6 +109,8 @@ func setDefaults() {
 
 	viper.SetDefault("server.admin.secret_key", defaultAdminSecretKey)
 	fmt.Printf("🔑 Default admin secret key: %s\n", defaultAdminSecretKey)
+
+	viper.SetDefault("server.performance.buffer_size", DefaultPerfBufferSize)
 }
 
 func setOverrides(rootCmd *cobra.Command) {
