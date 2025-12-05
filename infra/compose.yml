@@ -48,17 +48,15 @@ services:
       context: ..
       dockerfile: infra/Dockerfile.backend
     ports:
-      - ${BENCHMARK_LABSTORE_PORT:-7789}:${LABSTORE_SERVER_PORT}
+      - ${BENCHMARK_LABSTORE_PORT:-7789}:6789
     networks:
       - benchmark
     volumes:
       - benchmark-labstore:/data
     environment:
-      - LABSTORE_SERVER_HOST=${LABSTORE_SERVER_HOST}
-      - LABSTORE_SERVER_PORT=${LABSTORE_SERVER_PORT}
-      - LABSTORE_SERVER_ADMIN_ACCESS_KEY=${LABSTORE_SERVER_ADMIN_ACCESS_KEY}
-      - LABSTORE_SERVER_ADMIN_SECRET_KEY=${LABSTORE_SERVER_ADMIN_SECRET_KEY}
-    command: serve --storage-path /data
+      - LABSTORE_SERVER_ADMIN_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
+      - LABSTORE_SERVER_ADMIN_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
+    command: serve --host 0.0.0.0 --port 6789 --storage-path /data
     restart: unless-stopped
 
   benchmark-minio:
