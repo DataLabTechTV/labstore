@@ -29,6 +29,7 @@ func Start() {
 	mw := middleware.Stack(
 		middleware.LoggingMiddleware,
 		middleware.CompressionMiddleware,
+		middleware.LabStoreMiddleware,
 		middleware.AuthMiddleware,
 		middleware.NormalizationMiddleware,
 	)
