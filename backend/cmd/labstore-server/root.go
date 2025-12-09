@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/constants"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/logger"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/profiler"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
