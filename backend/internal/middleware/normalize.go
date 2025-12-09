@@ -11,7 +11,7 @@ func NormalizationMiddleware(next http.Handler) http.Handler {
 		slog.Debug("normalization middleware")
 
 		if r.URL.Path != "/" {
-			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+			r.URL.Path = strings.TrimRight(r.URL.Path, "/")
 		}
 		next.ServeHTTP(w, r)
 	})
