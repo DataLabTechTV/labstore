@@ -7,7 +7,7 @@ FRONTEND_DIR := web
 FRONTEND_SRC_DIRS := $(FRONTEND_DIR)/src $(FRONTEND_DIR)/static
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/build
 
-.PHONY: all backend frontend build run profile clean
+.PHONY: all backend frontend build run profile test clean
 
 all: build
 
@@ -47,6 +47,9 @@ profile: backend
 			-focus=github.com/IllumiKnowLabs/labstore/backend \
 			-http=:8081 \
 			http://localhost:6060/debug/pprof/profile?seconds=60"
+
+test:
+	cd $(BACKEND_DIR) && go test -v ./...
 
 clean:
 	rm -rf $(BIN_DIR)
