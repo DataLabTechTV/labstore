@@ -23,18 +23,16 @@ const DefaultAdminAccessKey = "admin"
 const DefaultAdminSecretKey = DefaultAdminAccessKey
 const DefaultPerfBufferSize = 256 * helper.KiB
 
-var Config AppConfig
-
 type AppConfig struct {
-	Server ServerConfig `mapstructure:"server"`
+	Server *ServerConfig `mapstructure:"server"`
 }
 
 type ServerConfig struct {
-	Host        string            `mapstructure:"host"`
-	Port        uint16            `mapstructure:"port"`
-	Storage     StorageConfig     `mapstructure:"storage"`
-	Admin       AdminConfig       `mapstructure:"admin"`
-	Performance PerformanceConfig `mapstructure:"performance"`
+	Host        string             `mapstructure:"host"`
+	Port        uint16             `mapstructure:"port"`
+	Storage     *StorageConfig     `mapstructure:"storage"`
+	Admin       *AdminConfig       `mapstructure:"admin"`
+	Performance *PerformanceConfig `mapstructure:"performance"`
 }
 
 type StorageConfig struct {
@@ -49,6 +47,8 @@ type AdminConfig struct {
 type PerformanceConfig struct {
 	BufferSize int `mapstructure:"buffer_size"`
 }
+
+var Server *ServerConfig
 
 func (config *ServerConfig) Debug() {
 	slog.Debug("config set", "name", "server.host", "value", config.Host)
@@ -146,14 +146,17 @@ func readConfig() {
 }
 
 func parseConfig() {
-	if err := viper.Unmarshal(&Config); err != nil {
+	var config AppConfig
+	if err := viper.Unmarshal(&config); err != nil {
 		slog.Error("config parsing", "err", err)
 		return
 	}
 
-	Config.Server.Debug()
+	Server = config.Server
 
-	relStoragePath := helper.MustResolveToRelativePath(Config.Server.Storage.Path)
-	slog.Debug("storage path resolved", "from", Config.Server.Storage.Path, "to", relStoragePath)
-	Config.Server.Storage.Path = relStoragePath
+	Server.Debug()
+
+	relStoragePath := helper.MustResolveToRelativePath(Server.Storage.Path)
+	slog.Debug("storage path resolved", "from", Server.Storage.Path, "to", relStoragePath)
+	Server.Storage.Path = relStoragePath
 }

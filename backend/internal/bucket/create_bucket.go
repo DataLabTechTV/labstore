@@ -19,7 +19,7 @@ func ErrBucketAlreadyExists() *core.S3Error {
 }
 
 func CreateBucket(bucket string) error {
-	path := filepath.Join(config.Config.Server.Storage.Path, bucket)
+	path := filepath.Join(config.Server.Storage.Path, bucket)
 
 	if _, err := os.Stat(path); err == nil {
 		return ErrBucketAlreadyExists()

@@ -24,7 +24,7 @@ func Start() {
 	router := http.NewServeMux()
 	loadRoutes(router)
 
-	addr := fmt.Sprintf("%s:%d", config.Config.Server.Host, config.Config.Server.Port)
+	addr := fmt.Sprintf("%s:%d", config.Server.Host, config.Server.Port)
 
 	middleware := middleware.Stack(
 		middleware.LoggingMiddleware,
@@ -36,8 +36,8 @@ func Start() {
 
 	slog.Info(
 		"starting S3-compatible object store server",
-		"host", config.Config.Server.Host,
-		"port", config.Config.Server.Port,
+		"host", config.Server.Host,
+		"port", config.Server.Port,
 	)
 
 	server := http.Server{
@@ -53,7 +53,7 @@ func Start() {
 func ensureDirectories() error {
 	slog.Debug("ensuring directories")
 
-	if err := os.MkdirAll(config.Config.Server.Storage.Path, 0755); err != nil {
+	if err := os.MkdirAll(config.Server.Storage.Path, 0755); err != nil {
 		return err
 	}
 
