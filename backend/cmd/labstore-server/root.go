@@ -26,7 +26,7 @@ func NewRootCmd() *cobra.Command {
 			logger.Init(logger.WithDebugFlag(debug))
 
 			config.Load(cmd)
-			iam.Load()
+			iam.Init()
 
 			if run_pprof := helper.Must(cmd.Flags().GetBool("pprof")); run_pprof {
 				pprof_host := helper.Must(cmd.Flags().GetString("pprof-host"))

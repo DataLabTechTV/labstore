@@ -24,9 +24,10 @@ func IAMMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		key := r.PathValue("key")
 		accessKey := GetRequestAccessKey(r)
 
-		if !iam.CheckPolicy(accessKey, bucket, action) {
+		if !iam.CheckPolicy(accessKey, bucket, key, iam.Action(action)) {
 			// !FIXME: AWS compliant error handling?
 			core.HandleError(w, ErrAccessDenied())
 			return
