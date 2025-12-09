@@ -11,3 +11,13 @@ const (
 	GetObject        Action = "s3:GetObject"
 	DeleteObject     Action = "s3:DeleteObject"
 )
+
+func matchAction(action Action, stmtActions []Action) bool {
+	for _, stmtAction := range stmtActions {
+		if stmtAction == action {
+			return true
+		}
+	}
+
+	return false
+}

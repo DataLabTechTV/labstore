@@ -170,7 +170,7 @@ func newSigV4Credential(credential string) (*sigV4Credential, error) {
 
 	accessKey := credentialParts[0]
 
-	secretKey, ok := iam.Users[accessKey]
+	user, ok := iam.GetUser(accessKey)
 	if !ok {
 		return nil, errors.New("invalid access key")
 	}
@@ -180,8 +180,8 @@ func newSigV4Credential(credential string) (*sigV4Credential, error) {
 	slog.Debug("credential", "access_key", accessKey, "scope", scope)
 
 	res := &sigV4Credential{
-		AccessKey: accessKey,
-		secretKey: secretKey,
+		AccessKey: user.AccessKeyID,
+		secretKey: user.SecretKey,
 		scope:     scope,
 	}
 

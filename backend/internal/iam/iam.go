@@ -1,27 +1,45 @@
 package iam
 
-import "github.com/IllumiKnowLabs/labstore/backend/internal/config"
+const Any = "*"
 
-var Users map[string]string
-var Policies map[string]PolicyFunc
-
-type PolicyFunc func(userID string, resourceID string) bool
-
-func Load() {
-	Users = map[string]string{
-		config.Server.Admin.AccessKey: config.Server.Admin.SecretKey,
-	}
-
-	Policies = map[string]PolicyFunc{
-		config.Server.Admin.AccessKey: func(bucket, op string) bool {
-			return true
-		},
-	}
+type Store struct {
+	Users    map[string]*User
+	Groups   map[string]*Group
+	Policies map[string]*Policy
 }
 
-func CheckPolicy(accessKey, bucket, op string) bool {
-	if polFunc, ok := Policies[accessKey]; ok {
-		return polFunc(bucket, op)
+var store Store
+
+func Init() {
+	createAdmin()
+}
+
+func CheckPolicy(accessKey, bucket, key string, action Action) bool {
+	user, ok := store.Users[accessKey]
+	if !ok {
+		return false
 	}
-	return false
+
+	allowed := false
+
+	for _, policyID := range user.PolicyIDs {
+		policy, ok := store.Policies[policyID]
+		if !ok {
+			continue
+		}
+
+		for _, stmt := range policy.Document.Statement {
+			if matchAction(action, stmt.Actions) && matchResource(bucket, key, stmt.Resources) {
+				if stmt.Effect == deny {
+					return false
+				}
+
+				if stmt.Effect == allow {
+					allowed = true
+				}
+			}
+		}
+	}
+
+	return allowed
 }
