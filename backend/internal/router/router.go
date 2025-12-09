@@ -9,10 +9,10 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/bucket"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/object"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/service"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
 )
 
 func Start() {
