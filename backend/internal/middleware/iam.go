@@ -16,10 +16,6 @@ func WithIAM(action iam.Action, next http.Handler) http.Handler {
 		}
 
 		bucket := r.PathValue("bucket")
-		if bucket == "" {
-			return
-		}
-
 		key := r.PathValue("key")
 		accessKey := GetRequestAccessKey(r)
 
