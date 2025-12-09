@@ -9,11 +9,11 @@ type PolicyFunc func(userID string, resourceID string) bool
 
 func Load() {
 	Users = map[string]string{
-		config.Config.Server.Admin.AccessKey: config.Config.Server.Admin.SecretKey,
+		config.Server.Admin.AccessKey: config.Server.Admin.SecretKey,
 	}
 
 	Policies = map[string]PolicyFunc{
-		config.Config.Server.Admin.AccessKey: func(bucket, op string) bool {
+		config.Server.Admin.AccessKey: func(bucket, op string) bool {
 			return true
 		},
 	}
