@@ -1,5 +1,7 @@
 package iam
 
+import "slices"
+
 type Action string
 
 const (
@@ -13,11 +15,5 @@ const (
 )
 
 func matchAction(action Action, stmtActions []Action) bool {
-	for _, stmtAction := range stmtActions {
-		if stmtAction == action {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(stmtActions, action)
 }
