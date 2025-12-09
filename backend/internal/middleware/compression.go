@@ -12,6 +12,8 @@ import (
 
 func CompressionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slog.Debug("compression middleware")
+
 		var reader io.Reader = r.Body
 
 		switch r.Header.Get("Content-Encoding") {
