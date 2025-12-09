@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/auth"
@@ -29,6 +30,8 @@ func GetRequestAccessKey(r *http.Request) string {
 // Must come before middleware that changes the request (e.g., NormalizeMiddleware)
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slog.Debug("auth middleware")
+
 		res, err := auth.VerifySigV4(r)
 		if err != nil {
 			core.HandleError(w, ErrSignatureDoesNotMatch())

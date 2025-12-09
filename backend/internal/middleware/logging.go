@@ -26,12 +26,15 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+// Tracks request time and logs request after all handlers
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rw := &responseWriter{ResponseWriter: w}
 
 		next.ServeHTTP(rw, r)
+
+		slog.Debug("logging middleware")
 
 		slog.Info(
 			"request",

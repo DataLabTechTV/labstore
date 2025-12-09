@@ -33,10 +33,9 @@ func createAdmin() {
 				Version: latestPolicyDocumentVersion,
 				Statement: []Statement{
 					{
-						Effect:  allow,
-						Actions: []Action{Action(Any)},
-						// Resources: []string{Any},
-						Resources: []string{"test/*"},
+						Effect:    allow,
+						Actions:   []Action{Action(Any)},
+						Resources: []string{Any},
 					},
 				},
 			},

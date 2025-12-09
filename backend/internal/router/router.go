@@ -26,12 +26,11 @@ func Start() {
 
 	addr := fmt.Sprintf("%s:%d", config.Server.Host, config.Server.Port)
 
-	middleware := middleware.Stack(
+	mw := middleware.Stack(
 		middleware.LoggingMiddleware,
 		middleware.CompressionMiddleware,
 		middleware.AuthMiddleware,
-		middleware.IAMMiddleware,
-		middleware.NormalizeMiddleware,
+		middleware.NormalizationMiddleware,
 	)
 
 	slog.Info(
@@ -42,7 +41,7 @@ func Start() {
 
 	server := http.Server{
 		Addr:    addr,
-		Handler: middleware(router),
+		Handler: mw(router),
 	}
 
 	fmt.Printf("🌐 Backend listening on http://%s\n", addr)
