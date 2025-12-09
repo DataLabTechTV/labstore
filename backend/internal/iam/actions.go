@@ -1,6 +1,6 @@
 package iam
 
-import "slices"
+import "github.com/gobwas/glob"
 
 type Action string
 
@@ -15,5 +15,13 @@ const (
 )
 
 func matchAction(action Action, stmtActions []Action) bool {
-	return slices.Contains(stmtActions, action)
+	for _, stmtAction := range stmtActions {
+		g := glob.MustCompile(string(stmtAction))
+		if g.Match(string(action)) {
+			return true
+		}
+	}
+
+	return false
+
 }
