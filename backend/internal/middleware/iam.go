@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 )
 
 const iamActionCtx ContextKey = "iamAction"
