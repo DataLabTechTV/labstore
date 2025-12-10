@@ -48,18 +48,18 @@ func loadS3Routes(router *http.ServeMux) {
 	slog.Debug("loading s3-compatible routes")
 
 	// Service
-	router.Handle("GET /", middleware.WithIAM(iam.ListAllMyBuckets, http.HandlerFunc(service.ListBucketsHandler)))
+	router.Handle("GET /", middleware.WithIAM(iam.S3ListAllMyBuckets, http.HandlerFunc(service.ListBucketsHandler)))
 
 	// Bucket
-	router.Handle("HEAD /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.HeadBucketHandler)))
-	router.Handle("GET /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.ListObjectsHandler)))
-	router.Handle("PUT /{bucket}", middleware.WithIAM(iam.CreateBucket, http.HandlerFunc(bucket.PutBucketHandler)))
-	router.Handle("DELETE /{bucket}", middleware.WithIAM(iam.DeleteBucket, http.HandlerFunc(bucket.DeleteBucketHandler)))
+	router.Handle("HEAD /{bucket}", middleware.WithIAM(iam.S3ListBucket, http.HandlerFunc(bucket.HeadBucketHandler)))
+	router.Handle("GET /{bucket}", middleware.WithIAM(iam.S3ListBucket, http.HandlerFunc(bucket.ListObjectsHandler)))
+	router.Handle("PUT /{bucket}", middleware.WithIAM(iam.S3CreateBucket, http.HandlerFunc(bucket.PutBucketHandler)))
+	router.Handle("DELETE /{bucket}", middleware.WithIAM(iam.S3DeleteBucket, http.HandlerFunc(bucket.DeleteBucketHandler)))
 
 	// Object
-	router.Handle("HEAD /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.HeadObjectHandler)))
-	router.Handle("GET /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.GetObjectHandler)))
-	router.Handle("PUT /{bucket}/{key...}", middleware.WithIAM(iam.PutObject, http.HandlerFunc(object.PutObjectHandler)))
-	router.Handle("DELETE /{bucket}/{key...}", middleware.WithIAM(iam.DeleteObject, http.HandlerFunc(object.DeleteObjectHandler)))
-	router.Handle("POST /{bucket}", middleware.WithIAM(iam.DeleteBucket, http.HandlerFunc(object.DeleteObjectsHandler)))
+	router.Handle("HEAD /{bucket}/{key...}", middleware.WithIAM(iam.S3GetObject, http.HandlerFunc(object.HeadObjectHandler)))
+	router.Handle("GET /{bucket}/{key...}", middleware.WithIAM(iam.S3GetObject, http.HandlerFunc(object.GetObjectHandler)))
+	router.Handle("PUT /{bucket}/{key...}", middleware.WithIAM(iam.S3PutObject, http.HandlerFunc(object.PutObjectHandler)))
+	router.Handle("DELETE /{bucket}/{key...}", middleware.WithIAM(iam.S3DeleteObject, http.HandlerFunc(object.DeleteObjectHandler)))
+	router.Handle("POST /{bucket}", middleware.WithIAM(iam.S3DeleteBucket, http.HandlerFunc(object.DeleteObjectsHandler)))
 }
