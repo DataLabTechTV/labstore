@@ -1,6 +1,10 @@
 package iam
 
-import "github.com/IllumiKnowLabs/labstore/backend/internal/config"
+import (
+	"net/http"
+
+	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+)
 
 type User struct {
 	Name        string
@@ -14,6 +18,14 @@ type User struct {
 func GetUser(accessKey string) (*User, bool) {
 	user, ok := store.Users[accessKey]
 	return user, ok
+}
+
+func CreateUser() {
+
+}
+
+func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func createAdmin() {

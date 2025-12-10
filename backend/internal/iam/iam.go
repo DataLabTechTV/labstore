@@ -5,6 +5,7 @@ const Any = "*"
 var store Store
 
 func Init() {
+	ensureSchema()
 	createAdmin()
 }
 
