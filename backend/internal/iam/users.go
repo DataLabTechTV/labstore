@@ -20,8 +20,12 @@ func GetUser(accessKey string) (*User, bool) {
 	return user, ok
 }
 
-func CreateUser() {
+func CreateUser(username string) *IAMError {
+	if username == config.Admin.Auth.AccessKey {
+		return ErrEntityAlreadyExists(username)
+	}
 
+	return nil
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {

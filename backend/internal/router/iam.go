@@ -59,7 +59,7 @@ func loadIAMRoutes(router *http.ServeMux) {
 		// case iam.OpAttachGroupPolicy:
 		// 	AttachGroupPolicy(w, r)
 		default:
-			core.HandleError(w, core.ErrNotImplemented(action))
+			core.HandleError(w, iam.ErrNotImplemented(action))
 		}
 	})
 }
