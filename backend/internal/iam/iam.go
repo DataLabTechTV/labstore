@@ -1,13 +1,27 @@
 package iam
 
+import "log"
+
 const Any = "*"
 
 var store *Store
 
 func Init() {
 	store = NewStore()
-	setupAdmin()
-	ensureSchema()
+
+	var err error
+
+	err = store.open()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	store.setupAdmin()
+
+	err = store.ensureSchema()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
