@@ -4,16 +4,25 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync/atomic"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 )
 
-func NewAdminServerDescriptor(host string, port uint16) *ServerDescriptor {
+var healthStatus []*atomic.Bool
+
+func NewAdminServerDescriptor(host string, port uint16, monitor []*ServerDescriptor) *ServerDescriptor {
 	slog.Info(
 		"admin api server",
 		"host", host,
 		"port", port,
+		"monitor", len(monitor),
 	)
+
+	healthStatus = make([]*atomic.Bool, len(monitor))
+	for i := range monitor {
+		healthStatus[i] = &monitor[i].Healthy
+	}
 
 	router := http.NewServeMux()
 	loadAdminRoutes(router)
@@ -46,5 +55,12 @@ func loadAdminRoutes(router *http.ServeMux) {
 
 // healthCheckHandler: GET /labstore/health
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	for _, hs := range healthStatus {
+		if healthy := hs.Load(); !healthy {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
 }

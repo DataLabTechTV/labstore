@@ -31,6 +31,7 @@ services:
       dockerfile: infra/Dockerfile.backend
     ports:
       - ${LABSTORE_BACKEND_ADMIN_SERVER_PORT}:${LABSTORE_BACKEND_ADMIN_SERVER_PORT}
+      - ${LABSTORE_BACKEND_IAM_SERVER_PORT}:${LABSTORE_BACKEND_IAM_SERVER_PORT}
       - ${LABSTORE_BACKEND_S3_SERVER_PORT}:${LABSTORE_BACKEND_S3_SERVER_PORT}
     networks:
       - labstore
@@ -52,7 +53,8 @@ services:
       context: ..
       dockerfile: infra/Dockerfile.backend
     ports:
-      - 7788:7788
+      - 7787:6787
+      - 7788:6788
       - ${BENCHMARK_LABSTORE_PORT:-7789}:6789
     networks:
       - benchmark

@@ -17,10 +17,13 @@ import (
 const (
 	configBasename = "labstore"
 
-	DefaultAdminHost          = "0.0.0.0"
-	DefaultAdminPort          = 6788
+	DefaultAdminServerHost    = "0.0.0.0"
+	DefaultAdminServerPort    = 6787
 	DefaultAdminAuthAccessKey = "admin"
 	DefaultAdminSecretKey     = DefaultAdminAuthAccessKey
+
+	DefaultIAMServerHost = "0.0.0.0"
+	DefaultIAMServerPort = 6788
 
 	DefaultS3ServerHost     = "0.0.0.0"
 	DefaultS3ServerPort     = 6789
@@ -34,7 +37,23 @@ type AppConfig struct {
 
 type BackendConfig struct {
 	Admin *AdminConfig `mapstructure:"admin"`
+	IAM   *IAMConfig   `mapstructure:"iam"`
 	S3    *S3Config    `mapstructure:"s3"`
+}
+
+type AdminConfig struct {
+	Server *ServerConfig `mapstructure:"server"`
+	Auth   *AuthConfig   `mapstructure:"auth"`
+}
+
+type IAMConfig struct {
+	Server *ServerConfig `mapstructure:"server"`
+}
+
+type S3Config struct {
+	Server  *ServerConfig  `mapstructure:"server"`
+	Storage *StorageConfig `mapstructure:"storage"`
+	Perf    *PerfConfig    `mapstructure:"perf"`
 }
 
 type ServerConfig struct {
@@ -47,17 +66,6 @@ type AuthConfig struct {
 	SecretKey string `mapstructure:"secret_key"`
 }
 
-type AdminConfig struct {
-	Server *ServerConfig `mapstructure:"server"`
-	Auth   *AuthConfig   `mapstructure:"auth"`
-}
-
-type S3Config struct {
-	Server  *ServerConfig  `mapstructure:"server"`
-	Storage *StorageConfig `mapstructure:"storage"`
-	Perf    *PerfConfig    `mapstructure:"perf"`
-}
-
 type StorageConfig struct {
 	Path string `mapstructure:"path"`
 }
@@ -66,15 +74,9 @@ type PerfConfig struct {
 	BufferSize int `mapstructure:"buffer_size"`
 }
 
-var S3 *S3Config
 var Admin *AdminConfig
-
-func (config *S3Config) Debug() {
-	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Server.Host)
-	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Server.Port)
-	slog.Debug("config set", "name", "backend.s3.storage.path", "value", config.Storage.Path)
-	slog.Debug("config set", "name", "backend.s3.perf.buffer_size", "value", config.Perf.BufferSize)
-}
+var IAM *IAMConfig
+var S3 *S3Config
 
 func (config *AdminConfig) Debug() {
 	slog.Debug("config set", "name", "backend.admin.server.host", "value", config.Server.Host)
@@ -88,6 +90,18 @@ func (config *AdminConfig) Debug() {
 		adminSecretKeyDisplay = constants.Empty
 	}
 	slog.Debug("config set", "name", "backend.admin.secret_key", "value", adminSecretKeyDisplay)
+}
+
+func (config *IAMConfig) Debug() {
+	slog.Debug("config set", "name", "backend.iam.server.host", "value", config.Server.Host)
+	slog.Debug("config set", "name", "backend.iam.server.port", "value", config.Server.Port)
+}
+
+func (config *S3Config) Debug() {
+	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Server.Host)
+	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Server.Port)
+	slog.Debug("config set", "name", "backend.s3.storage.path", "value", config.Storage.Path)
+	slog.Debug("config set", "name", "backend.s3.perf.buffer_size", "value", config.Perf.BufferSize)
 }
 
 func Load(rootCmd *cobra.Command) {
@@ -121,8 +135,8 @@ func setDefaults() {
 	slog.Debug("setting config defaults")
 
 	// admin
-	viper.SetDefault("backend.admin.server.host", DefaultAdminHost)
-	viper.SetDefault("backend.admin.server.port", DefaultAdminPort)
+	viper.SetDefault("backend.admin.server.host", DefaultAdminServerHost)
+	viper.SetDefault("backend.admin.server.port", DefaultAdminServerPort)
 	viper.SetDefault("backend.admin.auth.access_key", DefaultAdminAuthAccessKey)
 
 	defaultAdminAuthSecretKey, err := security.GeneratePassword(32)
@@ -133,6 +147,10 @@ func setDefaults() {
 
 	viper.SetDefault("backend.admin.auth.secret_key", defaultAdminAuthSecretKey)
 	fmt.Printf("🔑 Default admin secret key: %s\n", defaultAdminAuthSecretKey)
+
+	// iam
+	viper.SetDefault("backend.iam.server.host", DefaultIAMServerHost)
+	viper.SetDefault("backend.iam.server.port", DefaultIAMServerPort)
 
 	// s3
 	viper.SetDefault("backend.s3.server.host", DefaultS3ServerHost)
@@ -186,6 +204,9 @@ func parseConfig() {
 
 	Admin = config.Backend.Admin
 	Admin.Debug()
+
+	IAM = config.Backend.IAM
+	IAM.Debug()
 
 	S3 = config.Backend.S3
 	S3.Debug()

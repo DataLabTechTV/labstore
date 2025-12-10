@@ -22,15 +22,18 @@ func NewServeCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().String("admin-server-host", config.DefaultAdminServerHost, "Listening host for admin server")
+	cmd.Flags().String("admin-server-port", config.DefaultAdminServerHost, "Listening port for admin server")
+	cmd.Flags().String("admin-auth-access-key", config.DefaultAdminAuthAccessKey, "Administrator account access key")
+	cmd.Flags().String("admin-auth-secret-key", config.DefaultAdminSecretKey, "Administrator account secret key")
+
+	cmd.Flags().String("iam-server-host", config.DefaultIAMServerHost, "Listening host for IAM server")
+	cmd.Flags().String("iam-server-port", config.DefaultIAMServerHost, "Listening port for IAM server")
+
 	cmd.Flags().String("s3-server-host", config.DefaultS3ServerHost, "Listening host for S3-compatible server")
 	cmd.Flags().Uint16("s3-server-port", config.DefaultS3ServerPort, "Listening port for S3-compatible server")
 	cmd.Flags().String("s3-storage-path", config.DefaultS3StoragePath, "Storage path for objects and internals")
 	cmd.Flags().Int("s3-perf-buffer-size", config.DefaultS3PerfBufferSize, "Performance setting for buffer size in bytes")
-
-	cmd.Flags().String("admin-server-host", config.DefaultAdminHost, "Listening host for admin server")
-	cmd.Flags().String("admin-server-port", config.DefaultAdminHost, "Listening port for admin server")
-	cmd.Flags().String("admin-auth-access-key", config.DefaultAdminAuthAccessKey, "Administrator account access key")
-	cmd.Flags().String("admin-auth-secret-key", config.DefaultAdminSecretKey, "Administrator account secret key")
 
 	return cmd
 }
