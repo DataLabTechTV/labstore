@@ -19,10 +19,10 @@ check-deps:
 print-mc-host:
     #!/bin/bash
 
-    host=$(yq ".server.host" {{config_path}})
-    port=$(yq ".server.port" {{config_path}})
-    access_key=$(yq ".server.admin.access_key" {{config_path}})
-    secret_key=$(yq ".server.admin.secret_key" {{config_path}})
+    host=$(yq ".backend.s3.server.host" {{config_path}})
+    port=$(yq ".backend.s3.server.port" {{config_path}})
+    access_key=$(yq ".backend.admin.auth.access_key" {{config_path}})
+    secret_key=$(yq ".backend.admin.auth.secret_key" {{config_path}})
 
     mc_host="http://${access_key}:${secret_key}@${host}:${port}"
     echo $mc_host
@@ -31,10 +31,10 @@ print-mc-host:
 print-rclone-config:
     #!/bin/bash
 
-    HOST=$(yq ".server.host" {{config_path}})
-    PORT=$(yq ".server.port" {{config_path}})
-    ACCESS_KEY=$(yq ".server.admin.access_key" {{config_path}})
-    SECRET_KEY=$(yq ".server.admin.secret_key" {{config_path}})
+    HOST=$(yq ".backend.s3.server.host" {{config_path}})
+    PORT=$(yq ".backend.s3.server.port" {{config_path}})
+    ACCESS_KEY=$(yq ".backend.admin.auth.access_key" {{config_path}})
+    SECRET_KEY=$(yq ".backend.admin.auth.secret_key" {{config_path}})
 
     cat <<EOF
     [local]
@@ -99,8 +99,8 @@ test-put-obj-s5cmd: sandbox-bucket check-deps
 
     endpoint_url=$(just print-mc-host)
 
-    export AWS_ACCESS_KEY_ID=$(yq ".server.admin.access_key" {{config_path}})
-    export AWS_SECRET_ACCESS_KEY=$(yq ".server.admin.secret_key" {{config_path}})
+    export AWS_ACCESS_KEY_ID=$(yq ".backend.admin.auth.access_key" {{config_path}})
+    export AWS_SECRET_ACCESS_KEY=$(yq ".backend.admin.auth.secret_key" {{config_path}})
 
     echo "==> Generating temporary file with 10 MiB: $tmpfile"
     dd if=/dev/urandom of=$tmpfile bs=1M count=10
@@ -138,8 +138,8 @@ test-list-obj-s5cmd: sandbox-bucket check-deps
     #!/bin/bash
     endpoint_url=$(just print-mc-host)
 
-    export AWS_ACCESS_KEY_ID=$(yq ".server.admin.access_key" {{config_path}})
-    export AWS_SECRET_ACCESS_KEY=$(yq ".server.admin.secret_key" {{config_path}})
+    export AWS_ACCESS_KEY_ID=$(yq ".backend.admin.auth.access_key" {{config_path}})
+    export AWS_SECRET_ACCESS_KEY=$(yq ".backend.admin.auth.secret_key" {{config_path}})
 
     echo "==> Listing keys in {{sandbox_bucket}}"
     s5cmd --endpoint-url $endpoint_url ls s3://{{sandbox_bucket}}/

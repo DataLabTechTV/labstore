@@ -1,6 +1,7 @@
 services:
   web:
     profiles:
+      - all
       - labstore
       - testing
     build:
@@ -12,9 +13,9 @@ services:
       - labstore
       - testing
     environment:
-      - S3_ENDPOINT=labstore-backend:${LABSTORE_SERVER_PORT}
-      - S3_ACCESS_KEY=${LABSTORE_SERVER_ADMIN_ACCESS_KEY}
-      - S3_SECRET_KEY=${LABSTORE_SERVER_ADMIN_SECRET_KEY}
+      - S3_ENDPOINT=labstore-backend:${LABSTORE_BACKEND_S3_SERVER_PORT}
+      - S3_ACCESS_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY}
+      - S3_SECRET_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY}
       - S3_REGION=eu-west-1
       - S3_USE_SSL=false
       - S3_FORCE_PATH_STYLE=true
@@ -22,45 +23,50 @@ services:
 
   backend:
     profiles:
+      - all
       - labstore
       - testing
     build:
       context: ..
       dockerfile: infra/Dockerfile.backend
     ports:
-      - ${LABSTORE_SERVER_PORT}:${LABSTORE_SERVER_PORT}
+      - ${LABSTORE_BACKEND_ADMIN_SERVER_PORT}:${LABSTORE_BACKEND_ADMIN_SERVER_PORT}
+      - ${LABSTORE_BACKEND_S3_SERVER_PORT}:${LABSTORE_BACKEND_S3_SERVER_PORT}
     networks:
       - labstore
     volumes:
       - labstore:/data
     environment:
-      - LABSTORE_SERVER_HOST=${LABSTORE_SERVER_HOST}
-      - LABSTORE_SERVER_PORT=${LABSTORE_SERVER_PORT}
-      - LABSTORE_SERVER_ADMIN_ACCESS_KEY=${LABSTORE_SERVER_ADMIN_ACCESS_KEY}
-      - LABSTORE_SERVER_ADMIN_SECRET_KEY=${LABSTORE_SERVER_ADMIN_SECRET_KEY}
-    command: serve --storage-path /data
+      - LABSTORE_BACKEND_S3_SERVER_HOST=${LABSTORE_BACKEND_S3_SERVER_HOST}
+      - LABSTORE_BACKEND_S3_SERVER_PORT=${LABSTORE_BACKEND_S3_SERVER_PORT}
+      - LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY}
+      - LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY}
+    command: serve --s3-storage-path /data
     restart: unless-stopped
 
   benchmark-labstore:
     profiles:
+      - all
       - benchmark
     build:
       context: ..
       dockerfile: infra/Dockerfile.backend
     ports:
+      - 7788:7788
       - ${BENCHMARK_LABSTORE_PORT:-7789}:6789
     networks:
       - benchmark
     volumes:
       - benchmark-labstore:/data
     environment:
-      - LABSTORE_SERVER_ADMIN_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
-      - LABSTORE_SERVER_ADMIN_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
-    command: serve --host 0.0.0.0 --port 6789 --storage-path /data
+      - LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
+      - LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
+    command: serve --s3-server-host 0.0.0.0 --s3-server-port 6789 --s3-storage-path /data
     restart: unless-stopped
 
   benchmark-minio:
     profiles:
+      - all
       - benchmark
       - testing
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
@@ -84,6 +90,7 @@ services:
 
   benchmark-garage:
     profiles:
+      - all
       - benchmark
     build:
       context: ..
@@ -101,6 +108,7 @@ services:
 
   benchmark-seaweedfs:
     profiles:
+      - all
       - benchmark
     image: chrislusf/seaweedfs:4.00
     networks:
@@ -120,6 +128,7 @@ services:
 
   benchmark-rustfs:
     profiles:
+      - all
       - benchmark
     image: rustfs/rustfs:1.0.0-alpha.69
     ports:
@@ -137,6 +146,7 @@ services:
 
   benchmark-iperf3-server:
     profiles:
+      - all
       - benchmark
     image: networkstatic/iperf3
     ports:
