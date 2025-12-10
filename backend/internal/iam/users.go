@@ -18,10 +18,10 @@ func GetUser(accessKey string) (*User, bool) {
 
 func createAdmin() {
 	store.Users = map[string]*User{
-		config.Server.Admin.AccessKey: {
+		config.Admin.AccessKey: {
 			Name:        "Administrator",
 			AccessKeyID: "admin",
-			SecretKey:   config.Server.Admin.SecretKey,
+			SecretKey:   config.Admin.SecretKey,
 			PolicyIDs:   []string{adminPolicy},
 		},
 	}

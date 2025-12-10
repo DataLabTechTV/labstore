@@ -56,10 +56,13 @@ print-env:
     LABSTORE_WEB_HOST=$(yq ".web.host" {{config_path}})
     LABSTORE_WEB_PORT=$(yq ".web.port" {{config_path}})
 
-    LABSTORE_SERVER_HOST=$(yq ".server.host" {{config_path}})
-    LABSTORE_SERVER_PORT=$(yq ".server.port" {{config_path}})
-    LABSTORE_SERVER_ADMIN_ACCESS_KEY=$(yq ".server.admin.access_key" {{config_path}})
-    LABSTORE_SERVER_ADMIN_SECRET_KEY=$(yq ".server.admin.secret_key" {{config_path}})
+    LABSTORE_BACKEND_S3_SERVER_HOST=$(yq ".backend.s3.server.host" {{config_path}})
+    LABSTORE_BACKEND_S3_SERVER_PORT=$(yq ".backend.s3.server.port" {{config_path}})
+
+    LABSTORE_BACKEND_ADMIN_SERVER_HOST=$(yq ".backend.admin.server.host" {{config_path}})
+    LABSTORE_BACKEND_ADMIN_SERVER_PORT=$(yq ".backend.admin.server.port" {{config_path}})
+    LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=$(yq ".backend.admin.auth.access_key" {{config_path}})
+    LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=$(yq ".backend.admin.auth.secret_key" {{config_path}})
 
     BENCHMARK_HOST=$(yq ".benchmark.host" {{config_path}})
 
@@ -78,10 +81,12 @@ print-env:
     cat <<EOF
     export LABSTORE_WEB_HOST=$LABSTORE_WEB_HOST
     export LABSTORE_WEB_PORT=$LABSTORE_WEB_PORT
-    export LABSTORE_SERVER_HOST=$LABSTORE_SERVER_HOST
-    export LABSTORE_SERVER_PORT=$LABSTORE_SERVER_PORT
-    export LABSTORE_SERVER_ADMIN_ACCESS_KEY=$LABSTORE_SERVER_ADMIN_ACCESS_KEY
-    export LABSTORE_SERVER_ADMIN_SECRET_KEY=$LABSTORE_SERVER_ADMIN_SECRET_KEY
+    LABSTORE_BACKEND_S3_SERVER_HOST=$LABSTORE_BACKEND_S3_SERVER_HOST
+    LABSTORE_BACKEND_S3_SERVER_PORT=$LABSTORE_BACKEND_S3_SERVER_PORT
+    LABSTORE_BACKEND_ADMIN_SERVER_HOST=$LABSTORE_BACKEND_ADMIN_SERVER_HOST
+    LABSTORE_BACKEND_ADMIN_SERVER_PORT=$LABSTORE_BACKEND_ADMIN_SERVER_PORT
+    LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=$LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY
+    LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=$LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY
     export BENCHMARK_HOST=$BENCHMARK_HOST
     export BENCHMARK_PORTS_IPERF3=$BENCHMARK_PORTS_IPERF3
     export BENCHMARK_PORTS_LABSTORE=$BENCHMARK_PORTS_LABSTORE

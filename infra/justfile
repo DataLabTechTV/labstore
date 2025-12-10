@@ -49,3 +49,15 @@ benchmark-down: check-deps
     #!/bin/bash
     eval $(just print-env)
     docker compose -p labstore -f infra/compose.yml --profile benchmark down -v
+
+[working-directory: ".."]
+all-up: check-deps
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile all up --build -d
+
+[working-directory: ".."]
+all-down: check-deps
+    #!/bin/bash
+    eval $(just print-env)
+    docker compose -p labstore -f infra/compose.yml --profile all down -v

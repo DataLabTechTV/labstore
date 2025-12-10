@@ -13,7 +13,7 @@ import (
 )
 
 func PutObject(bucket string, key string, reader io.Reader) error {
-	bucketPath := filepath.Join(config.Server.Storage.Path, bucket)
+	bucketPath := filepath.Join(config.S3.Storage.Path, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
 		return core.ErrNoSuchBucket(bucket)
 	}
@@ -30,9 +30,9 @@ func PutObject(bucket string, key string, reader io.Reader) error {
 	}
 	defer helper.CloseWithErr(f, &err)
 
-	writer := bufio.NewWriterSize(f, config.Server.Performance.BufferSize)
+	writer := bufio.NewWriterSize(f, config.S3.Perf.BufferSize)
 
-	_, err = io.CopyBuffer(writer, reader, make([]byte, config.Server.Performance.BufferSize))
+	_, err = io.CopyBuffer(writer, reader, make([]byte, config.S3.Perf.BufferSize))
 	if err != nil {
 		return core.ErrInternalError("Failed to write object")
 	}
