@@ -1,17 +1,21 @@
 backend:
+  storage:
+    path: ./data
   admin:
     server:
       host: 0.0.0.0
-      port: 6788
+      port: 6787
     auth:
       access_key: admin
       secret_key: adminadmin
+  iam:
+    server:
+      host: 0.0.0.0
+      port: 6788
   s3:
     server:
       host: 0.0.0.0
       port: 6789
-    storage:
-      path: ./data
     perf:
       buffer_size: 262144
 

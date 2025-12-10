@@ -22,6 +22,8 @@ func NewServeCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().String("storage-path", config.DefaultStoragePath, "Storage root path for objects and metadata")
+
 	cmd.Flags().String("admin-server-host", config.DefaultAdminServerHost, "Listening host for admin server")
 	cmd.Flags().String("admin-server-port", config.DefaultAdminServerHost, "Listening port for admin server")
 	cmd.Flags().String("admin-auth-access-key", config.DefaultAdminAuthAccessKey, "Administrator account access key")
@@ -32,7 +34,6 @@ func NewServeCmd() *cobra.Command {
 
 	cmd.Flags().String("s3-server-host", config.DefaultS3ServerHost, "Listening host for S3-compatible server")
 	cmd.Flags().Uint16("s3-server-port", config.DefaultS3ServerPort, "Listening port for S3-compatible server")
-	cmd.Flags().String("s3-storage-path", config.DefaultS3StoragePath, "Storage path for objects and internals")
 	cmd.Flags().Int("s3-perf-buffer-size", config.DefaultS3PerfBufferSize, "Performance setting for buffer size in bytes")
 
 	return cmd

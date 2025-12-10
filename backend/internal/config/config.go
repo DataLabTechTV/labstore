@@ -17,6 +17,10 @@ import (
 const (
 	configBasename = "labstore"
 
+	DefaultStoragePath        = "./data"
+	DefaultStorageObjectsDir  = "objects"
+	DefaultStorageMetadataDir = "metadata"
+
 	DefaultAdminServerHost    = "0.0.0.0"
 	DefaultAdminServerPort    = 6787
 	DefaultAdminAuthAccessKey = "admin"
@@ -27,7 +31,6 @@ const (
 
 	DefaultS3ServerHost     = "0.0.0.0"
 	DefaultS3ServerPort     = 6789
-	DefaultS3StoragePath    = "./data"
 	DefaultS3PerfBufferSize = 256 * helper.KiB
 )
 
@@ -36,9 +39,16 @@ type AppConfig struct {
 }
 
 type BackendConfig struct {
-	Admin *AdminConfig `mapstructure:"admin"`
-	IAM   *IAMConfig   `mapstructure:"iam"`
-	S3    *S3Config    `mapstructure:"s3"`
+	Storage *StorageConfig `mapstructure:"storage"`
+	Admin   *AdminConfig   `mapstructure:"admin"`
+	IAM     *IAMConfig     `mapstructure:"iam"`
+	S3      *S3Config      `mapstructure:"s3"`
+}
+
+type StorageConfig struct {
+	Path         string `mapstructure:"path"`
+	ObjectsPath  string `mapstructure:"-"`
+	MetadataPath string `mapstructure:"-"`
 }
 
 type AdminConfig struct {
@@ -51,9 +61,8 @@ type IAMConfig struct {
 }
 
 type S3Config struct {
-	Server  *ServerConfig  `mapstructure:"server"`
-	Storage *StorageConfig `mapstructure:"storage"`
-	Perf    *PerfConfig    `mapstructure:"perf"`
+	Server *ServerConfig `mapstructure:"server"`
+	Perf   *PerfConfig   `mapstructure:"perf"`
 }
 
 type ServerConfig struct {
@@ -66,17 +75,18 @@ type AuthConfig struct {
 	SecretKey string `mapstructure:"secret_key"`
 }
 
-type StorageConfig struct {
-	Path string `mapstructure:"path"`
-}
-
 type PerfConfig struct {
 	BufferSize int `mapstructure:"buffer_size"`
 }
 
+var Storage *StorageConfig
 var Admin *AdminConfig
 var IAM *IAMConfig
 var S3 *S3Config
+
+func (config *StorageConfig) Debug() {
+	slog.Debug("config set", "name", "backend.storage.path", "value", config.Path)
+}
 
 func (config *AdminConfig) Debug() {
 	slog.Debug("config set", "name", "backend.admin.server.host", "value", config.Server.Host)
@@ -100,7 +110,6 @@ func (config *IAMConfig) Debug() {
 func (config *S3Config) Debug() {
 	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Server.Host)
 	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Server.Port)
-	slog.Debug("config set", "name", "backend.s3.storage.path", "value", config.Storage.Path)
 	slog.Debug("config set", "name", "backend.s3.perf.buffer_size", "value", config.Perf.BufferSize)
 }
 
@@ -134,6 +143,9 @@ func setLookupPaths() {
 func setDefaults() {
 	slog.Debug("setting config defaults")
 
+	// storage
+	viper.SetDefault("backend.storage.path", DefaultStoragePath)
+
 	// admin
 	viper.SetDefault("backend.admin.server.host", DefaultAdminServerHost)
 	viper.SetDefault("backend.admin.server.port", DefaultAdminServerPort)
@@ -155,7 +167,6 @@ func setDefaults() {
 	// s3
 	viper.SetDefault("backend.s3.server.host", DefaultS3ServerHost)
 	viper.SetDefault("backend.s3.server.port", DefaultS3ServerPort)
-	viper.SetDefault("backend.s3.storage.path", DefaultS3StoragePath)
 	viper.SetDefault("backend.s3.perf.buffer_size", DefaultS3PerfBufferSize)
 }
 
@@ -173,14 +184,18 @@ func setOverrides(rootCmd *cobra.Command) {
 		return
 	}
 
+	helper.CheckFatal(viper.BindPFlag("backend.storage.path", serverCmd.Flags().Lookup("storage-path")))
+
 	helper.CheckFatal(viper.BindPFlag("backend.admin.server.host", serverCmd.Flags().Lookup("admin-server-host")))
 	helper.CheckFatal(viper.BindPFlag("backend.admin.server.port", serverCmd.Flags().Lookup("admin-server-port")))
 	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.access_key", serverCmd.Flags().Lookup("admin-auth-access-key")))
 	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.secret_key", serverCmd.Flags().Lookup("admin-auth-secret-key")))
 
+	helper.CheckFatal(viper.BindPFlag("backend.iam.server.host", serverCmd.Flags().Lookup("iam-server-host")))
+	helper.CheckFatal(viper.BindPFlag("backend.aim.server.port", serverCmd.Flags().Lookup("iam-server-port")))
+
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.host", serverCmd.Flags().Lookup("s3-server-host")))
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.port", serverCmd.Flags().Lookup("s3-server-port")))
-	helper.CheckFatal(viper.BindPFlag("backend.s3.storage.path", serverCmd.Flags().Lookup("s3-storage-path")))
 	helper.CheckFatal(viper.BindPFlag("backend.s3.perf.buffer_size", serverCmd.Flags().Lookup("s3-perf-buffer-size")))
 }
 
@@ -202,6 +217,9 @@ func parseConfig() {
 		return
 	}
 
+	Storage = config.Backend.Storage
+	Storage.Debug()
+
 	Admin = config.Backend.Admin
 	Admin.Debug()
 
@@ -211,7 +229,13 @@ func parseConfig() {
 	S3 = config.Backend.S3
 	S3.Debug()
 
-	relStoragePath := helper.MustResolveToRelativePath(S3.Storage.Path)
-	slog.Debug("storage path resolved", "from", S3.Storage.Path, "to", relStoragePath)
-	S3.Storage.Path = relStoragePath
+	relStoragePath := helper.MustResolveToRelativePath(Storage.Path)
+	slog.Debug("storage path resolved", "from", Storage.Path, "to", relStoragePath)
+	Storage.Path = relStoragePath
+
+	Storage.ObjectsPath = filepath.Join(Storage.Path, DefaultStorageObjectsDir)
+	slog.Debug("object storage path set", "path", Storage.ObjectsPath)
+
+	Storage.MetadataPath = filepath.Join(Storage.Path, DefaultStorageMetadataDir)
+	slog.Debug("metadata storage path set", "path", Storage.MetadataPath)
 }

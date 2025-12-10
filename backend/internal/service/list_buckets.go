@@ -30,7 +30,7 @@ type ListAllMyBucketsResult struct {
 }
 
 func ListBuckets(accessKey string) (*ListAllMyBucketsResult, error) {
-	entries, err := os.ReadDir(config.S3.Storage.Path)
+	entries, err := os.ReadDir(config.Storage.ObjectsPath)
 	if err != nil {
 		return nil, core.ErrInternalError("Failed to list buckets")
 	}
