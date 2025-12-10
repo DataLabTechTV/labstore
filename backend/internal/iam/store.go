@@ -16,6 +16,14 @@ type Store struct {
 	Policies map[string]*Policy
 }
 
+func NewStore() *Store {
+	return &Store{
+		Users:    make(map[string]*User),
+		Groups:   make(map[string]*Group),
+		Policies: make(map[string]*Policy),
+	}
+}
+
 func ensureSchema() {
 	dbPath := filepath.Join(config.Storage.MetadataPath, "iam.db")
 
