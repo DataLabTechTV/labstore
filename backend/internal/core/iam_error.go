@@ -1,0 +1,43 @@
+package core
+
+import (
+	"encoding/xml"
+	"fmt"
+	"net/http"
+
+	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
+)
+
+type IAMErrorResponse struct {
+	XMLName   xml.Name `xml:"ErrorResponse"`
+	Error     *IAMError
+	RequestId string
+}
+
+type IAMError struct {
+	Type       IAMErrorType
+	Code       string
+	Message    string
+	RequestId  string `xml:"-"`
+	StatusCode int    `xml:"-"`
+}
+
+type IAMErrorType string
+
+const (
+	IAMSenderType   IAMErrorType = "Sender"
+	IAMReceiverType IAMErrorType = "Receiver"
+)
+
+func (e *IAMError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+}
+
+func ErrNotImplemented(action iam.IAMOp) *IAMError {
+	return &IAMError{
+		Type:       IAMSenderType,
+		Code:       "NotImplemented",
+		Message:    fmt.Sprintf("The action %s is not implemented", action),
+		StatusCode: http.StatusBadRequest,
+	}
+}
