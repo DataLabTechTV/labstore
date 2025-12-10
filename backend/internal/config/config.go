@@ -14,56 +14,76 @@ import (
 	"github.com/spf13/viper"
 )
 
-const configBasename = "labstore"
+const (
+	configBasename = "labstore"
 
-const DefaultHost = "0.0.0.0"
-const DefaultPort = 6789
-const DefaultStoragePath = "./data"
-const DefaultAdminAccessKey = "admin"
-const DefaultAdminSecretKey = DefaultAdminAccessKey
-const DefaultPerfBufferSize = 256 * helper.KiB
+	DefaultAdminHost          = "0.0.0.0"
+	DefaultAdminPort          = 6788
+	DefaultAdminAuthAccessKey = "admin"
+	DefaultAdminSecretKey     = DefaultAdminAuthAccessKey
+
+	DefaultS3ServerHost     = "0.0.0.0"
+	DefaultS3ServerPort     = 6789
+	DefaultS3StoragePath    = "./data"
+	DefaultS3PerfBufferSize = 256 * helper.KiB
+)
 
 type AppConfig struct {
-	Server *ServerConfig `mapstructure:"server"`
+	Backend *BackendConfig `mapstructure:"backend"`
+}
+
+type BackendConfig struct {
+	Admin *AdminConfig `mapstructure:"admin"`
+	S3    *S3Config    `mapstructure:"s3"`
 }
 
 type ServerConfig struct {
-	Host        string             `mapstructure:"host"`
-	Port        uint16             `mapstructure:"port"`
-	Storage     *StorageConfig     `mapstructure:"storage"`
-	Admin       *AdminConfig       `mapstructure:"admin"`
-	Performance *PerformanceConfig `mapstructure:"performance"`
+	Host string `mapstructure:"host"`
+	Port uint16 `mapstructure:"port"`
+}
+
+type AdminConfig struct {
+	ServerConfig `mapstructure:"server"`
+	AccessKey    string `mapstructure:"access_key"`
+	SecretKey    string `mapstructure:"secret_key"`
+}
+
+type S3Config struct {
+	ServerConfig `mapstructure:"server"`
+	Storage      *StorageConfig `mapstructure:"storage"`
+	Perf         *PerfConfig    `mapstructure:"perf"`
 }
 
 type StorageConfig struct {
 	Path string `mapstructure:"path"`
 }
 
-type AdminConfig struct {
-	AccessKey string `mapstructure:"access_key"`
-	SecretKey string `mapstructure:"secret_key"`
-}
-
-type PerformanceConfig struct {
+type PerfConfig struct {
 	BufferSize int `mapstructure:"buffer_size"`
 }
 
-var Server *ServerConfig
+var S3 *S3Config
+var Admin *AdminConfig
 
-func (config *ServerConfig) Debug() {
-	slog.Debug("config set", "name", "server.host", "value", config.Host)
-	slog.Debug("config set", "name", "server.port", "value", config.Port)
-	slog.Debug("config set", "name", "server.storage.path", "value", config.Storage.Path)
-	slog.Debug("config set", "name", "server.admin.access_key", "value", config.Admin.AccessKey)
-	slog.Debug("config set", "name", "server.performance.buffer_size", "value", config.Performance.BufferSize)
+func (config *S3Config) Debug() {
+	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Host)
+	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Port)
+	slog.Debug("config set", "name", "backend.s3.storage.path", "value", config.Storage.Path)
+	slog.Debug("config set", "name", "backend.s3.perf.buffer_size", "value", config.Perf.BufferSize)
+}
+
+func (config *AdminConfig) Debug() {
+	slog.Debug("config set", "name", "backend.admin.server.host", "value", config.Host)
+	slog.Debug("config set", "name", "backend.admin.server.port", "value", config.Port)
+	slog.Debug("config set", "name", "backend.admin.access_key", "value", config.AccessKey)
 
 	var adminSecretKeyDisplay string
-	if len(config.Admin.SecretKey) > 0 {
+	if len(config.SecretKey) > 0 {
 		adminSecretKeyDisplay = security.Redacted
 	} else {
 		adminSecretKeyDisplay = constants.Empty
 	}
-	slog.Debug("config set", "name", "server.admin.secret_key", "value", adminSecretKeyDisplay)
+	slog.Debug("config set", "name", "backend.admin.secret_key", "value", adminSecretKeyDisplay)
 }
 
 func Load(rootCmd *cobra.Command) {
@@ -96,21 +116,25 @@ func setLookupPaths() {
 func setDefaults() {
 	slog.Debug("setting config defaults")
 
-	viper.SetDefault("server.host", DefaultHost)
-	viper.SetDefault("server.port", DefaultPort)
-	viper.SetDefault("server.storage.path", DefaultStoragePath)
-	viper.SetDefault("server.admin.access_key", DefaultAdminAccessKey)
+	// admin
+	viper.SetDefault("backend.admin.server.host", DefaultAdminHost)
+	viper.SetDefault("backend.admin.server.port", DefaultAdminPort)
+	viper.SetDefault("backend.admin.auth.access_key", DefaultAdminAuthAccessKey)
 
-	defaultAdminSecretKey, err := security.GeneratePassword(32)
+	defaultAdminAuthSecretKey, err := security.GeneratePassword(32)
 	if err != nil {
 		slog.Error("admin password generation", "err", err)
-		defaultAdminSecretKey = DefaultAdminSecretKey
+		defaultAdminAuthSecretKey = DefaultAdminSecretKey
 	}
 
-	viper.SetDefault("server.admin.secret_key", defaultAdminSecretKey)
-	fmt.Printf("🔑 Default admin secret key: %s\n", defaultAdminSecretKey)
+	viper.SetDefault("backend.admin.auth.secret_key", defaultAdminAuthSecretKey)
+	fmt.Printf("🔑 Default admin secret key: %s\n", defaultAdminAuthSecretKey)
 
-	viper.SetDefault("server.performance.buffer_size", DefaultPerfBufferSize)
+	// s3
+	viper.SetDefault("backend.s3.server.host", DefaultS3ServerHost)
+	viper.SetDefault("backend.s3.server.port", DefaultS3ServerPort)
+	viper.SetDefault("backend.s3.storage.path", DefaultS3StoragePath)
+	viper.SetDefault("backend.s3.perf.buffer_size", DefaultS3PerfBufferSize)
 }
 
 func setOverrides(rootCmd *cobra.Command) {
@@ -127,11 +151,15 @@ func setOverrides(rootCmd *cobra.Command) {
 		return
 	}
 
-	helper.CheckFatal(viper.BindPFlag("server.host", serverCmd.Flags().Lookup("host")))
-	helper.CheckFatal(viper.BindPFlag("server.port", serverCmd.Flags().Lookup("port")))
-	helper.CheckFatal(viper.BindPFlag("server.storage.path", serverCmd.Flags().Lookup("storage-path")))
-	helper.CheckFatal(viper.BindPFlag("server.admin.access_key", serverCmd.Flags().Lookup("admin-user")))
-	helper.CheckFatal(viper.BindPFlag("server.admin.secret_key", serverCmd.Flags().Lookup("admin-pass")))
+	helper.CheckFatal(viper.BindPFlag("backend.admin.server.host", serverCmd.Flags().Lookup("admin-server-host")))
+	helper.CheckFatal(viper.BindPFlag("backend.amin.server.port", serverCmd.Flags().Lookup("admin-server-port")))
+	helper.CheckFatal(viper.BindPFlag("backend.admin.access_key", serverCmd.Flags().Lookup("admin-auth-access-key")))
+	helper.CheckFatal(viper.BindPFlag("backend.admin.secret_key", serverCmd.Flags().Lookup("admin-auth-secret-key")))
+
+	helper.CheckFatal(viper.BindPFlag("backend.s3.server.host", serverCmd.Flags().Lookup("s3-server-host")))
+	helper.CheckFatal(viper.BindPFlag("backend.s3.server.port", serverCmd.Flags().Lookup("s3-server-port")))
+	helper.CheckFatal(viper.BindPFlag("backend.s3.storage.path", serverCmd.Flags().Lookup("s3-storage-path")))
+	helper.CheckFatal(viper.BindPFlag("backend.s3.perf.buffer_size", serverCmd.Flags().Lookup("s3-perf-buffer-size")))
 }
 
 func readConfig() {
@@ -152,11 +180,13 @@ func parseConfig() {
 		return
 	}
 
-	Server = config.Server
+	Admin = config.Backend.Admin
+	Admin.Debug()
 
-	Server.Debug()
+	S3 = config.Backend.S3
+	S3.Debug()
 
-	relStoragePath := helper.MustResolveToRelativePath(Server.Storage.Path)
-	slog.Debug("storage path resolved", "from", Server.Storage.Path, "to", relStoragePath)
-	Server.Storage.Path = relStoragePath
+	relStoragePath := helper.MustResolveToRelativePath(S3.Storage.Path)
+	slog.Debug("storage path resolved", "from", S3.Storage.Path, "to", relStoragePath)
+	S3.Storage.Path = relStoragePath
 }

@@ -1,18 +1,17 @@
 package router
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/bucket"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/object"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/service"
 )
 
 func Start() {
@@ -21,61 +20,69 @@ func Start() {
 		os.Exit(1)
 	}
 
-	router := http.NewServeMux()
-	loadRoutes(router)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	addr := fmt.Sprintf("%s:%d", config.Server.Host, config.Server.Port)
+	s3ServerDescriptor := NewS3ServerDescriptor(config.S3.Host, config.S3.Port)
+	adminServerDescriptor := NewAdminServerDescriptor(config.Admin.Host, config.Admin.Port)
+	serverDescriptors := []*ServerDescriptor{adminServerDescriptor, s3ServerDescriptor}
 
-	mw := middleware.Stack(
-		middleware.LoggingMiddleware,
-		middleware.CompressionMiddleware,
-		middleware.LabStoreMiddleware,
-		middleware.AuthMiddleware,
-		middleware.NormalizationMiddleware,
-	)
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(serverDescriptors))
 
-	slog.Info(
-		"starting S3-compatible object store server",
-		"host", config.Server.Host,
-		"port", config.Server.Port,
-	)
-
-	server := http.Server{
-		Addr:    addr,
-		Handler: mw(router),
+	for _, sd := range serverDescriptors {
+		wg.Add(1)
+		go runServer(sd, &wg, errCh)
+		sd.Healthy.Store(true)
 	}
 
-	fmt.Printf("🌐 Backend listening on http://%s\n", addr)
+	go shutdownServers(ctx, serverDescriptors)
+	go waitAndClose(errCh, &wg)
 
-	log.Fatal(server.ListenAndServe())
+	if err := <-errCh; err != nil {
+		slog.Error("server error", "err", err)
+	}
+
+	slog.Info("all servers shut down cleanly")
 }
 
 func ensureDirectories() error {
 	slog.Debug("ensuring directories")
 
-	if err := os.MkdirAll(config.Server.Storage.Path, 0755); err != nil {
+	if err := os.MkdirAll(config.S3.Storage.Path, 0755); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func loadRoutes(router *http.ServeMux) {
-	slog.Debug("loading routes")
+func runServer(sd *ServerDescriptor, wg *sync.WaitGroup, errCh chan<- error) {
+	defer wg.Done()
 
-	// Service
-	router.Handle("GET /", middleware.WithIAM(iam.ListAllMyBuckets, http.HandlerFunc(service.ListBucketsHandler)))
+	fmt.Printf("🌐 %s listening on http://%s\n", sd.Name, sd.Server.Addr)
 
-	// Bucket
-	router.Handle("HEAD /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.HeadBucketHandler)))
-	router.Handle("GET /{bucket}", middleware.WithIAM(iam.ListBucket, http.HandlerFunc(bucket.ListObjectsHandler)))
-	router.Handle("PUT /{bucket}", middleware.WithIAM(iam.CreateBucket, http.HandlerFunc(bucket.PutBucketHandler)))
-	router.Handle("DELETE /{bucket}", middleware.WithIAM(iam.DeleteBucket, http.HandlerFunc(bucket.DeleteBucketHandler)))
+	err := sd.Server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		sd.Healthy.Store(false)
+		errCh <- err
+	}
+}
 
-	// Object
-	router.Handle("HEAD /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.HeadObjectHandler)))
-	router.Handle("GET /{bucket}/{key...}", middleware.WithIAM(iam.GetObject, http.HandlerFunc(object.GetObjectHandler)))
-	router.Handle("PUT /{bucket}/{key...}", middleware.WithIAM(iam.PutObject, http.HandlerFunc(object.PutObjectHandler)))
-	router.Handle("DELETE /{bucket}/{key...}", middleware.WithIAM(iam.DeleteObject, http.HandlerFunc(object.DeleteObjectHandler)))
-	router.Handle("POST /{bucket}", middleware.WithIAM(iam.DeleteBucket, http.HandlerFunc(object.DeleteObjectsHandler)))
+func shutdownServers(ctx context.Context, serverDescriptors []*ServerDescriptor) {
+	<-ctx.Done()
+	slog.Info("shutdown signal received")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	for i := len(serverDescriptors) - 1; i >= 0; i-- {
+		s := serverDescriptors[i]
+		slog.Info("shutting down server", "addr", s.Server.Addr)
+		_ = s.Server.Shutdown(shutdownCtx)
+	}
+}
+
+func waitAndClose(errCh chan error, wg *sync.WaitGroup) {
+	wg.Wait()
+	close(errCh)
 }

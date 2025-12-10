@@ -39,7 +39,7 @@ func (req DeleteObjectsRequest) LogValue() slog.Value {
 
 func DeleteObjects(bucket string, r *DeleteObjectsRequest) *DeleteResult {
 	res := &DeleteResult{}
-	bucketPath := filepath.Join(config.Server.Storage.Path, bucket)
+	bucketPath := filepath.Join(config.S3.Storage.Path, bucket)
 
 	for _, obj := range r.Object {
 		objPath := filepath.Join(bucketPath, obj.Key)
