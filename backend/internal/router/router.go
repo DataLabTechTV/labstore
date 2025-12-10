@@ -56,7 +56,11 @@ func Start() {
 func ensureDirectories() error {
 	slog.Debug("ensuring directories")
 
-	if err := os.MkdirAll(config.S3.Storage.Path, 0755); err != nil {
+	if err := os.MkdirAll(config.Storage.ObjectsPath, 0755); err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(config.Storage.MetadataPath, 0755); err != nil {
 		return err
 	}
 

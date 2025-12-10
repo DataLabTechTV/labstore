@@ -13,7 +13,7 @@ import (
 )
 
 func PutObject(bucket string, key string, reader io.Reader) error {
-	bucketPath := filepath.Join(config.S3.Storage.Path, bucket)
+	bucketPath := filepath.Join(config.Storage.ObjectsPath, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
 		return core.ErrNoSuchBucket(bucket)
 	}

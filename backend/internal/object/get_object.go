@@ -19,7 +19,7 @@ type GetObjectResult struct {
 }
 
 func GetObject(bucket, key string) (*GetObjectResult, error) {
-	objPath := filepath.Join(config.S3.Storage.Path, bucket, key)
+	objPath := filepath.Join(config.Storage.ObjectsPath, bucket, key)
 
 	file, err := os.Open(objPath)
 	if err != nil {
