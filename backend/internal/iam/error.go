@@ -48,3 +48,12 @@ func ErrEntityAlreadyExists(entityName string) *IAMError {
 		StatusCode: http.StatusConflict,
 	}
 }
+
+func ErrServiceFailure() *IAMError {
+	return &IAMError{
+		Type:       IAMReceiverType,
+		Code:       "ServiceFailure",
+		Message:    "The request processing has failed because of an internal error.",
+		StatusCode: http.StatusInternalServerError,
+	}
+}

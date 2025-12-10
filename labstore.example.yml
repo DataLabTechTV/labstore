@@ -12,6 +12,12 @@ backend:
     server:
       host: 0.0.0.0
       port: 6788
+    db:
+      max_open_conns: 3
+      max_idle_conns: 3
+      timeout_ms: 5000
+      read_cache_size_kib: 65536
+      writer_cache_size_kib: 16384
   s3:
     server:
       host: 0.0.0.0
