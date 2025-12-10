@@ -28,27 +28,23 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func createAdmin() {
-	store.Users = map[string]*User{
-		config.Admin.Auth.AccessKey: {
-			Name:        "Administrator",
-			AccessKeyID: "admin",
-			SecretKey:   config.Admin.Auth.SecretKey,
-			PolicyIDs:   []string{adminPolicy},
-		},
+func setupAdmin() {
+	store.Users[config.Admin.Auth.AccessKey] = &User{
+		Name:        "Administrator",
+		AccessKeyID: config.Admin.Auth.AccessKey,
+		SecretKey:   config.Admin.Auth.SecretKey,
+		PolicyIDs:   []string{adminPolicy},
 	}
 
-	store.Policies = map[string]*Policy{
-		adminPolicy: {
-			ID: adminPolicy,
-			Document: &PolicyDocument{
-				Version: latestPolicyDocumentVersion,
-				Statement: []Statement{
-					{
-						Effect:    allow,
-						Actions:   []Action{Action(Any)},
-						Resources: []string{Any},
-					},
+	store.Policies[adminPolicy] = &Policy{
+		ID: adminPolicy,
+		Document: &PolicyDocument{
+			Version: latestPolicyDocumentVersion,
+			Statement: []Statement{
+				{
+					Effect:    allow,
+					Actions:   []Action{Action(Any)},
+					Resources: []string{Any},
 				},
 			},
 		},

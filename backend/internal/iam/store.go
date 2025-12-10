@@ -29,7 +29,7 @@ func ensureSchema() {
 	CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT,
-		access_key_id TEXT,
+		access_key TEXT,
 		secret_key TEXT
 	);
 	`
