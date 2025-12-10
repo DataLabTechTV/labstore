@@ -6,7 +6,7 @@ var store Store
 
 func Init() {
 	ensureSchema()
-	createAdmin()
+	setupAdmin()
 }
 
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
