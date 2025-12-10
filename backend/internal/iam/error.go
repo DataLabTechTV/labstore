@@ -1,11 +1,9 @@
-package core
+package iam
 
 import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
-
-	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 )
 
 type IAMErrorResponse struct {
@@ -33,11 +31,20 @@ func (e *IAMError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
-func ErrNotImplemented(action iam.IAMOp) *IAMError {
+func ErrNotImplemented(action IAMOp) *IAMError {
 	return &IAMError{
 		Type:       IAMSenderType,
 		Code:       "NotImplemented",
 		Message:    fmt.Sprintf("The action %s is not implemented", action),
 		StatusCode: http.StatusBadRequest,
+	}
+}
+
+func ErrEntityAlreadyExists(entityName string) *IAMError {
+	return &IAMError{
+		Type:       IAMReceiverType,
+		Code:       "EntityAlreadyExists",
+		Message:    fmt.Sprintf("The entity %s already exists", entityName),
+		StatusCode: http.StatusConflict,
 	}
 }

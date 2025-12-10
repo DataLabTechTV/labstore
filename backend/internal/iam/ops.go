@@ -2,6 +2,7 @@ package iam
 
 type IAMOp string
 
+// TODO: remaining ops for CRUD
 const (
 	// Users
 	OpCreateUser      IAMOp = "CreateUser"
