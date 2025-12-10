@@ -23,8 +23,8 @@ func Start() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	s3ServerDescriptor := NewS3ServerDescriptor(config.S3.Host, config.S3.Port)
-	adminServerDescriptor := NewAdminServerDescriptor(config.Admin.Host, config.Admin.Port)
+	s3ServerDescriptor := NewS3ServerDescriptor(config.S3.Server.Host, config.S3.Server.Port)
+	adminServerDescriptor := NewAdminServerDescriptor(config.Admin.Server.Host, config.Admin.Server.Port)
 	serverDescriptors := []*ServerDescriptor{adminServerDescriptor, s3ServerDescriptor}
 
 	var wg sync.WaitGroup
