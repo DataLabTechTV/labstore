@@ -24,8 +24,15 @@ func Start() {
 	defer stop()
 
 	s3ServerDescriptor := NewS3ServerDescriptor(config.S3.Server.Host, config.S3.Server.Port)
-	adminServerDescriptor := NewAdminServerDescriptor(config.Admin.Server.Host, config.Admin.Server.Port)
-	serverDescriptors := []*ServerDescriptor{adminServerDescriptor, s3ServerDescriptor}
+	iamServerDescriptor := NewIAMServerDescriptor(config.IAM.Server.Host, config.IAM.Server.Port)
+
+	adminServerDescriptor := NewAdminServerDescriptor(
+		config.Admin.Server.Host,
+		config.Admin.Server.Port,
+		[]*ServerDescriptor{s3ServerDescriptor, iamServerDescriptor},
+	)
+
+	serverDescriptors := []*ServerDescriptor{adminServerDescriptor, iamServerDescriptor, s3ServerDescriptor}
 
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(serverDescriptors))
