@@ -2,11 +2,12 @@ package iam
 
 const Any = "*"
 
-var store Store
+var store *Store
 
 func Init() {
-	ensureSchema()
+	store = NewStore()
 	setupAdmin()
+	ensureSchema()
 }
 
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
