@@ -5,3 +5,7 @@ type Store struct {
 	Groups   map[string]*Group
 	Policies map[string]*Policy
 }
+
+func ensureSchema() {
+
+}
