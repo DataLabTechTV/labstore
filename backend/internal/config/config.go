@@ -42,16 +42,20 @@ type ServerConfig struct {
 	Port uint16 `mapstructure:"port"`
 }
 
+type AuthConfig struct {
+	AccessKey string `mapstructure:"access_key"`
+	SecretKey string `mapstructure:"secret_key"`
+}
+
 type AdminConfig struct {
-	ServerConfig `mapstructure:"server"`
-	AccessKey    string `mapstructure:"access_key"`
-	SecretKey    string `mapstructure:"secret_key"`
+	Server *ServerConfig `mapstructure:"server"`
+	Auth   *AuthConfig   `mapstructure:"auth"`
 }
 
 type S3Config struct {
-	ServerConfig `mapstructure:"server"`
-	Storage      *StorageConfig `mapstructure:"storage"`
-	Perf         *PerfConfig    `mapstructure:"perf"`
+	Server  *ServerConfig  `mapstructure:"server"`
+	Storage *StorageConfig `mapstructure:"storage"`
+	Perf    *PerfConfig    `mapstructure:"perf"`
 }
 
 type StorageConfig struct {
@@ -66,19 +70,19 @@ var S3 *S3Config
 var Admin *AdminConfig
 
 func (config *S3Config) Debug() {
-	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Host)
-	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Port)
+	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Server.Host)
+	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Server.Port)
 	slog.Debug("config set", "name", "backend.s3.storage.path", "value", config.Storage.Path)
 	slog.Debug("config set", "name", "backend.s3.perf.buffer_size", "value", config.Perf.BufferSize)
 }
 
 func (config *AdminConfig) Debug() {
-	slog.Debug("config set", "name", "backend.admin.server.host", "value", config.Host)
-	slog.Debug("config set", "name", "backend.admin.server.port", "value", config.Port)
-	slog.Debug("config set", "name", "backend.admin.access_key", "value", config.AccessKey)
+	slog.Debug("config set", "name", "backend.admin.server.host", "value", config.Server.Host)
+	slog.Debug("config set", "name", "backend.admin.server.port", "value", config.Server.Port)
+	slog.Debug("config set", "name", "backend.admin.access_key", "value", config.Auth.AccessKey)
 
 	var adminSecretKeyDisplay string
-	if len(config.SecretKey) > 0 {
+	if len(config.Auth.SecretKey) > 0 {
 		adminSecretKeyDisplay = security.Redacted
 	} else {
 		adminSecretKeyDisplay = constants.Empty
@@ -152,9 +156,9 @@ func setOverrides(rootCmd *cobra.Command) {
 	}
 
 	helper.CheckFatal(viper.BindPFlag("backend.admin.server.host", serverCmd.Flags().Lookup("admin-server-host")))
-	helper.CheckFatal(viper.BindPFlag("backend.amin.server.port", serverCmd.Flags().Lookup("admin-server-port")))
-	helper.CheckFatal(viper.BindPFlag("backend.admin.access_key", serverCmd.Flags().Lookup("admin-auth-access-key")))
-	helper.CheckFatal(viper.BindPFlag("backend.admin.secret_key", serverCmd.Flags().Lookup("admin-auth-secret-key")))
+	helper.CheckFatal(viper.BindPFlag("backend.admin.server.port", serverCmd.Flags().Lookup("admin-server-port")))
+	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.access_key", serverCmd.Flags().Lookup("admin-auth-access-key")))
+	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.secret_key", serverCmd.Flags().Lookup("admin-auth-secret-key")))
 
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.host", serverCmd.Flags().Lookup("s3-server-host")))
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.port", serverCmd.Flags().Lookup("s3-server-port")))
