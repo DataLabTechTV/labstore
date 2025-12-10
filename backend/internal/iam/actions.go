@@ -5,13 +5,13 @@ import "github.com/gobwas/glob"
 type Action string
 
 const (
-	ListAllMyBuckets Action = "s3:ListAllMyBuckets"
-	CreateBucket     Action = "s3:CreateBucket"
-	DeleteBucket     Action = "s3:DeleteBucket"
-	ListBucket       Action = "s3:ListBucket"
-	PutObject        Action = "s3:PutObject"
-	GetObject        Action = "s3:GetObject"
-	DeleteObject     Action = "s3:DeleteObject"
+	S3ListAllMyBuckets Action = "s3:ListAllMyBuckets"
+	S3CreateBucket     Action = "s3:CreateBucket"
+	S3DeleteBucket     Action = "s3:DeleteBucket"
+	S3ListBucket       Action = "s3:ListBucket"
+	S3PutObject        Action = "s3:PutObject"
+	S3GetObject        Action = "s3:GetObject"
+	S3DeleteObject     Action = "s3:DeleteObject"
 )
 
 func matchAction(action Action, stmtActions []Action) bool {
