@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	Name        string
+	Name        string `db:"name"`
 	AccessKeyID string
 	SecretKey   string
 
@@ -20,19 +20,26 @@ func GetUser(accessKey string) (*User, bool) {
 	return user, ok
 }
 
-func CreateUser(username string) *IAMError {
-	if username == config.Admin.Auth.AccessKey {
-		return ErrEntityAlreadyExists(username)
+func CreateUser(name string) *IAMError {
+	if name == config.Admin.Auth.AccessKey {
+		return ErrEntityAlreadyExists(name)
+	}
+
+	user := User{Name: name}
+
+	_, err := store.writeDB.NamedExec(`INSERT INTO users (name) VALUES (:name)`, &user)
+	if err != nil {
+		return ErrServiceFailure()
 	}
 
 	return nil
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-
+	// TODO: call CreateUser
 }
 
-func setupAdmin() {
+func (store *Store) setupAdmin() {
 	store.Users[config.Admin.Auth.AccessKey] = &User{
 		Name:        "Administrator",
 		AccessKeyID: config.Admin.Auth.AccessKey,

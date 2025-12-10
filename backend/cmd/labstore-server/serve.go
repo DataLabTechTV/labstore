@@ -31,6 +31,11 @@ func NewServeCmd() *cobra.Command {
 
 	cmd.Flags().String("iam-server-host", config.DefaultIAMServerHost, "Listening host for IAM server")
 	cmd.Flags().String("iam-server-port", config.DefaultIAMServerHost, "Listening port for IAM server")
+	cmd.Flags().Int("iam-db-max-open-conns", config.DefaultIAMDBMaxOpenConns, "Maximum open reader connections for the IAM database")
+	cmd.Flags().Int("iam-db-max-idle-conns", config.DefaultIAMDBMaxIdleConns, "Maximum idle reader connections for the IAM database")
+	cmd.Flags().Int("iam-db-timeout-ms", config.DefaultIAMDBTimeoutMs, "Connection timeout for the IAM database")
+	cmd.Flags().Int("iam-db-read-cache-size-kib", config.DefaultIAMDBReadCacheSizeKiB, "Cache size of each individual reader connection for the IAM database")
+	cmd.Flags().Int("iam-db-write-cache-size-kib", config.DefaultIAMDBWriteCacheSizeKiB, "Cache size of the writer connection for the IAM database")
 
 	cmd.Flags().String("s3-server-host", config.DefaultS3ServerHost, "Listening host for S3-compatible server")
 	cmd.Flags().Uint16("s3-server-port", config.DefaultS3ServerPort, "Listening port for S3-compatible server")

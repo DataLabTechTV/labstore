@@ -26,8 +26,13 @@ const (
 	DefaultAdminAuthAccessKey = "admin"
 	DefaultAdminSecretKey     = DefaultAdminAuthAccessKey
 
-	DefaultIAMServerHost = "0.0.0.0"
-	DefaultIAMServerPort = 6788
+	DefaultIAMServerHost          = "0.0.0.0"
+	DefaultIAMServerPort          = 6788
+	DefaultIAMDBMaxOpenConns      = 3
+	DefaultIAMDBMaxIdleConns      = 3
+	DefaultIAMDBTimeoutMs         = 5000
+	DefaultIAMDBReadCacheSizeKiB  = 65536
+	DefaultIAMDBWriteCacheSizeKiB = 16384
 
 	DefaultS3ServerHost     = "0.0.0.0"
 	DefaultS3ServerPort     = 6789
@@ -58,6 +63,7 @@ type AdminConfig struct {
 
 type IAMConfig struct {
 	Server *ServerConfig `mapstructure:"server"`
+	DB     *IAMDBConfig  `mapstructure:"db"`
 }
 
 type S3Config struct {
@@ -73,6 +79,14 @@ type ServerConfig struct {
 type AuthConfig struct {
 	AccessKey string `mapstructure:"access_key"`
 	SecretKey string `mapstructure:"secret_key"`
+}
+
+type IAMDBConfig struct {
+	MaxOpenConns      int `mapstructure:"max_open_conns"`
+	MaxIdleConns      int `mapstructure:"max_idle_conns"`
+	TimeoutMs         int `mapstructure:"timeout_ms"`
+	ReadCacheSizeKiB  int `mapstructure:"read_cache_size_kib"`
+	WriteCacheSizeKiB int `mapstructure:"write_cache_size_kib"`
 }
 
 type PerfConfig struct {
@@ -105,6 +119,11 @@ func (config *AdminConfig) Debug() {
 func (config *IAMConfig) Debug() {
 	slog.Debug("config set", "name", "backend.iam.server.host", "value", config.Server.Host)
 	slog.Debug("config set", "name", "backend.iam.server.port", "value", config.Server.Port)
+	slog.Debug("config set", "name", "backend.iam.db.max_open_conns", "value", config.DB.MaxOpenConns)
+	slog.Debug("config set", "name", "backend.iam.db.max_idle_conns", "value", config.DB.MaxIdleConns)
+	slog.Debug("config set", "name", "backend.iam.db.timeout_ms", "value", config.DB.TimeoutMs)
+	slog.Debug("config set", "name", "backend.iam.db.read_cache_size_kib", "value", config.DB.ReadCacheSizeKiB)
+	slog.Debug("config set", "name", "backend.iam.db.write_cache_size_kib", "value", config.DB.WriteCacheSizeKiB)
 }
 
 func (config *S3Config) Debug() {
@@ -163,6 +182,11 @@ func setDefaults() {
 	// iam
 	viper.SetDefault("backend.iam.server.host", DefaultIAMServerHost)
 	viper.SetDefault("backend.iam.server.port", DefaultIAMServerPort)
+	viper.SetDefault("backend.iam.db.max_open_conns", DefaultIAMDBMaxOpenConns)
+	viper.SetDefault("backend.iam.db.max_idle_conns", DefaultIAMDBMaxIdleConns)
+	viper.SetDefault("backend.iam.db.timeout_ms", DefaultIAMDBTimeoutMs)
+	viper.SetDefault("backend.iam.db.read_cache_size_kib", DefaultIAMDBReadCacheSizeKiB)
+	viper.SetDefault("backend.iam.db.write_cache_size_kib", DefaultIAMDBWriteCacheSizeKiB)
 
 	// s3
 	viper.SetDefault("backend.s3.server.host", DefaultS3ServerHost)
@@ -184,16 +208,25 @@ func setOverrides(rootCmd *cobra.Command) {
 		return
 	}
 
+	// storage
 	helper.CheckFatal(viper.BindPFlag("backend.storage.path", serverCmd.Flags().Lookup("storage-path")))
 
+	// admin
 	helper.CheckFatal(viper.BindPFlag("backend.admin.server.host", serverCmd.Flags().Lookup("admin-server-host")))
 	helper.CheckFatal(viper.BindPFlag("backend.admin.server.port", serverCmd.Flags().Lookup("admin-server-port")))
 	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.access_key", serverCmd.Flags().Lookup("admin-auth-access-key")))
 	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.secret_key", serverCmd.Flags().Lookup("admin-auth-secret-key")))
 
+	// iam
 	helper.CheckFatal(viper.BindPFlag("backend.iam.server.host", serverCmd.Flags().Lookup("iam-server-host")))
 	helper.CheckFatal(viper.BindPFlag("backend.aim.server.port", serverCmd.Flags().Lookup("iam-server-port")))
+	helper.CheckFatal(viper.BindPFlag("backend.iam.db.max_open_conns", serverCmd.Flags().Lookup("iam-db-max-open-conns")))
+	helper.CheckFatal(viper.BindPFlag("backend.iam.db.max_idle_conns", serverCmd.Flags().Lookup("iam-db-max-idle-conns")))
+	helper.CheckFatal(viper.BindPFlag("backend.iam.db.timeout_ms", serverCmd.Flags().Lookup("iam-db-timeout-ms")))
+	helper.CheckFatal(viper.BindPFlag("backend.iam.db.read_cache_size_kib", serverCmd.Flags().Lookup("iam-db-read-cache-size-kib")))
+	helper.CheckFatal(viper.BindPFlag("backend.iam.db.write_cache_size_kib", serverCmd.Flags().Lookup("iam-db-write-cache-size-kib")))
 
+	// s3
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.host", serverCmd.Flags().Lookup("s3-server-host")))
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.port", serverCmd.Flags().Lookup("s3-server-port")))
 	helper.CheckFatal(viper.BindPFlag("backend.s3.perf.buffer_size", serverCmd.Flags().Lookup("s3-perf-buffer-size")))
