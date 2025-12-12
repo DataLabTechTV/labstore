@@ -2,7 +2,8 @@ set shell := ["bash", "-uc"]
 
 config_path := "../labstore.yml"
 
-sandbox_bucket := "sandbox"
+test_bucket := "test-bucket"
+test_user := "test_user"
 
 default:
     just -l
@@ -14,6 +15,8 @@ check-deps:
     @just check mc
     @just check rclone
     @just check s5cmd
+    @just check http
+    @just check sqlite3
 
 [group("helpers")]
 print-mc-host:
@@ -53,11 +56,11 @@ create-bucket bucket: check-deps
     mc mb -p local/{{bucket}}
 
 [group("helpers")]
-sandbox-bucket:
-    just create-bucket {{sandbox_bucket}}
+test-bucket:
+    just create-bucket {{test_bucket}}
 
 [group("test-put")]
-test-put-obj-mc: sandbox-bucket check-deps
+test-put-obj-mc: test-bucket check-deps
     #!/bin/bash
 
     tmpfile=$(mktemp)
@@ -67,13 +70,13 @@ test-put-obj-mc: sandbox-bucket check-deps
     dd if=/dev/urandom of=$tmpfile bs=1M count=10
 
     echo "==> Sending temporary file: $tmpfile"
-    mc cp --disable-multipart $tmpfile local/{{sandbox_bucket}}/$(basename $tmpfile).mc
+    mc cp --disable-multipart $tmpfile local/{{test_bucket}}/$(basename $tmpfile).mc
 
     echo "==> Cleaning up temporary file: $tmpfile"
     rm -f $tmpfile
 
 [group("test-put")]
-test-put-obj-rclone: sandbox-bucket check-deps
+test-put-obj-rclone: test-bucket check-deps
     #!/bin/bash
 
     tmpfile=$(mktemp)
@@ -86,13 +89,13 @@ test-put-obj-rclone: sandbox-bucket check-deps
     just print-rclone-config >$tmpconfig
 
     echo "==> Sending temporary file: $tmpfile"
-    rclone copyto $tmpfile local:/{{sandbox_bucket}}/$(basename $tmpfile).rclone --config $tmpconfig
+    rclone copyto $tmpfile local:/{{test_bucket}}/$(basename $tmpfile).rclone --config $tmpconfig
 
     echo "==> Cleaning up temporary files: $tmpfile, $tmpconfig"
     rm -f $tmpfile $tmpconfig
 
 [group("test-put")]
-test-put-obj-s5cmd: sandbox-bucket check-deps
+test-put-obj-s5cmd: test-bucket check-deps
     #!/bin/bash
 
     tmpfile=$(mktemp)
@@ -106,20 +109,20 @@ test-put-obj-s5cmd: sandbox-bucket check-deps
     dd if=/dev/urandom of=$tmpfile bs=1M count=10
 
     echo "==> Sending temporary file: $tmpfile"
-    s5cmd --endpoint-url $endpoint_url cp $tmpfile s3://{{sandbox_bucket}}/$(basename $tmpfile).s5cmd
+    s5cmd --endpoint-url $endpoint_url cp $tmpfile s3://{{test_bucket}}/$(basename $tmpfile).s5cmd
 
     echo "==> Cleaning up temporary file: $tmpfile"
     rm -f $tmpfile
 
 [group("test-list")]
-test-list-obj-mc: sandbox-bucket check-deps
+test-list-obj-mc: test-bucket check-deps
     #!/bin/bash
     export MC_HOST_local=$(just print-mc-host)
-    echo "==> Listing keys in {{sandbox_bucket}}"
-    mc ls local/{{sandbox_bucket}}/
+    echo "==> Listing keys in {{test_bucket}}"
+    mc ls local/{{test_bucket}}/
 
 [group("test-list")]
-test-list-obj-rclone: sandbox-bucket check-deps
+test-list-obj-rclone: test-bucket check-deps
     #!/bin/bash
 
     tmpconfig=$(mktemp)
@@ -127,19 +130,34 @@ test-list-obj-rclone: sandbox-bucket check-deps
     echo "==> Creating temporary rclone config: $tmpconfig"
     just print-rclone-config >$tmpconfig
 
-    echo "==> Listing keys in {{sandbox_bucket}}"
-    rclone lsf local:/{{sandbox_bucket}}/ --config $tmpconfig
+    echo "==> Listing keys in {{test_bucket}}"
+    rclone lsf local:/{{test_bucket}}/ --config $tmpconfig
 
     echo "==> Cleaning up temporary config: $tmpconfig"
     rm -f $tmpconfig
 
 [group("test-list")]
-test-list-obj-s5cmd: sandbox-bucket check-deps
+test-list-obj-s5cmd: test-bucket check-deps
     #!/bin/bash
     endpoint_url=$(just print-mc-host)
 
     export AWS_ACCESS_KEY_ID=$(yq ".backend.admin.auth.access_key" {{config_path}})
     export AWS_SECRET_ACCESS_KEY=$(yq ".backend.admin.auth.secret_key" {{config_path}})
 
-    echo "==> Listing keys in {{sandbox_bucket}}"
-    s5cmd --endpoint-url $endpoint_url ls s3://{{sandbox_bucket}}/
+    echo "==> Listing keys in {{test_bucket}}"
+    s5cmd --endpoint-url $endpoint_url ls s3://{{test_bucket}}/
+
+[group("test-iam")]
+test-iam-create-user: check-deps
+    #!/bin/bash
+    echo "Creating IAM user: {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=CreateUser&UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-delete-user: check-deps
+    #!/bin/bash
+    echo "Deleting IAM user: {{test_user}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM users WHERE name = '{{test_user}}'"

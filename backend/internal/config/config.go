@@ -18,9 +18,10 @@ const (
 	configBasename = "labstore"
 
 	DefaultStorageDataDir     = "./data"
-	DefaultStorageKeysDir     = "./keys"
 	DefaultStorageObjectsDir  = "objects"
 	DefaultStorageMetadataDir = "metadata"
+	DefaultStorageKeysDir     = "./keys"
+	DefaultMasterKeyFilename  = "master.key"
 
 	DefaultAdminServerHost    = "0.0.0.0"
 	DefaultAdminServerPort    = 6787
@@ -53,9 +54,11 @@ type BackendConfig struct {
 
 type StorageConfig struct {
 	DataDir      string `mapstructure:"data_dir"`
-	KeysDir      string `mapstructure:"keys_dir"`
 	ObjectsPath  string `mapstructure:"-"`
 	MetadataPath string `mapstructure:"-"`
+
+	KeysDir       string `mapstructure:"keys_dir"`
+	MasterKeyPath string `mapstructure:"-"`
 }
 
 type AdminConfig struct {
@@ -271,13 +274,16 @@ func parseConfig() {
 	slog.Debug("storage data dir resolved", "from", Storage.DataDir, "to", relStorageDataDir)
 	Storage.DataDir = relStorageDataDir
 
-	relStorageKeysDir := helper.MustResolveToRelativePath(Storage.KeysDir)
-	slog.Debug("storage keys dir resolved", "from", Storage.KeysDir, "to", relStorageKeysDir)
-	Storage.KeysDir = relStorageKeysDir
-
 	Storage.ObjectsPath = filepath.Join(Storage.DataDir, DefaultStorageObjectsDir)
 	slog.Debug("object storage path set", "path", Storage.ObjectsPath)
 
 	Storage.MetadataPath = filepath.Join(Storage.DataDir, DefaultStorageMetadataDir)
 	slog.Debug("metadata storage path set", "path", Storage.MetadataPath)
+
+	relStorageKeysDir := helper.MustResolveToRelativePath(Storage.KeysDir)
+	slog.Debug("storage keys dir resolved", "from", Storage.KeysDir, "to", relStorageKeysDir)
+	Storage.KeysDir = relStorageKeysDir
+
+	Storage.MasterKeyPath = filepath.Join(Storage.KeysDir, DefaultMasterKeyFilename)
+	slog.Debug("master key path set", "path", Storage.MasterKeyPath)
 }
