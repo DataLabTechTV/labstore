@@ -77,7 +77,6 @@ func GetUserByAccessKey(accessKey string) (*User, error) {
 	}
 
 	var user User
-
 	if err := store.readDB.Get(&user, `SELECT * FROM users WHERE access_key = $1`, accessKey); err != nil {
 		return nil, err
 	}
