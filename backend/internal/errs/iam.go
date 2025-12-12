@@ -35,7 +35,7 @@ func IAMNotImplemented(action string) *IAMError {
 	return &IAMError{
 		Type:       IAMSenderType,
 		Code:       "NotImplemented",
-		Message:    fmt.Sprintf("The action %s is not implemented", action),
+		Message:    fmt.Sprintf("The action %s is not implemented.", action),
 		StatusCode: http.StatusBadRequest,
 	}
 }
@@ -44,7 +44,7 @@ func IAMEntityAlreadyExists(entityName string) *IAMError {
 	return &IAMError{
 		Type:       IAMReceiverType,
 		Code:       "EntityAlreadyExists",
-		Message:    fmt.Sprintf("The entity %s already exists", entityName),
+		Message:    fmt.Sprintf("The entity %s already exists.", entityName),
 		StatusCode: http.StatusConflict,
 	}
 }

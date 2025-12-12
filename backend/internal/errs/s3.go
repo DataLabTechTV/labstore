@@ -53,7 +53,7 @@ func S3InternalError(message string) *S3Error {
 func S3NoSuchBucket(bucket string) *S3Error {
 	return &S3Error{
 		Code:       "NoSuchBucket",
-		Message:    "Bucket does not exist",
+		Message:    "Bucket does not exist.",
 		BucketName: bucket,
 		StatusCode: http.StatusNotFound,
 	}
@@ -70,7 +70,7 @@ func S3SignatureDoesNotMatch() *S3Error {
 func S3BucketAlreadyExists() *S3Error {
 	return &S3Error{
 		Code:       "BucketAlreadyExists",
-		Message:    "Could not create bucket, because it already exists",
+		Message:    "Could not create bucket, because it already exists.",
 		StatusCode: http.StatusConflict,
 	}
 }
@@ -87,7 +87,7 @@ func S3NoSuchKey(key string) *S3Error {
 	return &S3Error{
 		Key:        key,
 		Code:       "NoSuchKey",
-		Message:    "Object not found",
+		Message:    "Object not found.",
 		StatusCode: http.StatusNotFound,
 	}
 }

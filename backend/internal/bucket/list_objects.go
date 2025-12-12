@@ -20,7 +20,6 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 )
 
 const DefaultMaxKeys = 250
@@ -84,7 +83,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	var maxKeys int
 
 	bucket := r.PathValue("bucket")
-	requestID := middleware.NewRequestID()
+	requestID := core.NewRequestID()
 
 	q := r.URL.Query()
 

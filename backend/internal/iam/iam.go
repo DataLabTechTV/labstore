@@ -3,15 +3,12 @@ package iam
 import (
 	"log/slog"
 	"os"
-	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 const Any = "*"
-
-const masterKeyFilename = "master.key"
 
 var store *Store
 
@@ -33,7 +30,7 @@ func Init() {
 }
 
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
-	user, ok := store.Users[accessKey]
+	user, ok := GetUser(accessKey)
 	if !ok {
 		return false
 	}
@@ -82,13 +79,11 @@ func ensureMasterKey() error {
 		return err
 	}
 
-	keyPath := filepath.Join(config.Storage.KeysDir, masterKeyFilename)
-
-	if _, err := os.Stat(keyPath); os.IsExist(err) {
+	if _, err := os.Stat(config.Storage.MasterKeyPath); os.IsExist(err) {
 		return nil
 	}
 
-	if err := os.WriteFile(keyPath, key, 0600); err != nil {
+	if err := os.WriteFile(config.Storage.MasterKeyPath, key, 0600); err != nil {
 		return err
 	}
 
@@ -102,10 +97,12 @@ func initStore() error {
 		return err
 	}
 
-	store.setupAdmin()
+	if err := store.setupAdmin(); err != nil {
+		return err
+	}
 
 	if err := store.ensureSchema(); err != nil {
-		return nil
+		return err
 	}
 
 	return nil

@@ -6,7 +6,12 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/google/uuid"
 )
+
+func NewRequestID() string {
+	return uuid.NewString()
+}
 
 func ReadXML(w http.ResponseWriter, r *http.Request, dst any) error {
 	decoder := xml.NewDecoder(r.Body)

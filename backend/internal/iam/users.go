@@ -1,20 +1,48 @@
 package iam
 
 import (
+	"database/sql"
+	"encoding/xml"
 	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 type User struct {
-	Name        string `db:"name"`
-	AccessKeyID string
-	SecretKey   string
+	UserID      int            `db:"user_id"`
+	Name        string         `db:"name"`
+	AccessKeyID sql.NullString `db:"access_key"`
+	SecretKey   []byte         `db:"secret_key"`
+	Salt        []byte         `db:"salt"`
 
 	GroupIDs  []string
 	PolicyIDs []string
+}
+
+type CreateUserResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ CreateUserResponse"`
+	CreateUserResult *CreateUserResult
+}
+
+type CreateUserResult struct {
+	User             *UserResult
+	ResponseMetadata *ResponseMetadata
+}
+
+type UserResult struct {
+	// XMLName  xml.Name `xml:"User"`
+	Path     string
+	UserName string
+	UserId   string
+	Arn      string
 }
 
 func GetUser(accessKey string) (*User, bool) {
@@ -22,19 +50,33 @@ func GetUser(accessKey string) (*User, bool) {
 	return user, ok
 }
 
-func CreateUser(name string) *errs.IAMError {
+func CreateUser(name string) (*User, *errs.IAMError) {
 	if name == config.Admin.Auth.AccessKey {
-		return errs.IAMEntityAlreadyExists(name)
+		return nil, errs.IAMEntityAlreadyExists(name)
 	}
 
-	user := User{Name: name}
+	user := &User{Name: name}
 
 	_, err := store.writeDB.NamedExec(`INSERT INTO users (name) VALUES (:name)`, &user)
 	if err != nil {
-		return errs.IAMServiceFailure()
+		var sqliteErr *sqlite.Error
+		if errors.As(err, &sqliteErr) {
+			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+				slog.Error("create user insert", "err", sqliteErr)
+				return nil, errs.IAMEntityAlreadyExists(name)
+			}
+		}
+
+		slog.Error("create user insert", "err", err)
+		return nil, errs.IAMServiceFailure()
 	}
 
-	return nil
+	if err := store.readDB.Get(user, `SELECT * FROM users WHERE name = $1`, name); err != nil {
+		slog.Error("create user insert", "err", err)
+		return nil, errs.IAMServiceFailure()
+	}
+
+	return user, nil
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,19 +86,49 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := CreateUser(userName); err != nil {
+	user, err := CreateUser(userName)
+	if err != nil {
 		errs.Handle(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	userPath := "/"
+
+	response := &CreateUserResponse{
+		CreateUserResult: &CreateUserResult{
+			User: &UserResult{
+				Path:     userPath,
+				UserName: user.Name,
+				UserId:   fmt.Sprint(user.UserID),
+				Arn:      fmt.Sprintf("arn:labstore:iam::%d:%s%s", user.UserID, userPath, user.Name),
+			},
+			ResponseMetadata: &ResponseMetadata{
+				RequestId: core.NewRequestID(),
+			},
+		},
+	}
+
+	core.WriteXML(w, http.StatusOK, response)
 }
 
-func (store *Store) setupAdmin() {
+func (user *User) EncryptedData() *security.EncryptedData {
+	return &security.EncryptedData{
+		Value: user.SecretKey,
+		Salt:  user.Salt,
+	}
+}
+
+func (store *Store) setupAdmin() error {
+	encryptedData, err := security.EncryptAESGCM(config.Admin.Auth.SecretKey, config.Storage.MasterKeyPath)
+	if err != nil {
+		return err
+	}
+
 	store.Users[config.Admin.Auth.AccessKey] = &User{
 		Name:        "Administrator",
-		AccessKeyID: config.Admin.Auth.AccessKey,
-		SecretKey:   config.Admin.Auth.SecretKey,
+		AccessKeyID: sql.NullString{String: config.Admin.Auth.AccessKey, Valid: true},
+		SecretKey:   encryptedData.Value,
+		Salt:        encryptedData.Salt,
 		PolicyIDs:   []string{adminPolicy},
 	}
 
@@ -73,4 +145,6 @@ func (store *Store) setupAdmin() {
 			},
 		},
 	}
+
+	return nil
 }
