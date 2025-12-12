@@ -17,7 +17,8 @@ import (
 const (
 	configBasename = "labstore"
 
-	DefaultStoragePath        = "./data"
+	DefaultStorageDataDir     = "./data"
+	DefaultStorageKeysDir     = "./keys"
 	DefaultStorageObjectsDir  = "objects"
 	DefaultStorageMetadataDir = "metadata"
 
@@ -51,7 +52,8 @@ type BackendConfig struct {
 }
 
 type StorageConfig struct {
-	Path         string `mapstructure:"path"`
+	DataDir      string `mapstructure:"data_dir"`
+	KeysDir      string `mapstructure:"keys_dir"`
 	ObjectsPath  string `mapstructure:"-"`
 	MetadataPath string `mapstructure:"-"`
 }
@@ -99,7 +101,8 @@ var IAM *IAMConfig
 var S3 *S3Config
 
 func (config *StorageConfig) Debug() {
-	slog.Debug("config set", "name", "backend.storage.path", "value", config.Path)
+	slog.Debug("config set", "name", "backend.storage.data_dir", "value", config.DataDir)
+	slog.Debug("config set", "name", "backend.storage.keys_dir", "value", config.KeysDir)
 }
 
 func (config *AdminConfig) Debug() {
@@ -163,7 +166,8 @@ func setDefaults() {
 	slog.Debug("setting config defaults")
 
 	// storage
-	viper.SetDefault("backend.storage.path", DefaultStoragePath)
+	viper.SetDefault("backend.storage.data_dir", DefaultStorageDataDir)
+	viper.SetDefault("backend.storage.keys_dir", DefaultStorageKeysDir)
 
 	// admin
 	viper.SetDefault("backend.admin.server.host", DefaultAdminServerHost)
@@ -209,7 +213,8 @@ func setOverrides(rootCmd *cobra.Command) {
 	}
 
 	// storage
-	helper.CheckFatal(viper.BindPFlag("backend.storage.path", serverCmd.Flags().Lookup("storage-path")))
+	helper.CheckFatal(viper.BindPFlag("backend.storage.data_dir", serverCmd.Flags().Lookup("storage-data-dir")))
+	helper.CheckFatal(viper.BindPFlag("backend.storage.keys_dir", serverCmd.Flags().Lookup("storage-keys-dir")))
 
 	// admin
 	helper.CheckFatal(viper.BindPFlag("backend.admin.server.host", serverCmd.Flags().Lookup("admin-server-host")))
@@ -262,13 +267,17 @@ func parseConfig() {
 	S3 = config.Backend.S3
 	S3.Debug()
 
-	relStoragePath := helper.MustResolveToRelativePath(Storage.Path)
-	slog.Debug("storage path resolved", "from", Storage.Path, "to", relStoragePath)
-	Storage.Path = relStoragePath
+	relStorageDataDir := helper.MustResolveToRelativePath(Storage.DataDir)
+	slog.Debug("storage data dir resolved", "from", Storage.DataDir, "to", relStorageDataDir)
+	Storage.DataDir = relStorageDataDir
 
-	Storage.ObjectsPath = filepath.Join(Storage.Path, DefaultStorageObjectsDir)
+	relStorageKeysDir := helper.MustResolveToRelativePath(Storage.KeysDir)
+	slog.Debug("storage keys dir resolved", "from", Storage.KeysDir, "to", relStorageKeysDir)
+	Storage.KeysDir = relStorageKeysDir
+
+	Storage.ObjectsPath = filepath.Join(Storage.DataDir, DefaultStorageObjectsDir)
 	slog.Debug("object storage path set", "path", Storage.ObjectsPath)
 
-	Storage.MetadataPath = filepath.Join(Storage.Path, DefaultStorageMetadataDir)
+	Storage.MetadataPath = filepath.Join(Storage.DataDir, DefaultStorageMetadataDir)
 	slog.Debug("metadata storage path set", "path", Storage.MetadataPath)
 }
