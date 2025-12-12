@@ -232,7 +232,7 @@ func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
 		basePath = filepath.Join(bucketPath, r.Prefix)
 		entries, err := os.ReadDir(basePath)
 
-		if err != nil && os.IsExist(err) {
+		if err != nil && !os.IsNotExist(err) {
 			return errors.New("could not read files")
 		}
 
