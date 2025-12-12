@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
@@ -37,7 +38,18 @@ func CreateUser(name string) *errs.IAMError {
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: call CreateUser
+	userName := r.URL.Query().Get("UserName")
+	if userName == "" {
+		errs.Handle(w, errors.New("missing query parameter: UserName"))
+		return
+	}
+
+	if err := CreateUser(userName); err != nil {
+		errs.Handle(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (store *Store) setupAdmin() {
