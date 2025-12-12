@@ -94,7 +94,7 @@ func (store *Store) ensureSchema() error {
 
 	schema := `
 	CREATE TABLE IF NOT EXISTS users (
-		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id TEXT PRIMARY KEY,
 		name TEXT UNIQUE,
 		access_key TEXT,
 		secret_key BLOB,
@@ -107,17 +107,10 @@ func (store *Store) ensureSchema() error {
 	);
 
 	CREATE TABLE IF NOT EXISTS policies (
-		policy_id INTEGER PRIMARY KEY AUTOINCREMENT
-	);
-
-	CREATE TABLE IF NOT EXISTS policies_policy_versions (
-		policy_id INTEGER,
-		policy_version_id INTEGER,
-		PRIMARY KEY (policy_id, policy_version_id)
-	);
-
-	CREATE TABLE IF NOT EXISTS policy_versions (
-		policy_version_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		policy_id TEXT PRIMARY KEY,
+		name TEXT UNIQUE,
+		created_at TEXT,
+		updated_at TEXT,
 		document JSON NOT NULL
 	);
 	`

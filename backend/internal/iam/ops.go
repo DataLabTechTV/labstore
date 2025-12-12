@@ -53,17 +53,14 @@ const (
 	// ======================
 
 	// --- Policies: Create ---
-	OpCreatePolicy        IAMOp = "CreatePolicy"
-	OpCreatePolicyVersion IAMOp = "CreatePolicyVersion"
+	OpCreatePolicy IAMOp = "CreatePolicy"
 
 	// --- Policies: Read ---
-	OpGetPolicy        IAMOp = "GetPolicy"
-	OpGetPolicyVersion IAMOp = "GetPolicyVersion"
+	OpGetPolicy IAMOp = "GetPolicy"
 
 	// --- Policies: Update ---
 	// N/A
 
 	// --- Policies: Delete ---
-	OpDeletePolicy        IAMOp = "DeletePolicy"
-	OpDeletePolicyVersion IAMOp = "DeletePolicyVersion"
+	OpDeletePolicy IAMOp = "DeletePolicy"
 )
