@@ -9,6 +9,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
 type DeleteObjectsRequest struct {
@@ -19,7 +20,7 @@ type DeleteObjectsRequest struct {
 
 type DeleteResult struct {
 	Deleted []DeletedObject
-	Error   []core.S3Error
+	Error   []errs.S3Error
 }
 
 type DeletedObject struct {
@@ -46,7 +47,7 @@ func DeleteObjects(bucket string, r *DeleteObjectsRequest) *DeleteResult {
 
 		err := os.RemoveAll(objPath)
 		if err != nil {
-			res.Error = append(res.Error, *ErrorNoSuchKey(obj.Key))
+			res.Error = append(res.Error, *errs.S3NoSuchKey(obj.Key))
 			continue
 		}
 
@@ -74,7 +75,7 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	var req DeleteObjectsRequest
 	err := core.ReadXML(w, r, &req)
 	if err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 

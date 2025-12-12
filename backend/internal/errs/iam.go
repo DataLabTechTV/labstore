@@ -1,4 +1,4 @@
-package iam
+package errs
 
 import (
 	"encoding/xml"
@@ -31,7 +31,7 @@ func (e *IAMError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
-func ErrNotImplemented(action IAMOp) *IAMError {
+func IAMNotImplemented(action string) *IAMError {
 	return &IAMError{
 		Type:       IAMSenderType,
 		Code:       "NotImplemented",
@@ -40,7 +40,7 @@ func ErrNotImplemented(action IAMOp) *IAMError {
 	}
 }
 
-func ErrEntityAlreadyExists(entityName string) *IAMError {
+func IAMEntityAlreadyExists(entityName string) *IAMError {
 	return &IAMError{
 		Type:       IAMReceiverType,
 		Code:       "EntityAlreadyExists",
@@ -49,7 +49,7 @@ func ErrEntityAlreadyExists(entityName string) *IAMError {
 	}
 }
 
-func ErrServiceFailure() *IAMError {
+func IAMServiceFailure() *IAMError {
 	return &IAMError{
 		Type:       IAMReceiverType,
 		Code:       "ServiceFailure",

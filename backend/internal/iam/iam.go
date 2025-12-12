@@ -77,7 +77,7 @@ func ensureDirectories() error {
 }
 
 func ensureMasterKey() error {
-	key, err := security.GenerateAES256MasterKey()
+	key, err := security.GenerateMasterKey()
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func ensureMasterKey() error {
 		return nil
 	}
 
-	if err := os.WriteFile(keyPath, key, 0400); err != nil {
+	if err := os.WriteFile(keyPath, key, 0600); err != nil {
 		return err
 	}
 

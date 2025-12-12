@@ -1,23 +1,23 @@
-package core
+package errs
 
 import (
 	"errors"
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 )
 
-func HandleError(w http.ResponseWriter, err error) {
+func Handle(w http.ResponseWriter, err error) {
 	var s3Err *S3Error
-	var iamErr *iam.IAMError
+	var iamErr *IAMError
 
 	if errors.As(err, &s3Err) {
 		slog.Error("s3 error", "err", s3Err)
-		WriteXML(w, s3Err.StatusCode, s3Err)
+		core.WriteXML(w, s3Err.StatusCode, s3Err)
 	} else if errors.As(err, &iamErr) {
 		slog.Error("iam error", "err", iamErr)
-		WriteXML(w, iamErr.StatusCode, iam.IAMErrorResponse{
+		core.WriteXML(w, iamErr.StatusCode, IAMErrorResponse{
 			Error:     iamErr,
 			RequestId: iamErr.RequestId,
 		})

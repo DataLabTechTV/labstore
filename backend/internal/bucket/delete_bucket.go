@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
 func DeleteBucket(bucket string) error {
@@ -14,7 +14,7 @@ func DeleteBucket(bucket string) error {
 
 	err := os.RemoveAll(path)
 	if err != nil {
-		return core.ErrNoSuchBucket(bucket)
+		return errs.S3NoSuchBucket(bucket)
 	}
 
 	return nil
@@ -25,7 +25,7 @@ func DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 
 	if err := DeleteBucket(bucket); err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 

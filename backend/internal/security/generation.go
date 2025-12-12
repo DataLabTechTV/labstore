@@ -7,12 +7,7 @@ import (
 
 const passwordCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-type DerivedKey struct {
-	Key  []byte
-	Salt []byte
-}
-
-// Produce an alphanumeric placeholder password
+// Produces an alphanumeric placeholder password
 func GeneratePassword(length int) (string, error) {
 	randBytes := make([]byte, length)
 	for i := range randBytes {
@@ -26,6 +21,7 @@ func GeneratePassword(length int) (string, error) {
 	return string(randBytes), nil
 }
 
+// Produces a key with the given byte-length
 func GenerateKey(length int) ([]byte, error) {
 	key := make([]byte, length)
 
@@ -36,10 +32,7 @@ func GenerateKey(length int) ([]byte, error) {
 	return key, nil
 }
 
-func GenerateAES256MasterKey() ([]byte, error) {
+// Produces a AES-256 master key (32 bytes)
+func GenerateMasterKey() ([]byte, error) {
 	return GenerateKey(32)
-}
-
-func GenerateSalt() ([]byte, error) {
-	return GenerateKey(16)
 }

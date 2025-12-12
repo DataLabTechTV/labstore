@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
 type User struct {
@@ -20,16 +21,16 @@ func GetUser(accessKey string) (*User, bool) {
 	return user, ok
 }
 
-func CreateUser(name string) *IAMError {
+func CreateUser(name string) *errs.IAMError {
 	if name == config.Admin.Auth.AccessKey {
-		return ErrEntityAlreadyExists(name)
+		return errs.IAMEntityAlreadyExists(name)
 	}
 
 	user := User{Name: name}
 
 	_, err := store.writeDB.NamedExec(`INSERT INTO users (name) VALUES (:name)`, &user)
 	if err != nil {
-		return ErrServiceFailure()
+		return errs.IAMServiceFailure()
 	}
 
 	return nil
