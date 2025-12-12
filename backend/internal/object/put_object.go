@@ -8,25 +8,25 @@ import (
 	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
 func PutObject(bucket string, key string, reader io.Reader) error {
 	bucketPath := filepath.Join(config.Storage.ObjectsPath, bucket)
 	if _, err := os.Stat(bucketPath); os.IsNotExist(err) {
-		return core.ErrNoSuchBucket(bucket)
+		return errs.S3NoSuchBucket(bucket)
 	}
 
 	objPath := filepath.Join(bucketPath, key)
 	objDir := filepath.Dir(objPath)
 	if err := os.MkdirAll(objDir, 0755); err != nil {
-		return core.ErrInternalError("Failed to create object directory")
+		return errs.S3InternalError("Failed to create object directory")
 	}
 
 	f, err := os.Create(objPath)
 	if err != nil {
-		return core.ErrInternalError("Failed to create object")
+		return errs.S3InternalError("Failed to create object")
 	}
 	defer helper.CloseWithErr(f, &err)
 
@@ -34,7 +34,7 @@ func PutObject(bucket string, key string, reader io.Reader) error {
 
 	_, err = io.CopyBuffer(writer, reader, make([]byte, config.S3.Perf.BufferSize))
 	if err != nil {
-		return core.ErrInternalError("Failed to write object")
+		return errs.S3InternalError("Failed to write object")
 	}
 
 	return nil
@@ -46,7 +46,7 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 
 	if err := PutObject(bucket, key, r.Body); err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 

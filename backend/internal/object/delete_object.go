@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
 func DeleteObject(bucket, key string) error {
@@ -14,7 +14,7 @@ func DeleteObject(bucket, key string) error {
 
 	err := os.Remove(objPath)
 	if err != nil {
-		return ErrorNoSuchKey(key)
+		return errs.S3NoSuchKey(key)
 	}
 
 	return nil
@@ -26,7 +26,7 @@ func DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 
 	if err := DeleteObject(bucket, key); err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 

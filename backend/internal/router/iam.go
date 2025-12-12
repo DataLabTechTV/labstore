@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 )
@@ -45,10 +45,10 @@ func loadIAMRoutes(router *http.ServeMux) {
 	slog.Debug("loading iam routes")
 
 	router.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
-		action := iam.IAMOp(r.URL.Query().Get("Action"))
+		action := r.URL.Query().Get("Action")
 
 		// TODO: support for missing operations
-		switch action {
+		switch iam.IAMOp(action) {
 		case iam.OpCreateUser:
 			iam.CreateUserHandler(w, r)
 		// case iam.OpCreateAccessKey:
@@ -60,7 +60,7 @@ func loadIAMRoutes(router *http.ServeMux) {
 		// case iam.OpAttachGroupPolicy:
 		// 	AttachGroupPolicy(w, r)
 		default:
-			core.HandleError(w, iam.ErrNotImplemented(action))
+			errs.Handle(w, errs.IAMNotImplemented(action))
 		}
 	})
 }
