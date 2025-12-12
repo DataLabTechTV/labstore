@@ -209,6 +209,11 @@ func setOverrides(rootCmd *cobra.Command) {
 
 	viper.AutomaticEnv()
 
+	if rootCmd == nil {
+		slog.Warn("set overrides without root command")
+		return
+	}
+
 	serverCmd, _, err := rootCmd.Find([]string{"server"})
 	if err != nil {
 		slog.Warn("config fallback", "err", err)
