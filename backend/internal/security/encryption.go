@@ -62,7 +62,7 @@ func DecryptAESGCM(encrypted *EncryptedData, masterKeyPath string) (string, erro
 
 	decrypted, err := aesGCM.Open(nil, encrypted.Salt, encrypted.Value, nil)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	return string(decrypted), nil
