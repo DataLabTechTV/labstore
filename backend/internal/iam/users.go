@@ -17,7 +17,7 @@ import (
 )
 
 type User struct {
-	UserID      int            `db:"user_id"`
+	UserID      string         `db:"user_id"`
 	Name        string         `db:"name"`
 	AccessKeyID sql.NullString `db:"access_key"`
 	SecretKey   []byte         `db:"secret_key"`
@@ -105,9 +105,12 @@ func CreateUser(name string) (*User, *errs.IAMError) {
 		return nil, errs.IAMEntityAlreadyExists(name)
 	}
 
-	user := &User{Name: name}
+	user := &User{
+		UserID: GenerateUniqueID(IAMUserUniqueID),
+		Name:   name,
+	}
 
-	_, err := store.writeDB.NamedExec(`INSERT INTO users (name) VALUES (:name)`, &user)
+	_, err := store.writeDB.NamedExec(`INSERT INTO users (user_id, name) VALUES (:user_id, :name)`, &user)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
@@ -151,7 +154,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 				Path:     userPath,
 				UserName: user.Name,
 				UserId:   fmt.Sprint(user.UserID),
-				Arn:      fmt.Sprintf("arn:labstore:iam::%d:%s%s", user.UserID, userPath, user.Name),
+				Arn:      toArn(ArnUser, userPath, user.Name),
 			},
 			ResponseMetadata: &ResponseMetadata{
 				RequestId: core.NewRequestID(),
@@ -257,7 +260,7 @@ func (store *Store) setupAdmin() error {
 	}
 
 	store.Policies[adminPolicy] = &Policy{
-		ID: adminPolicy,
+		PolicyID: adminPolicy,
 		Document: &PolicyDocument{
 			Version: latestPolicyDocumentVersion,
 			Statement: []Statement{
