@@ -51,14 +51,14 @@ func loadIAMRoutes(router *http.ServeMux) {
 		switch iam.IAMOp(action) {
 		case iam.OpCreateUser:
 			iam.CreateUserHandler(w, r)
-		// case iam.OpCreateAccessKey:
-		// 	CreateAccessKeyHandler(w, r)
+		case iam.OpCreateAccessKey:
+			iam.CreateAccessKeyHandler(w, r)
 		// case iam.OpCreateGroup:
-		// 	CreateGroupHandler(w, r)
+		// 	iam.CreateGroupHandler(w, r)
 		// case iam.OpAttachUserPolicy:
-		// 	AttachUserPolicy(w, r)
+		// 	iam.AttachUserPolicy(w, r)
 		// case iam.OpAttachGroupPolicy:
-		// 	AttachGroupPolicy(w, r)
+		// 	iam.AttachGroupPolicy(w, r)
 		default:
 			errs.Handle(w, errs.IAMNotImplemented(action))
 		}

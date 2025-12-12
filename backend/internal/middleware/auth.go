@@ -26,6 +26,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		res, err := auth.VerifySigV4(r)
 		if err != nil {
+			slog.Error("sigv4", "err", err)
 			errs.Handle(w, errs.S3SignatureDoesNotMatch())
 			return
 		}
