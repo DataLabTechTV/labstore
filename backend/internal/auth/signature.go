@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
@@ -171,7 +172,7 @@ func newSigV4Credential(credential string) (*sigV4Credential, error) {
 	accessKey := credentialParts[0]
 
 	user, ok := iam.GetUser(accessKey)
-	if !ok {
+	if !ok || !user.AccessKeyID.Valid {
 		return nil, errors.New("invalid access key")
 	}
 
@@ -179,9 +180,14 @@ func newSigV4Credential(credential string) (*sigV4Credential, error) {
 
 	slog.Debug("credential", "access_key", accessKey, "scope", scope)
 
+	plainSecretKey, err := security.DecryptAESGCM(user.EncryptedData(), config.Storage.MasterKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
 	res := &sigV4Credential{
-		AccessKey: user.AccessKeyID,
-		secretKey: user.SecretKey,
+		AccessKey: user.AccessKeyID.String,
+		secretKey: plainSecretKey,
 		scope:     scope,
 	}
 
