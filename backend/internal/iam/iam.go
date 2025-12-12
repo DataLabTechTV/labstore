@@ -1,14 +1,27 @@
 package iam
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/constants"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 const Any = "*"
+
+const defaultAccountID = "000000000001"
+
+type ArnType string
+
+const (
+	ArnUser   ArnType = "user"
+	ArnGroup  ArnType = "group"
+	ArnPolicy ArnType = "policy"
+)
 
 var store *Store
 
@@ -106,4 +119,15 @@ func initStore() error {
 	}
 
 	return nil
+}
+
+func toArn(arnType ArnType, path, description string) string {
+	return fmt.Sprintf(
+		"arn:%s:iam::%s:%s%s%s",
+		strings.ToLower(constants.Name),
+		defaultAccountID,
+		arnType,
+		path,
+		description,
+	)
 }
