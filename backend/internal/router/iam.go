@@ -47,6 +47,7 @@ func loadIAMRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
 		action := iam.IAMOp(r.URL.Query().Get("Action"))
 
+		// TODO: support for missing operations
 		switch action {
 		case iam.OpCreateUser:
 			iam.CreateUserHandler(w, r)

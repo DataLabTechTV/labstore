@@ -2,6 +2,7 @@ package iam
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
@@ -31,6 +32,12 @@ func NewStore() *Store {
 
 func (store *Store) open() error {
 	dbPath := filepath.Join(config.Storage.MetadataPath, IAMDBFilename)
+
+	f, err := os.OpenFile(dbPath, os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	helper.CloseWithErr(f, &err)
 
 	timeoutMs := fmt.Sprint(config.IAM.DB.TimeoutMs)
 	readCacheSize := fmt.Sprint(config.IAM.DB.ReadCacheSizeKiB)
@@ -87,10 +94,21 @@ func (store *Store) ensureSchema() error {
 
 	schema := `
 	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT,
 		access_key TEXT,
-		secret_key TEXT
+		secret_key BLOB,
+		salt BLOB
+	);
+
+	CREATE TABLE IF NOT EXISTS groups (
+		group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT
+	);
+
+	CREATE TABLE IF NOT EXISTS policies (
+		policy_id INTEGER PRIMARY KEY AUTOINCREMENT
+		document JSON NOT NULL
 	);
 	`
 

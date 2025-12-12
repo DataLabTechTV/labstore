@@ -1,8 +1,6 @@
 package security
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"regexp"
 	"strings"
@@ -59,16 +57,4 @@ func TruncLastLines(sensitive string, n int) string {
 	truncated := strings.Join(lines, "\n")
 
 	return truncated
-}
-
-func GeneratePassword(n int) (string, error) {
-	b := make([]byte, n)
-
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-
-	password := base64.RawURLEncoding.EncodeToString(b)
-
-	return password, nil
 }

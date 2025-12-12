@@ -37,12 +37,13 @@ services:
       - labstore
     volumes:
       - labstore:/data
+      - labstore-keys:/keys
     environment:
       - LABSTORE_BACKEND_S3_SERVER_HOST=${LABSTORE_BACKEND_S3_SERVER_HOST}
       - LABSTORE_BACKEND_S3_SERVER_PORT=${LABSTORE_BACKEND_S3_SERVER_PORT}
       - LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY}
       - LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY}
-    command: serve --s3-storage-path /data
+    command: serve --storage-data-dir /data --storage-keys-dir /keys
     restart: unless-stopped
 
   benchmark-labstore:
@@ -60,10 +61,11 @@ services:
       - benchmark
     volumes:
       - benchmark-labstore:/data
+      - benchmark-labstore-keys:/keys
     environment:
       - LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
       - LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
-    command: serve --s3-server-host 0.0.0.0 --s3-server-port 6789 --s3-storage-path /data
+    command: serve --s3-server-host 0.0.0.0 --s3-server-port 6789 --storage-data-dir /data --storage-keys-dir /keys
     restart: unless-stopped
 
   benchmark-minio:
@@ -159,7 +161,9 @@ services:
 
 volumes:
   labstore:
+  labstore-keys:
   benchmark-labstore:
+  benchmark-labstore-keys:
   benchmark-minio:
   benchmark-garage:
   benchmark-seaweedfs:

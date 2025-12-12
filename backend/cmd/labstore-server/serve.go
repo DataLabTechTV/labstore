@@ -22,7 +22,8 @@ func NewServeCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("storage-path", config.DefaultStoragePath, "Storage root path for objects and metadata")
+	cmd.Flags().String("storage-data-dir", config.DefaultStorageDataDir, "Storage root path for objects and metadata")
+	cmd.Flags().String("storage-keys-dir", config.DefaultStorageDataDir, "Storage root path for encryption keys")
 
 	cmd.Flags().String("admin-server-host", config.DefaultAdminServerHost, "Listening host for admin server")
 	cmd.Flags().String("admin-server-port", config.DefaultAdminServerHost, "Listening port for admin server")

@@ -1,6 +1,7 @@
 # Project
 bin/
 data/
+keys/
 output/
 .zed/
 .vscode/
