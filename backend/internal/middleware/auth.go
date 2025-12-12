@@ -6,18 +6,10 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/auth"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
 const accessKeyCtx ContextKey = "accessKey"
-
-func ErrSignatureDoesNotMatch() *core.S3Error {
-	return &core.S3Error{
-		Code:       "SignatureDoesNotMatch",
-		Message:    "The request signature we calculate does not match the signature you provided.",
-		StatusCode: http.StatusForbidden,
-	}
-}
 
 func GetRequestAccessKey(r *http.Request) string {
 	if accessKey := r.Context().Value(accessKeyCtx); accessKey != nil {
@@ -34,7 +26,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		res, err := auth.VerifySigV4(r)
 		if err != nil {
-			core.HandleError(w, ErrSignatureDoesNotMatch())
+			errs.Handle(w, errs.S3SignatureDoesNotMatch())
 			return
 		}
 

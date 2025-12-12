@@ -1,4 +1,4 @@
-package core
+package errs
 
 import (
 	"encoding/xml"
@@ -42,7 +42,7 @@ func (e *S3Error) WithResource(resource string) *S3Error {
 	return e
 }
 
-func ErrInternalError(message string) *S3Error {
+func S3InternalError(message string) *S3Error {
 	return &S3Error{
 		Code:       "InternalError",
 		Message:    message,
@@ -50,11 +50,44 @@ func ErrInternalError(message string) *S3Error {
 	}
 }
 
-func ErrNoSuchBucket(bucket string) *S3Error {
+func S3NoSuchBucket(bucket string) *S3Error {
 	return &S3Error{
 		Code:       "NoSuchBucket",
 		Message:    "Bucket does not exist",
 		BucketName: bucket,
+		StatusCode: http.StatusNotFound,
+	}
+}
+
+func S3SignatureDoesNotMatch() *S3Error {
+	return &S3Error{
+		Code:       "SignatureDoesNotMatch",
+		Message:    "The request signature we calculate does not match the signature you provided.",
+		StatusCode: http.StatusForbidden,
+	}
+}
+
+func S3BucketAlreadyExists() *S3Error {
+	return &S3Error{
+		Code:       "BucketAlreadyExists",
+		Message:    "Could not create bucket, because it already exists",
+		StatusCode: http.StatusConflict,
+	}
+}
+
+func S3AccessDenied() *S3Error {
+	return &S3Error{
+		Code:       "AccessDenied",
+		Message:    "AccessDenied",
+		StatusCode: 403,
+	}
+}
+
+func S3NoSuchKey(key string) *S3Error {
+	return &S3Error{
+		Key:        key,
+		Code:       "NoSuchKey",
+		Message:    "Object not found",
 		StatusCode: http.StatusNotFound,
 	}
 }

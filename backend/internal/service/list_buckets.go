@@ -8,6 +8,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 )
 
@@ -32,7 +33,7 @@ type ListAllMyBucketsResult struct {
 func ListBuckets(accessKey string) (*ListAllMyBucketsResult, error) {
 	entries, err := os.ReadDir(config.Storage.ObjectsPath)
 	if err != nil {
-		return nil, core.ErrInternalError("Failed to list buckets")
+		return nil, errs.S3InternalError("Failed to list buckets")
 	}
 
 	res := ListAllMyBucketsResult{}
@@ -55,7 +56,7 @@ func ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 
 	res, err := ListBuckets(accessKey)
 	if err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 

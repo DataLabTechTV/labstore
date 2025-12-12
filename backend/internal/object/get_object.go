@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
@@ -23,12 +23,12 @@ func GetObject(bucket, key string) (*GetObjectResult, error) {
 
 	file, err := os.Open(objPath)
 	if err != nil {
-		return nil, ErrorNoSuchKey(key)
+		return nil, errs.S3NoSuchKey(key)
 	}
 
 	info, err := file.Stat()
 	if err != nil {
-		return nil, core.ErrInternalError("Couldn't compute file size")
+		return nil, errs.S3InternalError("Couldn't compute file size")
 	}
 
 	res := &GetObjectResult{
@@ -47,7 +47,7 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	res, err := GetObject(bucket, key)
 	if err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 	defer helper.CloseWithErr(res.Content, &err)

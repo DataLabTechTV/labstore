@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 )
 
@@ -21,18 +21,10 @@ func WithIAM(action iam.Action, next http.Handler) http.Handler {
 
 		if !iam.CheckPolicy(accessKey, bucket, key, iam.Action(action)) {
 			// !FIXME: AWS compliant error handling?
-			core.HandleError(w, ErrAccessDenied())
+			errs.Handle(w, errs.S3AccessDenied())
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func ErrAccessDenied() *core.S3Error {
-	return &core.S3Error{
-		Code:       "AccessDenied",
-		Message:    "AccessDenied",
-		StatusCode: 403,
-	}
 }

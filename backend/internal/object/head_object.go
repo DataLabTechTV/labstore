@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
@@ -16,19 +17,19 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 
 	if !core.BucketExists(bucket) {
-		core.HandleError(w, core.ErrNoSuchBucket(bucket))
+		errs.Handle(w, errs.S3NoSuchBucket(bucket))
 		return
 	}
 
 	path := core.BucketKeyPath(bucket, key)
 	if helper.IsDir(path) {
-		core.HandleError(w, ErrorNoSuchKey(key))
+		errs.Handle(w, errs.S3NoSuchKey(key))
 		return
 	}
 
 	res, err := GetObject(bucket, key)
 	if err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 	defer helper.CloseWithErr(res.Content, &err)
@@ -37,7 +38,7 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	n, err := res.Content.Read(buf)
 	if err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 

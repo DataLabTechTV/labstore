@@ -18,6 +18,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 )
@@ -117,12 +118,12 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !core.BucketExists(rBase.Bucket) {
-		core.HandleError(w, core.ErrNoSuchBucket(rBase.Bucket))
+		errs.Handle(w, errs.S3NoSuchBucket(rBase.Bucket))
 		return
 	}
 
 	if rBase.Delimiter != "/" {
-		core.HandleError(w, errors.New("only '/' delimiters are supported by LabStore"))
+		errs.Handle(w, errors.New("only '/' delimiters are supported by LabStore"))
 		return
 	}
 
@@ -134,7 +135,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		var token []byte
 		token, err = base64.StdEncoding.DecodeString(continuationToken)
 		if err != nil {
-			core.HandleError(w, core.ErrInternalError("Invalid continuation token"))
+			errs.Handle(w, errs.S3InternalError("Invalid continuation token"))
 			return
 		}
 		rBase.afterKey = string(token)
@@ -160,7 +161,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 

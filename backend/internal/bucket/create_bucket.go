@@ -7,22 +7,14 @@ import (
 	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
-
-func ErrBucketAlreadyExists() *core.S3Error {
-	return &core.S3Error{
-		Code:       "BucketAlreadyExists",
-		Message:    "Could not create bucket, because it already exists",
-		StatusCode: http.StatusConflict,
-	}
-}
 
 func CreateBucket(bucket string) error {
 	path := filepath.Join(config.Storage.ObjectsPath, bucket)
 
 	if _, err := os.Stat(path); err == nil {
-		return ErrBucketAlreadyExists()
+		return errs.S3BucketAlreadyExists()
 	}
 
 	if err := os.MkdirAll(path, 0755); err != nil {
@@ -37,7 +29,7 @@ func PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 
 	if err := CreateBucket(bucket); err != nil {
-		core.HandleError(w, err)
+		errs.Handle(w, err)
 		return
 	}
 
