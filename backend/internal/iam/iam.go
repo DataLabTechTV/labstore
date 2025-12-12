@@ -30,8 +30,8 @@ func Init() {
 }
 
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
-	user, ok := GetUser(accessKey)
-	if !ok {
+	user, err := GetUserByAccessKey(accessKey)
+	if err != nil {
 		return false
 	}
 

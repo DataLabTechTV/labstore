@@ -161,3 +161,11 @@ test-iam-delete-user: check-deps
     echo "Deleting IAM user: {{test_user}}"
     iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
     sqlite3 $iam_db "DELETE FROM users WHERE name = '{{test_user}}'"
+
+[group("test-iam")]
+test-iam-create-access-key: check-deps
+    #!/bin/bash
+    echo "Creating IAM access key for user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=CreateAccessKey&UserName={{test_user}}"
