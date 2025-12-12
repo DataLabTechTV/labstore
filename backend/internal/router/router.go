@@ -54,13 +54,13 @@ func Start() {
 }
 
 func ensureDirectories() error {
-	slog.Debug("ensuring directories")
+	slog.Debug("ensuring data directories")
 
-	if err := os.MkdirAll(config.Storage.ObjectsPath, 0755); err != nil {
+	if err := os.MkdirAll(config.Storage.ObjectsPath, 0750); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(config.Storage.MetadataPath, 0755); err != nil {
+	if err := os.MkdirAll(config.Storage.MetadataPath, 0750); err != nil {
 		return err
 	}
 

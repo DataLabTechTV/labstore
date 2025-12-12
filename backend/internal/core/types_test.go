@@ -24,7 +24,7 @@ func TestTimestampMarshalXML(t *testing.T) {
 	var b strings.Builder
 
 	if err := xml.NewEncoder(&b).Encode(data); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	if b.String() != expected {

@@ -1,6 +1,7 @@
 backend:
   storage:
-    path: ./data
+    data_dir: ./data
+    keys_dir: ./keys
   admin:
     server:
       host: 0.0.0.0
