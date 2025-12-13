@@ -116,7 +116,7 @@ func CreateUser(name string) (*User, error) {
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
 				slog.Error("create user insert", "err", sqliteErr)
-				return nil, &errs.ErrExists{Resource: name}
+				return nil, &errs.ErrExists{Type: "user", Resource: name}
 			}
 		}
 
@@ -127,7 +127,7 @@ func CreateUser(name string) (*User, error) {
 	user, err = GetUserByName(name)
 	if err != nil {
 		slog.Error("get user by name", "err", err)
-		return nil, errs.IAMServiceFailure()
+		return nil, &errs.ErrNotFound{Type: "user", Resource: name}
 	}
 
 	return user, nil
@@ -146,6 +146,11 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		if errors.As(err, &errExists) {
 			errs.Handle(w, errs.IAMEntityAlreadyExists(errExists.Resource))
 			return
+		}
+
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			errs.Handle(w, errs.IAMServiceFailure())
 		}
 
 		errs.Handle(w, errs.IAMServiceFailure())

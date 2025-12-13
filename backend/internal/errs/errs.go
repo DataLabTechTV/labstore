@@ -10,11 +10,21 @@ import (
 )
 
 type ErrExists struct {
+	Type     string
+	Resource string
+}
+
+type ErrNotFound struct {
+	Type     string
 	Resource string
 }
 
 func (e *ErrExists) Error() string {
-	return fmt.Sprintf("%s not found", e.Resource)
+	return fmt.Sprintf("%s exists: %s", e.Type, e.Resource)
+}
+
+func (e *ErrNotFound) Error() string {
+	return fmt.Sprintf("%s not found: %s", e.Type, e.Resource)
 }
 
 func Handle(w http.ResponseWriter, err error) {
