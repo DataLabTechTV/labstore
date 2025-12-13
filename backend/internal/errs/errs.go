@@ -9,13 +9,20 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 )
 
+const (
+	ErrEntityTypeUser   = "user"
+	ErrEntityTypePolicy = "policy"
+)
+
+type ErrEntityType string
+
 type ErrExists struct {
-	Type     string
+	Type     ErrEntityType
 	Resource string
 }
 
 type ErrNotFound struct {
-	Type     string
+	Type     ErrEntityType
 	Resource string
 }
 

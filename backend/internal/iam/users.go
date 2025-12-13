@@ -102,7 +102,7 @@ func GetUserByName(name string) (*User, error) {
 
 func CreateUser(name string) (*User, error) {
 	if name == config.Admin.Auth.AccessKey {
-		return nil, &errs.ErrExists{Resource: name}
+		return nil, &errs.ErrExists{Type: errs.ErrEntityTypeUser, Resource: name}
 	}
 
 	user := &User{
@@ -116,7 +116,7 @@ func CreateUser(name string) (*User, error) {
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
 				slog.Error("create user insert", "err", sqliteErr)
-				return nil, &errs.ErrExists{Type: "user", Resource: name}
+				return nil, &errs.ErrExists{Type: errs.ErrEntityTypeUser, Resource: name}
 			}
 		}
 
@@ -127,7 +127,7 @@ func CreateUser(name string) (*User, error) {
 	user, err = GetUserByName(name)
 	if err != nil {
 		slog.Error("get user by name", "err", err)
-		return nil, &errs.ErrNotFound{Type: "user", Resource: name}
+		return nil, &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: name}
 	}
 
 	return user, nil
