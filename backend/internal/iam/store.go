@@ -109,10 +109,19 @@ func (store *Store) ensureSchema() error {
 	CREATE TABLE IF NOT EXISTS policies (
 		policy_id TEXT PRIMARY KEY,
 		name TEXT UNIQUE,
-		created_at TEXT,
-		updated_at TEXT,
+		created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+		updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
 		document JSON NOT NULL
 	);
+
+	CREATE TRIGGER policies_update_trigger
+	AFTER UPDATE ON policies
+	FOR EACH ROW
+	BEGIN
+		UPDATE policies
+		SET updated_at = CURRENT_TIMESTAMP
+		WHERE policy_id = OLD.policy_id;
+	END;
 	`
 
 	if _, err := db.Exec(schema); err != nil {
