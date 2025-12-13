@@ -1,11 +1,13 @@
 package iam
 
 import (
+	"errors"
 	"log/slog"
 	"os"
 	"testing"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
@@ -17,12 +19,13 @@ func TestCreateAccessKeyIntegration(t *testing.T) {
 	config.Load(nil)
 	Init()
 
-	_, iamErr := CreateUser(testUserName)
-	if iamErr != nil {
-		if iamErr.Code == "EntityAlreadyExists" {
-			slog.Warn("user exists", "err", iamErr)
+	_, err := CreateUser(testUserName)
+	if err != nil {
+		var errExists *errs.ErrExists
+		if errors.As(err, &errExists) {
+			slog.Warn("user exists", "err", err)
 		} else {
-			t.Error(iamErr)
+			t.Error(err)
 		}
 	}
 
