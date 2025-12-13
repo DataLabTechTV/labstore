@@ -100,9 +100,9 @@ func GetUserByName(name string) (*User, error) {
 	return &user, nil
 }
 
-func CreateUser(name string) (*User, *errs.IAMError) {
+func CreateUser(name string) (*User, error) {
 	if name == config.Admin.Auth.AccessKey {
-		return nil, errs.IAMEntityAlreadyExists(name)
+		return nil, &errs.ErrExists{Resource: name}
 	}
 
 	user := &User{
@@ -116,12 +116,12 @@ func CreateUser(name string) (*User, *errs.IAMError) {
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
 				slog.Error("create user insert", "err", sqliteErr)
-				return nil, errs.IAMEntityAlreadyExists(name)
+				return nil, &errs.ErrExists{Resource: name}
 			}
 		}
 
 		slog.Error("create user insert", "err", err)
-		return nil, errs.IAMServiceFailure()
+		return nil, err
 	}
 
 	user, err = GetUserByName(name)
@@ -142,7 +142,13 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := CreateUser(userName)
 	if err != nil {
-		errs.Handle(w, err)
+		var errExists *errs.ErrExists
+		if errors.As(err, &errExists) {
+			errs.Handle(w, errs.IAMEntityAlreadyExists(errExists.Resource))
+			return
+		}
+
+		errs.Handle(w, errs.IAMServiceFailure())
 		return
 	}
 
