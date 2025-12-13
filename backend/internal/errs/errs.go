@@ -2,11 +2,20 @@ package errs
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 )
+
+type ErrExists struct {
+	Resource string
+}
+
+func (e *ErrExists) Error() string {
+	return fmt.Sprintf("%s not found", e.Resource)
+}
 
 func Handle(w http.ResponseWriter, err error) {
 	var s3Err *S3Error
