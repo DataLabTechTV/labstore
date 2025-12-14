@@ -44,7 +44,7 @@ func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 		}
 
 		for _, stmt := range policy.Document.Statement {
-			if matchAction(action, stmt.Actions) && matchResource(bucket, key, stmt.Resources) {
+			if matchAction(action, stmt.Action) && matchResource(bucket, key, stmt.Resource) {
 				if stmt.Effect == deny {
 					return false
 				}

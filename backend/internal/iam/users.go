@@ -151,6 +151,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMServiceFailure())
+			return
 		}
 
 		errs.Handle(w, errs.IAMServiceFailure())
@@ -276,9 +277,9 @@ func (store *Store) setupAdmin() error {
 			Version: latestPolicyDocumentVersion,
 			Statement: []Statement{
 				{
-					Effect:    allow,
-					Actions:   []Action{Action(Any)},
-					Resources: []string{Any},
+					Effect:   allow,
+					Action:   []Action{Action(Any)},
+					Resource: []string{Any},
 				},
 			},
 		},

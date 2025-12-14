@@ -1,8 +1,10 @@
 package iam
 
-import "github.com/gobwas/glob"
+import (
+	"encoding/json"
 
-type Action string
+	"github.com/gobwas/glob"
+)
 
 const (
 	S3ListAllMyBuckets Action = "s3:ListAllMyBuckets"
@@ -13,6 +15,24 @@ const (
 	S3GetObject        Action = "s3:GetObject"
 	S3DeleteObject     Action = "s3:DeleteObject"
 )
+
+type Action string
+type Actions []Action
+
+func (a *Actions) UnmarshalJSON(data []byte) error {
+	var single Action
+	if err := json.Unmarshal(data, &single); err == nil {
+		*a = []Action{single}
+		return nil
+	}
+
+	var multi []Action
+	if err := json.Unmarshal(data, &multi); err != nil {
+		return err
+	}
+	*a = multi
+	return nil
+}
 
 func matchAction(action Action, stmtActions []Action) bool {
 	for _, stmtAction := range stmtActions {

@@ -102,7 +102,7 @@ func (store *Store) ensureSchema() error {
 	);
 
 	CREATE TABLE IF NOT EXISTS groups (
-		group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		group_id TEXT PRIMARY KEY,
 		name TEXT UNIQUE
 	);
 
@@ -114,7 +114,7 @@ func (store *Store) ensureSchema() error {
 		document JSON NOT NULL
 	);
 
-	CREATE TRIGGER policies_update_trigger
+	CREATE TRIGGER IF NOT EXISTS policies_update_trigger
 	AFTER UPDATE ON policies
 	FOR EACH ROW
 	BEGIN
@@ -122,6 +122,18 @@ func (store *Store) ensureSchema() error {
 		SET updated_at = CURRENT_TIMESTAMP
 		WHERE policy_id = OLD.policy_id;
 	END;
+
+	CREATE TABLE IF NOT EXISTS user_policies (
+		user_id TEXT,
+		policy_id TEXT,
+		PRIMARY KEY (user_id, policy_id)
+	);
+
+	CREATE TABLE IF NOT EXISTS group_policies (
+		group_id TEXT,
+		policy_id TEXT,
+		PRIMARY KEY (group_id, policy_id)
+	);
 	`
 
 	if _, err := db.Exec(schema); err != nil {
