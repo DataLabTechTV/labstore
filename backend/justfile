@@ -3,7 +3,6 @@ set shell := ["bash", "-uc"]
 config_path := "../labstore.yml"
 
 test_bucket := "test-bucket"
-test_user := "test_user"
 
 default:
     just -l
@@ -147,6 +146,8 @@ test-list-obj-s5cmd: test-bucket check-deps
     echo "==> Listing keys in {{test_bucket}}"
     s5cmd --endpoint-url $endpoint_url ls s3://{{test_bucket}}/
 
+test_user := "test_user"
+
 [group("test-iam")]
 test-iam-create-user: check-deps
     #!/bin/bash
@@ -169,3 +170,28 @@ test-iam-create-access-key: check-deps
     host=$(yq ".backend.iam.server.host" {{config_path}})
     port=$(yq ".backend.iam.server.port" {{config_path}})
     http POST "http://${host}:${port}?Action=CreateAccessKey&UserName={{test_user}}"
+
+test_policy_name := "test-policy"
+test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
+    '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
+    '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
+    '"Resource":["{{test_bucket}}","{{test_bucket}}/*"]}]}'
+
+[group("debug")]
+print-test-policy-document:
+    @echo '{{test_policy_document}}' | jq
+
+[group("test-iam")]
+test-iam-create-policy: check-deps
+    #!/bin/bash
+    echo "Creating IAM policy {{test_policy_name}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}"'?Action=CreatePolicy&PolicyName={{test_policy_name}}&PolicyDocument={{test_policy_document}}'
+
+[group("test-iam")]
+test-iam-delete-policy: check-deps
+    #!/bin/bash
+    echo "Deleting IAM policy: {{test_policy_name}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM policies WHERE name = '{{test_policy_name}}'"
