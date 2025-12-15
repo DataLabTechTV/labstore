@@ -157,7 +157,7 @@ test-iam-create-user: check-deps
     http POST "http://${host}:${port}?Action=CreateUser&UserName={{test_user}}"
 
 [group("test-iam")]
-test-iam-delete-user: check-deps
+test-db-delete-user: check-deps
     #!/bin/bash
     echo "Deleting IAM user: {{test_user}}"
     iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
@@ -175,7 +175,7 @@ test_policy_name := "test-policy"
 test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
     '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
     '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
-    '"Resource":["{{test_bucket}}","{{test_bucket}}/*"]}]}'
+    '"Resource":["' + test_bucket + '","' + test_bucket + '/*"]}]}'
 
 [group("debug")]
 print-test-policy-document:
@@ -187,10 +187,13 @@ test-iam-create-policy: check-deps
     echo "Creating IAM policy {{test_policy_name}}"
     host=$(yq ".backend.iam.server.host" {{config_path}})
     port=$(yq ".backend.iam.server.port" {{config_path}})
-    http POST "http://${host}:${port}"'?Action=CreatePolicy&PolicyName={{test_policy_name}}&PolicyDocument={{test_policy_document}}'
+    http POST "http://${host}:${port}" \
+        "Action==CreatePolicy" \
+        'PolicyName=={{test_policy_name}}' \
+        'PolicyDocument=={{test_policy_document}}'
 
 [group("test-iam")]
-test-iam-delete-policy: check-deps
+test-db-delete-policy: check-deps
     #!/bin/bash
     echo "Deleting IAM policy: {{test_policy_name}}"
     iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db

@@ -109,8 +109,8 @@ func (store *Store) ensureSchema() error {
 	CREATE TABLE IF NOT EXISTS policies (
 		policy_id TEXT PRIMARY KEY,
 		name TEXT UNIQUE,
-		created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
-		updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+		created_at DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+		updated_at DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP),
 		document JSON NOT NULL
 	);
 
