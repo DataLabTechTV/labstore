@@ -59,7 +59,7 @@ test-bucket:
     just create-bucket {{test_bucket}}
 
 [group("test-put")]
-test-put-obj-mc: test-bucket check-deps
+test-put-obj-mc: check-deps test-bucket
     #!/bin/bash
 
     tmpfile=$(mktemp)
@@ -75,7 +75,7 @@ test-put-obj-mc: test-bucket check-deps
     rm -f $tmpfile
 
 [group("test-put")]
-test-put-obj-rclone: test-bucket check-deps
+test-put-obj-rclone: check-deps test-bucket
     #!/bin/bash
 
     tmpfile=$(mktemp)
@@ -94,7 +94,7 @@ test-put-obj-rclone: test-bucket check-deps
     rm -f $tmpfile $tmpconfig
 
 [group("test-put")]
-test-put-obj-s5cmd: test-bucket check-deps
+test-put-obj-s5cmd: check-deps test-bucket
     #!/bin/bash
 
     tmpfile=$(mktemp)
@@ -114,14 +114,14 @@ test-put-obj-s5cmd: test-bucket check-deps
     rm -f $tmpfile
 
 [group("test-list")]
-test-list-obj-mc: test-bucket check-deps
+test-list-obj-mc: check-deps test-bucket
     #!/bin/bash
     export MC_HOST_local=$(just print-mc-host)
     echo "==> Listing keys in {{test_bucket}}"
     mc ls local/{{test_bucket}}/
 
 [group("test-list")]
-test-list-obj-rclone: test-bucket check-deps
+test-list-obj-rclone: check-deps test-bucket
     #!/bin/bash
 
     tmpconfig=$(mktemp)
@@ -136,7 +136,7 @@ test-list-obj-rclone: test-bucket check-deps
     rm -f $tmpconfig
 
 [group("test-list")]
-test-list-obj-s5cmd: test-bucket check-deps
+test-list-obj-s5cmd: check-deps test-bucket
     #!/bin/bash
     endpoint_url=$(just print-mc-host)
 
@@ -175,14 +175,14 @@ test_policy_name := "test-policy"
 test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
     '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
     '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
-    '"Resource":["' + test_bucket + '","' + test_bucket + '/*"]}]}'
+    '"Resource":["arn:aws:s3:::' + test_bucket + '","arn:aws:s3:::' + test_bucket + '/*"]}]}'
 
 [group("debug")]
 print-test-policy-document:
     @echo '{{test_policy_document}}' | jq
 
 [group("test-iam")]
-test-iam-create-policy: check-deps
+test-iam-create-policy: check-deps test-bucket
     #!/bin/bash
     echo "Creating IAM policy {{test_policy_name}}"
     host=$(yq ".backend.iam.server.host" {{config_path}})
@@ -198,3 +198,14 @@ test-db-delete-policy: check-deps
     echo "Deleting IAM policy: {{test_policy_name}}"
     iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
     sqlite3 $iam_db "DELETE FROM policies WHERE name = '{{test_policy_name}}'"
+
+[group("test-iam")]
+test-iam-attach-user-policy: check-deps
+    #!/bin/bash
+    echo "Attaching IAM policy {{test_policy_name}} to user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}" \
+        "Action==AttachUserPolicy" \
+        'PolicyArn==arn:aws:iam::000000000001:policy/{{test_policy_name}}' \
+        'UserName=={{test_user}}'

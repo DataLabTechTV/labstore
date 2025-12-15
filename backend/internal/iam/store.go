@@ -96,6 +96,7 @@ func (store *Store) ensureSchema() error {
 	CREATE TABLE IF NOT EXISTS users (
 		user_id TEXT PRIMARY KEY,
 		name TEXT UNIQUE,
+		arn TEXT UNIQUE,
 		access_key TEXT,
 		secret_key BLOB,
 		salt BLOB
@@ -109,9 +110,12 @@ func (store *Store) ensureSchema() error {
 	CREATE TABLE IF NOT EXISTS policies (
 		policy_id TEXT PRIMARY KEY,
 		name TEXT UNIQUE,
+		arn TEXT UNIQUE,
+
+		document JSON NOT NULL,
+
 		created_at DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP),
-		updated_at DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP),
-		document JSON NOT NULL
+		updated_at DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 	);
 
 	CREATE TRIGGER IF NOT EXISTS policies_update_trigger
