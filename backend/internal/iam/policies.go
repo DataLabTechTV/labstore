@@ -20,7 +20,7 @@ const latestPolicyDocumentVersion = "2012-10-17"
 type Policy struct {
 	PolicyID        string          `db:"policy_id"`
 	Name            string          `db:"name"`
-	CreateAt        time.Time       `db:"created_at"`
+	CreatedAt       time.Time       `db:"created_at"`
 	UpdatedAt       time.Time       `db:"updated_at"`
 	Document        *PolicyDocument `db:"document"`
 	AttachmentCount uint
@@ -96,6 +96,7 @@ func GetPolicyByID(policyID string) (*Policy, error) {
 		SELECT 1 FROM group_policies WHERE policy_id = $1
 	)
 	`
+
 	if err := store.readDB.Get(&attachments, query, policyID); err != nil {
 		return nil, err
 	}
@@ -175,7 +176,7 @@ func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 				Path:             policyPath,
 				Arn:              toArn(ArnPolicy, policyPath, policy.Name),
 				AttachmentCount:  policy.AttachmentCount,
-				CreateDate:       policy.CreateAt,
+				CreateDate:       policy.CreatedAt,
 				UpdateDate:       policy.UpdatedAt,
 			},
 		},
