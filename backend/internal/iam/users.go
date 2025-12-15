@@ -16,9 +16,16 @@ import (
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
+const (
+	defaultAdminUserName = "Administrator"
+	defaultUserPath      = "/"
+)
+
 type User struct {
-	UserID      string         `db:"user_id"`
-	Name        string         `db:"name"`
+	UserID string `db:"user_id"`
+	Name   string `db:"name"`
+	Arn    string `db:"arn"`
+
 	AccessKeyID sql.NullString `db:"access_key"`
 	SecretKey   []byte         `db:"secret_key"`
 	Salt        []byte         `db:"salt"`
@@ -108,9 +115,15 @@ func CreateUser(name string) (*User, error) {
 	user := &User{
 		UserID: GenerateUniqueID(IAMUserUniqueID),
 		Name:   name,
+		Arn:    toArn(ArnUser, defaultUserPath+name),
 	}
 
-	_, err := store.writeDB.NamedExec(`INSERT INTO users (user_id, name) VALUES (:user_id, :name)`, &user)
+	query := `
+	INSERT INTO users (user_id, name, arn)
+	VALUES (:user_id, :name, :arn)
+	`
+
+	_, err := store.writeDB.NamedExec(query, &user)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
@@ -165,8 +178,8 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 			User: &UserResult{
 				Path:     userPath,
 				UserName: user.Name,
-				UserId:   fmt.Sprint(user.UserID),
-				Arn:      toArn(ArnUser, userPath, user.Name),
+				UserId:   user.UserID,
+				Arn:      user.Arn,
 			},
 			ResponseMetadata: &ResponseMetadata{
 				RequestId: core.NewRequestID(),
@@ -264,11 +277,16 @@ func (store *Store) setupAdmin() error {
 	}
 
 	store.Users[config.Admin.Auth.AccessKey] = &User{
-		Name:        "Administrator",
+		UserID: GenerateUniqueID(IAMUserUniqueID),
+		Name:   defaultAdminUserName,
+		Arn:    toArn(ArnUser, defaultUserPath+defaultAdminUserName),
+
 		AccessKeyID: sql.NullString{String: config.Admin.Auth.AccessKey, Valid: true},
 		SecretKey:   encryptedData.Value,
 		Salt:        encryptedData.Salt,
-		PolicyIDs:   []string{adminPolicy},
+
+		GroupIDs:  []string{},
+		PolicyIDs: []string{adminPolicy},
 	}
 
 	store.Policies[adminPolicy] = &Policy{
