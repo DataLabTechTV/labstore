@@ -25,7 +25,8 @@ func (r *Resources) UnmarshalJSON(data []byte) error {
 }
 
 func Resource(bucket, key string) string {
-	resource := strings.TrimSuffix(bucket, "/") + "/" + strings.TrimPrefix(key, "/")
+	path := strings.TrimSuffix(bucket, "/") + "/" + strings.TrimPrefix(key, "/")
+	resource := toArn(ArnS3, path)
 	return resource
 }
 

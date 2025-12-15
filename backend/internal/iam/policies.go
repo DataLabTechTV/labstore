@@ -14,15 +14,25 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
-const adminPolicy = "admin-policy"
-const latestPolicyDocumentVersion = "2012-10-17"
+const (
+	defaultPolicyPath    = "/"
+	defaultPolicyVersion = "v1"
+
+	latestPolicyDocumentVersion = "2012-10-17"
+
+	adminPolicy = "admin-policy"
+)
 
 type Policy struct {
-	PolicyID        string          `db:"policy_id"`
-	Name            string          `db:"name"`
-	CreatedAt       time.Time       `db:"created_at"`
-	UpdatedAt       time.Time       `db:"updated_at"`
-	Document        *PolicyDocument `db:"document"`
+	PolicyID string `db:"policy_id"`
+	Name     string `db:"name"`
+	Arn      string `db:"arn"`
+
+	Document *PolicyDocument `db:"document"`
+
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+
 	AttachmentCount uint
 }
 
@@ -104,18 +114,44 @@ func GetPolicyByID(policyID string) (*Policy, error) {
 	return &policy, nil
 }
 
+func GetPolicyByArn(arn string) (*Policy, error) {
+	var policy Policy
+
+	query := `SELECT * FROM policies WHERE arn = $1`
+	if err := store.readDB.Get(&policy, query, arn); err != nil {
+		return nil, err
+	}
+
+	var attachments int
+	query = `
+	SELECT count(*)
+	FROM (
+		SELECT 1 FROM user_policies WHERE policy_id = $1
+		UNION ALL
+		SELECT 1 FROM group_policies WHERE policy_id = $1
+	)
+	`
+
+	if err := store.readDB.Get(&attachments, query, policy.PolicyID); err != nil {
+		return nil, err
+	}
+
+	return &policy, nil
+}
+
 func CreatePolicy(name string, doc *PolicyDocument) (*Policy, error) {
 	policyID := GenerateUniqueID(ManagedPolicyUniqueID)
 
 	policy := &Policy{
 		PolicyID: policyID,
 		Name:     name,
+		Arn:      toArn(ArnPolicy, defaultPolicyPath+name),
 		Document: doc,
 	}
 
 	query := `
-	INSERT INTO policies (policy_id, name, document)
-	VALUES (:policy_id, :name, :document)
+	INSERT INTO policies (policy_id, name, arn, document)
+	VALUES (:policy_id, :name, :arn, :document)
 	`
 
 	_, err := store.writeDB.NamedExec(query, &policy)
@@ -171,10 +207,10 @@ func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 		CreatePolicyResult: &CreatePolicyResult{
 			Policy: &PolicyResult{
 				PolicyName:       policy.Name,
-				DefaultVersionId: "v1",
+				DefaultVersionId: defaultPolicyVersion,
 				PolicyId:         policy.PolicyID,
 				Path:             policyPath,
-				Arn:              toArn(ArnPolicy, policyPath, policy.Name),
+				Arn:              policy.Arn,
 				AttachmentCount:  policy.AttachmentCount,
 				CreateDate:       policy.CreatedAt,
 				UpdateDate:       policy.UpdatedAt,
@@ -187,4 +223,47 @@ func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 
 	core.WriteXML(w, http.StatusOK, response)
 
+}
+
+func AttachPolicy(arnType ArnType, policyArn, userName string) error {
+	user, err := GetUserByName(userName)
+	if err != nil {
+		slog.Error("get user by name", "err", err)
+		return err
+	}
+
+	policy, err := GetPolicyByArn(policyArn)
+	if err != nil {
+		slog.Error("get policy by arn", "err", err)
+		return err
+	}
+
+	var tableName string
+	var idFieldName string
+
+	switch arnType {
+	case ArnUser:
+		tableName = "user_policies"
+		idFieldName = "user_id"
+	case ArnGroup:
+		tableName = "group_policies"
+		idFieldName = "group_id"
+	default:
+		return errors.New("unsupported arn type")
+	}
+
+	query_tmpl := `
+	INSERT INTO %s (%s, policy_id)
+	VALUES (:%s, :policy_id)
+	`
+
+	query := fmt.Sprintf(query_tmpl, tableName, idFieldName, idFieldName)
+
+	_, err = store.writeDB.Exec(query, user.UserID, policy.PolicyID)
+	if err != nil {
+		slog.Error("attach policy insert", "err", err)
+		return err
+	}
+
+	return nil
 }
