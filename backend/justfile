@@ -218,3 +218,7 @@ test-db-delete-user-policy: check-deps
     sqlite3 $iam_db "DELETE FROM user_policies \
         WHERE user_id = (SELECT user_id FROM users WHERE name = '{{test_user}}') \
         AND policy_id = (SELECT policy_id FROM policies WHERE name = '{{test_policy_name}}')"
+
+[group("test-iam")]
+test-iam-policy: test-iam-create-user test-iam-create-access-key \
+    test-iam-create-policy test-iam-attach-user-policy

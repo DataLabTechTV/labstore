@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
@@ -80,13 +81,13 @@ func ensureDirectories() error {
 }
 
 func ensureMasterKey() error {
+	if helper.FileExists(config.Storage.MasterKeyPath) {
+		return nil
+	}
+
 	key, err := security.GenerateMasterKey()
 	if err != nil {
 		return err
-	}
-
-	if _, err := os.Stat(config.Storage.MasterKeyPath); os.IsExist(err) {
-		return nil
 	}
 
 	if err := os.WriteFile(config.Storage.MasterKeyPath, key, 0600); err != nil {
