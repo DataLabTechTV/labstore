@@ -138,8 +138,8 @@ func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
 	return &policy, nil
 }
 
-func (store *Store) getPolicyIDsByEntityID(arnType ArnType, entityID string) ([]string, error) {
-	var policyIDs []string
+func (store *Store) getPoliciesByEntityID(arnType ArnType, entityID string) ([]*Policy, error) {
+	var policies []*Policy
 
 	var tableName string
 	var idFieldName string
@@ -155,15 +155,19 @@ func (store *Store) getPolicyIDsByEntityID(arnType ArnType, entityID string) ([]
 		return nil, errors.New("unsupported arn type")
 	}
 
-	query_tmpl := `SELECT policy_id FROM %s WHERE %s = $1`
+	query_tmpl := `
+	SELECT * FROM policies WHERE policy_id = (
+		SELECT policy_id FROM %s WHERE %s = $1
+	)
+	`
 	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
 
-	if err := store.readDB.Select(&policyIDs, query, entityID); err != nil {
-		slog.Error("get policy ids by entity id", "err", err)
+	if err := store.readDB.Select(&policies, query, entityID); err != nil {
+		slog.Error("load policies by entity id", "err", err)
 		return nil, err
 	}
 
-	return policyIDs, nil
+	return policies, nil
 }
 
 func (store *Store) countPolicyAttachments(policy *Policy) (int, error) {
