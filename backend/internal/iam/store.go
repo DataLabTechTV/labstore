@@ -110,7 +110,8 @@ func (store *Store) ensureSchema() error {
 
 	CREATE TABLE IF NOT EXISTS groups (
 		group_id TEXT PRIMARY KEY,
-		name TEXT UNIQUE
+		name TEXT UNIQUE,
+		arn TEXT UNIQUE
 	);
 
 	CREATE TABLE IF NOT EXISTS policies (

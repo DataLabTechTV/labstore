@@ -3,6 +3,14 @@ set shell := ["bash", "-uc"]
 config_path := "../labstore.yml"
 
 test_bucket := "test-bucket"
+test_user := "test_user"
+test_group := "test_group"
+test_policy_name := "test-policy"
+test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
+    '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
+    '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
+    '"Resource":["arn:aws:s3:::' + test_bucket + '","arn:aws:s3:::' + test_bucket + '/*"]}]}'
+
 
 default:
     just -l
@@ -146,8 +154,6 @@ test-list-obj-s5cmd: check-deps test-bucket
     echo "==> Listing keys in {{test_bucket}}"
     s5cmd --endpoint-url $endpoint_url ls s3://{{test_bucket}}/
 
-test_user := "test_user"
-
 [group("test-iam")]
 test-iam-create-user: check-deps
     #!/bin/bash
@@ -170,12 +176,6 @@ test-iam-create-access-key: check-deps
     host=$(yq ".backend.iam.server.host" {{config_path}})
     port=$(yq ".backend.iam.server.port" {{config_path}})
     http POST "http://${host}:${port}?Action=CreateAccessKey&UserName={{test_user}}"
-
-test_policy_name := "test-policy"
-test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
-    '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
-    '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
-    '"Resource":["arn:aws:s3:::' + test_bucket + '","arn:aws:s3:::' + test_bucket + '/*"]}]}'
 
 [group("debug")]
 print-test-policy-document:
@@ -222,3 +222,18 @@ test-db-delete-user-policy: check-deps
 [group("test-iam")]
 test-iam-policy: test-iam-create-user test-iam-create-access-key \
     test-iam-create-policy test-iam-attach-user-policy
+
+[group("test-iam")]
+test-iam-create-group: check-deps
+    #!/bin/bash
+    echo "Creating IAM group: {{test_group}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=CreateGroup&GroupName={{test_group}}"
+
+[group("test-iam")]
+test-db-delete-group: check-deps
+    #!/bin/bash
+    echo "Deleting IAM group: {{test_group}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM groups WHERE name = '{{test_group}}'"

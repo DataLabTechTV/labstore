@@ -11,6 +11,7 @@ import (
 
 const (
 	ErrEntityTypeUser        = "user"
+	ErrEntityTypeGroup       = "group"
 	ErrEntityTypePolicy      = "policy"
 	ErrEntityTypeUserPolicy  = "user_policy"
 	ErrEntityTypeGroupPolicy = "group_policy"
