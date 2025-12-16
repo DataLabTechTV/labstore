@@ -387,3 +387,27 @@ func CreateAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 
 	core.WriteXML(w, http.StatusOK, response)
 }
+
+func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func DeleteAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
