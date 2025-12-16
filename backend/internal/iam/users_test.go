@@ -19,7 +19,7 @@ func TestCreateAccessKeyIntegration(t *testing.T) {
 	config.Load(nil)
 	Init()
 
-	_, err := CreateUser(testUserName)
+	_, err := store.CreateUser(testUserName)
 	if err != nil {
 		var errExists *errs.ErrExists
 		if errors.As(err, &errExists) {
@@ -29,17 +29,17 @@ func TestCreateAccessKeyIntegration(t *testing.T) {
 		}
 	}
 
-	user, err := GetUserByName(testUserName)
+	user, err := store.GetUserByName(testUserName)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = CreateAccessKey(user)
+	_, err = store.CreateAccessKey(user)
 	if err != nil {
 		t.Error(err)
 	}
 
-	fetchedUser, err := GetUserByAccessKey(user.AccessKeyID.String)
+	fetchedUser, err := store.GetUserByAccessKey(user.AccessKeyID.String)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -49,6 +49,15 @@ func IAMEntityAlreadyExists(entityName string) *IAMError {
 	}
 }
 
+func IAMNoSuchEntity(entityName string) *IAMError {
+	return &IAMError{
+		Type:       IAMReceiverType,
+		Code:       "NoSuchEntity",
+		Message:    fmt.Sprintf("The entity %s does not exist.", entityName),
+		StatusCode: http.StatusNotFound,
+	}
+}
+
 func IAMServiceFailure() *IAMError {
 	return &IAMError{
 		Type:       IAMReceiverType,

@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
@@ -32,6 +32,11 @@ type User struct {
 
 	GroupIDs  []string
 	PolicyIDs []string
+}
+
+type cachedUser struct {
+	user     *User
+	loadedAt time.Time
 }
 
 type CreateUserResponse struct {
@@ -78,9 +83,21 @@ const (
 	AccessKeyExpired  AccessKeyStatus = "Expired"
 )
 
-func GetUserByAccessKey(accessKey string) (*User, error) {
-	if user, ok := store.Users[accessKey]; ok {
-		return user, nil
+func (user *User) EncryptedData() *security.EncryptedData {
+	return &security.EncryptedData{
+		Value: user.SecretKey,
+		Salt:  user.Salt,
+	}
+}
+
+func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
+	if cachedUser, ok := store.Users[accessKey]; ok {
+		if time.Since(cachedUser.loadedAt) < store.ttl {
+			return cachedUser.user, nil
+		}
+
+		slog.Debug("invalidating user", "accessKey", accessKey)
+		delete(store.Users, accessKey)
 	}
 
 	var user User
@@ -88,26 +105,45 @@ func GetUserByAccessKey(accessKey string) (*User, error) {
 		return nil, err
 	}
 
-	store.Users[user.AccessKeyID.String] = &user
+	policyIDs, err := store.getPolicyIDsByEntityID(ArnUser, user.UserID)
+	if err != nil {
+		return nil, err
+	}
+	user.PolicyIDs = policyIDs
+
+	store.Users[user.AccessKeyID.String] = &cachedUser{
+		user:     &user,
+		loadedAt: time.Now(),
+	}
 
 	return &user, nil
 }
 
-func GetUserByName(name string) (*User, error) {
+func (store *Store) GetUserByName(name string) (*User, error) {
 	var user User
 
 	if err := store.readDB.Get(&user, `SELECT * FROM users WHERE name = $1`, name); err != nil {
+		slog.Error("get user by name", "err", err)
 		return nil, err
 	}
 
+	policyIDs, err := store.getPolicyIDsByEntityID(ArnUser, user.UserID)
+	if err != nil {
+		return nil, err
+	}
+	user.PolicyIDs = policyIDs
+
 	if user.AccessKeyID.Valid {
-		store.Users[user.AccessKeyID.String] = &user
+		store.Users[user.AccessKeyID.String] = &cachedUser{
+			user:     &user,
+			loadedAt: time.Now(),
+		}
 	}
 
 	return &user, nil
 }
 
-func CreateUser(name string) (*User, error) {
+func (store *Store) CreateUser(name string) (*User, error) {
 	if name == config.Admin.Auth.AccessKey {
 		return nil, &errs.ErrExists{Type: errs.ErrEntityTypeUser, Resource: name}
 	}
@@ -137,7 +173,7 @@ func CreateUser(name string) (*User, error) {
 		return nil, err
 	}
 
-	user, err = GetUserByName(name)
+	user, err = store.GetUserByName(name)
 	if err != nil {
 		slog.Error("get user by name", "err", err)
 		return nil, &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: name}
@@ -146,14 +182,88 @@ func CreateUser(name string) (*User, error) {
 	return user, nil
 }
 
+func (store *Store) CreateAccessKey(user *User) (string, error) {
+	secretKey, err := security.GeneratePassword(42)
+	if err != nil {
+		return "", err
+	}
+
+	user.AccessKeyID = sql.NullString{
+		String: user.Name,
+		Valid:  user.Name != "",
+	}
+
+	encryptedSecretKey, err := security.EncryptAESGCM(secretKey, config.Storage.MasterKeyPath)
+	if err != nil {
+		return "", err
+	}
+
+	user.SecretKey = encryptedSecretKey.Value
+	user.Salt = encryptedSecretKey.Salt
+
+	query := `
+	UPDATE users
+	SET
+		access_key = :access_key,
+		secret_key = :secret_key,
+		salt = :salt
+	WHERE user_id = :user_id
+	`
+
+	if _, err := store.writeDB.NamedExec(query, user); err != nil {
+		return "", err
+	}
+
+	return secretKey, nil
+}
+
+func (store *Store) setupAdmin() error {
+	encryptedData, err := security.EncryptAESGCM(config.Admin.Auth.SecretKey, config.Storage.MasterKeyPath)
+	if err != nil {
+		return err
+	}
+
+	store.Users[config.Admin.Auth.AccessKey] = &cachedUser{
+		user: &User{
+			UserID: GenerateUniqueID(IAMUserUniqueID),
+			Name:   defaultAdminUserName,
+			Arn:    toArn(ArnUser, defaultUserPath+defaultAdminUserName),
+
+			AccessKeyID: sql.NullString{String: config.Admin.Auth.AccessKey, Valid: true},
+			SecretKey:   encryptedData.Value,
+			Salt:        encryptedData.Salt,
+
+			GroupIDs:  []string{},
+			PolicyIDs: []string{adminPolicy},
+		},
+		loadedAt: time.Now(),
+	}
+
+	store.Policies[adminPolicy] = &Policy{
+		PolicyID: adminPolicy,
+		Document: &PolicyDocument{
+			Version: latestPolicyDocumentVersion,
+			Statement: []Statement{
+				{
+					Effect:   allow,
+					Action:   []Action{Action(Any)},
+					Resource: []string{Any},
+				},
+			},
+		},
+	}
+
+	return nil
+}
+
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	userName := r.URL.Query().Get("UserName")
 	if userName == "" {
-		errs.Handle(w, errors.New("missing query parameter: UserName"))
+		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return
 	}
 
-	user, err := CreateUser(userName)
+	user, err := store.CreateUser(userName)
 	if err != nil {
 		var errExists *errs.ErrExists
 		if errors.As(err, &errExists) {
@@ -190,59 +300,23 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	core.WriteXML(w, http.StatusOK, response)
 }
 
-func CreateAccessKey(user *User) (string, error) {
-	secretKey, err := security.GeneratePassword(42)
-	if err != nil {
-		return "", err
-	}
-
-	user.AccessKeyID = sql.NullString{
-		String: user.Name,
-		Valid:  user.Name != "",
-	}
-
-	encryptedSecretKey, err := security.EncryptAESGCM(secretKey, config.Storage.MasterKeyPath)
-	if err != nil {
-		return "", err
-	}
-
-	user.SecretKey = encryptedSecretKey.Value
-	user.Salt = encryptedSecretKey.Salt
-
-	query := `
-	UPDATE users
-	SET
-		access_key = :access_key,
-		secret_key = :secret_key,
-		salt = :salt
-	WHERE user_id = :user_id
-	`
-
-	if _, err := store.writeDB.NamedExec(query, user); err != nil {
-		return "", err
-	}
-
-	return secretKey, nil
-}
-
 func CreateAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 	userName := r.URL.Query().Get("UserName")
 	if userName == "" {
-		errs.Handle(w, errors.New("missing query parameter: UserName"))
+		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return
 	}
 
-	user, err := GetUserByName(userName)
+	user, err := store.GetUserByName(userName)
 	if err != nil {
-		slog.Error("get user by name", "err", err)
-		errs.Handle(w, fmt.Errorf("user not found: %s", userName))
+		errs.Handle(w, errs.IAMNoSuchEntity(userName))
 		return
 	}
 
-	secretKey, err := CreateAccessKey(user)
+	secretKey, err := store.CreateAccessKey(user)
 	if err != nil {
 		slog.Error("create access key", "err", err)
-		errs.Handle(w, errors.New("could not create access key"))
+		errs.Handle(w, errs.IAMServiceFailure())
 		return
 	}
 
@@ -261,47 +335,4 @@ func CreateAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	core.WriteXML(w, http.StatusOK, response)
-}
-
-func (user *User) EncryptedData() *security.EncryptedData {
-	return &security.EncryptedData{
-		Value: user.SecretKey,
-		Salt:  user.Salt,
-	}
-}
-
-func (store *Store) setupAdmin() error {
-	encryptedData, err := security.EncryptAESGCM(config.Admin.Auth.SecretKey, config.Storage.MasterKeyPath)
-	if err != nil {
-		return err
-	}
-
-	store.Users[config.Admin.Auth.AccessKey] = &User{
-		UserID: GenerateUniqueID(IAMUserUniqueID),
-		Name:   defaultAdminUserName,
-		Arn:    toArn(ArnUser, defaultUserPath+defaultAdminUserName),
-
-		AccessKeyID: sql.NullString{String: config.Admin.Auth.AccessKey, Valid: true},
-		SecretKey:   encryptedData.Value,
-		Salt:        encryptedData.Salt,
-
-		GroupIDs:  []string{},
-		PolicyIDs: []string{adminPolicy},
-	}
-
-	store.Policies[adminPolicy] = &Policy{
-		PolicyID: adminPolicy,
-		Document: &PolicyDocument{
-			Version: latestPolicyDocumentVersion,
-			Statement: []Statement{
-				{
-					Effect:   allow,
-					Action:   []Action{Action(Any)},
-					Resource: []string{Any},
-				},
-			},
-		},
-	}
-
-	return nil
 }
