@@ -47,9 +47,8 @@ func loadIAMRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
 		action := r.URL.Query().Get("Action")
 
-		// TODO: support for missing operations
 		switch iam.IAMOp(action) {
-		// --- User ---
+		// --- User: Create ---
 		case iam.OpCreateUser:
 			iam.CreateUserHandler(w, r)
 		case iam.OpCreateAccessKey:
@@ -57,7 +56,23 @@ func loadIAMRoutes(router *http.ServeMux) {
 		case iam.OpAttachUserPolicy:
 			iam.AttachUserPolicyHandler(w, r)
 
-		// --- Groups ---
+		// --- User: Read ---
+		case iam.OpGetUser:
+			iam.GetUserHandler(w, r)
+		case iam.OpListAccessKeys:
+			iam.ListAccessKeysHandler(w, r)
+		case iam.OpListAttachedUserPolicies:
+			iam.ListAttachedUserPoliciesHandler(w, r)
+
+		// --- User: Delete ---
+		case iam.OpDeleteUser:
+			iam.DeleteUserHandler(w, r)
+		case iam.OpDeleteAccessKey:
+			iam.DeleteAccessKeyHandler(w, r)
+		case iam.OpDetachUserPolicy:
+			iam.DetachUserPolicyHandler(w, r)
+
+		// --- Groups: Create ---
 		case iam.OpCreateGroup:
 			iam.CreateGroupHandler(w, r)
 		case iam.OpAddUserToGroup:
@@ -65,9 +80,27 @@ func loadIAMRoutes(router *http.ServeMux) {
 		case iam.OpAttachGroupPolicy:
 			iam.AttachGroupPolicyHandler(w, r)
 
+		// --- Groups: Read ---
+		case iam.OpGetGroup:
+			iam.GetGroupHandler(w, r)
+		case iam.OpListAttachedGroupPolicies:
+			iam.ListAttachedGroupPoliciesHandler(w, r)
+
+		// --- Groups: Delete ---
+		case iam.OpDeleteGroup:
+			iam.DeleteGroupHandler(w, r)
+		case iam.OpRemoveUserFromGroup:
+			iam.RemoveUserFromGroupHandler(w, r)
+		case iam.OpDetachGroupPolicy:
+			iam.DetachGroupPolicyHandler(w, r)
+
 		// --- Policies ---
 		case iam.OpCreatePolicy:
 			iam.CreatePolicyHandler(w, r)
+		case iam.OpGetPolicy:
+			iam.GetPolicyHandler(w, r)
+		case iam.OpDeletePolicy:
+			iam.DeletePolicyHandler(w, r)
 
 		default:
 			errs.Handle(w, errs.IAMNotImplemented(action))

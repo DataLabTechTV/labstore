@@ -429,3 +429,11 @@ func AttachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 
 	core.WriteXML(w, http.StatusOK, response)
 }
+
+func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func DeletePolicyHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
