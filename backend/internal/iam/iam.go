@@ -43,8 +43,9 @@ func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 	allowed := false
 
 	for _, policyID := range user.PolicyIDs {
-		policy, ok := store.Policies[policyID]
-		if !ok {
+		policy, err := store.GetPolicyByID(policyID)
+		if err != nil {
+			slog.Warn("policy not found", "policy", policy, "err", err)
 			continue
 		}
 
