@@ -38,6 +38,12 @@ type Policy struct {
 	AttachmentCount int
 }
 
+type cachedPolicy struct {
+	policy      *Policy
+	loadedAt    time.Time
+	neverExpire bool
+}
+
 type PolicyDocument struct {
 	Version   string
 	Statement []Statement
@@ -97,8 +103,13 @@ func (pd *PolicyDocument) Scan(src any) error {
 }
 
 func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
-	if policy, ok := store.Policies[policyID]; ok {
-		return policy, nil
+	if cachedPolicy, ok := store.Policies[policyID]; ok {
+		if cachedPolicy.neverExpire || time.Since(cachedPolicy.loadedAt) < store.ttl {
+			return cachedPolicy.policy, nil
+		}
+
+		slog.Debug("invalidating cached policy", "policyID", policyID)
+		delete(store.Policies, policyID)
 	}
 
 	var policy Policy
@@ -114,7 +125,10 @@ func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
 	}
 	policy.AttachmentCount = attachments
 
-	store.Policies[policyID] = &policy
+	store.Policies[policyID] = &cachedPolicy{
+		policy:   &policy,
+		loadedAt: time.Now(),
+	}
 
 	return &policy, nil
 }
@@ -133,7 +147,10 @@ func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
 	}
 	policy.AttachmentCount = attachments
 
-	store.Policies[policy.PolicyID] = &policy
+	store.Policies[policy.PolicyID] = &cachedPolicy{
+		policy:   &policy,
+		loadedAt: time.Now(),
+	}
 
 	return &policy, nil
 }
