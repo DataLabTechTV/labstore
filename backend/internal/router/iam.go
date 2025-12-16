@@ -49,16 +49,26 @@ func loadIAMRoutes(router *http.ServeMux) {
 
 		// TODO: support for missing operations
 		switch iam.IAMOp(action) {
+		// --- User ---
 		case iam.OpCreateUser:
 			iam.CreateUserHandler(w, r)
 		case iam.OpCreateAccessKey:
 			iam.CreateAccessKeyHandler(w, r)
-		case iam.OpCreatePolicy:
-			iam.CreatePolicyHandler(w, r)
 		case iam.OpAttachUserPolicy:
 			iam.AttachUserPolicyHandler(w, r)
+
+		// --- Groups ---
+		case iam.OpCreateGroup:
+			iam.CreateGroupHandler(w, r)
+		case iam.OpAddUserToGroup:
+			iam.AddUserToGroupHandler(w, r)
 		case iam.OpAttachGroupPolicy:
 			iam.AttachGroupPolicyHandler(w, r)
+
+		// --- Policies ---
+		case iam.OpCreatePolicy:
+			iam.CreatePolicyHandler(w, r)
+
 		default:
 			errs.Handle(w, errs.IAMNotImplemented(action))
 		}

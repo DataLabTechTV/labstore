@@ -180,7 +180,7 @@ func (store *Store) getPoliciesByEntityID(arnType ArnType, entityID string) ([]*
 	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
 
 	if err := store.readDB.Select(&policies, query, entityID); err != nil {
-		slog.Error("load policies by entity id", "err", err)
+		slog.Error("get policies by entity id", "err", err)
 		return nil, err
 	}
 
@@ -222,7 +222,7 @@ func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, err
 
 	_, err := store.writeDB.NamedExec(query, &policy)
 	if err != nil {
-		slog.Error("create policy insert", "err", err)
+		slog.Error("create policy", "err", err)
 		return nil, err
 	}
 
@@ -235,12 +235,8 @@ func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, err
 	return policy, nil
 }
 
-func (store *Store) AttachPolicy(arnType ArnType, policyArn, userName string) error {
-	user, err := store.GetUserByName(userName)
-	if err != nil {
-		slog.Error("get user by name", "err", err)
-		return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: userName}
-	}
+func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) error {
+	var entity any
 
 	policy, err := store.GetPolicyByArn(policyArn)
 	if err != nil {
@@ -250,14 +246,29 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, userName string) er
 
 	var tableName string
 	var idFieldName string
+	var idFieldValue string
 
 	switch arnType {
 	case ArnUser:
+		entity, err := store.GetUserByName(entityName)
+		if err != nil {
+			slog.Error("get user by name", "err", err)
+			return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: entityName}
+		}
+
 		tableName = "user_policies"
 		idFieldName = "user_id"
+		idFieldValue = entity.UserID
 	case ArnGroup:
+		entity, err := store.GetGroupByID(entityName)
+		if err != nil {
+			slog.Error("get group by name", "err", err)
+			return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: entityName}
+		}
+
 		tableName = "group_policies"
 		idFieldName = "group_id"
+		idFieldValue = entity.GroupID
 	default:
 		return errors.New("unsupported arn type")
 	}
@@ -268,26 +279,26 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, userName string) er
 	`
 	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
 
-	_, err = store.writeDB.Exec(query, user.UserID, policy.PolicyID)
+	_, err = store.writeDB.Exec(query, idFieldValue, policy.PolicyID)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
-				slog.Warn("attach policy insert", "arnType", arnType, "err", sqliteErr)
+				slog.Warn("attach policy", "arnType", arnType, "err", sqliteErr)
 				return nil
 			}
 		}
 
-		slog.Error("attach policy insert", "arnType", arnType, "err", err)
+		slog.Error("attach policy", "arnType", arnType, "err", err)
 		return err
 	}
 
-	user, err = store.GetUserByName(userName)
-	if err != nil {
-		return err
+	switch e := entity.(type) {
+	case User:
+		e.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+	case Group:
+		e.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
 	}
-
-	user.PolicyIDs = append(user.PolicyIDs, policy.PolicyID)
 
 	return nil
 }
@@ -381,5 +392,34 @@ func AttachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AttachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	policyArn := r.URL.Query().Get("PolicyArn")
+	if policyArn == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
+		return
+	}
 
+	groupName := r.URL.Query().Get("GroupName")
+	if groupName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
+		return
+	}
+
+	if err := store.AttachPolicy(ArnGroup, policyArn, groupName); err != nil {
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			errs.Handle(w, errs.IAMNoSuchEntity(errNotFound.Resource))
+			return
+		}
+
+		errs.Handle(w, errs.IAMServiceFailure())
+		return
+	}
+
+	response := &AttachUserPolicyResponse{
+		ResponseMetadata: &ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	core.WriteXML(w, http.StatusOK, response)
 }

@@ -11,6 +11,7 @@ type UniqueIDPrefix string
 
 const (
 	IAMUserUniqueID       UniqueIDPrefix = "AIDA"
+	IAMGroupUniqueID      UniqueIDPrefix = "AGPA"
 	ManagedPolicyUniqueID UniqueIDPrefix = "ANPA"
 )
 
