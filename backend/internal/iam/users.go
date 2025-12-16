@@ -83,6 +83,38 @@ const (
 	AccessKeyExpired  AccessKeyStatus = "Expired"
 )
 
+type GetUserResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ GetUserResponse"`
+	GetUserResult    *GetUserResult
+	ResponseMetadata *ResponseMetadata
+}
+
+type GetUserResult struct {
+	User *UserResult
+}
+
+type ListAccessKeysResponse struct {
+	XMLName              xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ ListAccessKeysResponse"`
+	ListAccessKeysResult *ListAccessKeysResult
+	ResponseMetadata     *ResponseMetadata
+}
+
+type ListAccessKeysResult struct {
+	UserName          string
+	AccessKeyMetadata *AccessKeyMetadata
+	IsTruncated       bool
+}
+
+type AccessKeyMetadata struct {
+	Member []*Member
+}
+
+type Member struct {
+	UserName    string
+	AccessKeyId string
+	Status      AccessKeyStatus
+}
+
 func (user *User) EncryptedData() *security.EncryptedData {
 	return &security.EncryptedData{
 		Value: user.SecretKey,
