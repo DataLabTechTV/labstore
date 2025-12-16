@@ -9,6 +9,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 const testUserName = "integration_test_user"
@@ -34,11 +35,12 @@ func TestCreateAccessKeyIntegration(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = store.CreateAccessKey(user)
+	secretKey, err := store.CreateAccessKey(user)
 	if err != nil {
 		t.Error(err)
 	}
 
+	delete(store.Users, user.Name)
 	fetchedUser, err := store.GetUserByAccessKey(user.AccessKeyID.String)
 	if err != nil {
 		t.Fatal(err)
@@ -46,5 +48,20 @@ func TestCreateAccessKeyIntegration(t *testing.T) {
 
 	if fetchedUser.UserID != user.UserID {
 		t.Fatalf("expected %v, got %v", user.UserID, fetchedUser.UserID)
+	}
+
+	fetchedUserSecretKey, err := security.DecryptAESGCM(
+		&security.EncryptedData{
+			Value: fetchedUser.SecretKey,
+			Salt:  fetchedUser.Salt,
+		},
+		config.Storage.MasterKeyPath,
+	)
+	if err != nil {
+		t.Error("failed to decrypt secret key after fetching user")
+	}
+
+	if fetchedUserSecretKey != secretKey {
+		t.Error("decrypted secret key does not match set value")
 	}
 }
