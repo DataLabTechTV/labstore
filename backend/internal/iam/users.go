@@ -188,6 +188,7 @@ func (store *Store) CreateUser(name string) (*User, error) {
 	return user, nil
 }
 
+// Creates an access key and returns the secret key in plain text
 func (store *Store) CreateAccessKey(user *User) (string, error) {
 	secretKey, err := security.GeneratePassword(42)
 	if err != nil {
