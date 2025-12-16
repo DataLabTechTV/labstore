@@ -96,7 +96,7 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 			return cachedUser.user, nil
 		}
 
-		slog.Debug("invalidating user", "accessKey", accessKey)
+		slog.Debug("invalidating cached user", "accessKey", accessKey)
 		delete(store.Users, accessKey)
 	}
 
