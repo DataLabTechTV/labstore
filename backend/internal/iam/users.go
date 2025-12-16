@@ -35,8 +35,9 @@ type User struct {
 }
 
 type cachedUser struct {
-	user     *User
-	loadedAt time.Time
+	user        *User
+	loadedAt    time.Time
+	neverExpire bool
 }
 
 type CreateUserResponse struct {
@@ -92,7 +93,7 @@ func (user *User) EncryptedData() *security.EncryptedData {
 
 func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 	if cachedUser, ok := store.Users[accessKey]; ok {
-		if time.Since(cachedUser.loadedAt) < store.ttl {
+		if cachedUser.neverExpire || time.Since(cachedUser.loadedAt) < store.ttl {
 			return cachedUser.user, nil
 		}
 
@@ -243,21 +244,26 @@ func (store *Store) setupAdmin() error {
 			GroupIDs:  []string{},
 			PolicyIDs: []string{adminPolicy},
 		},
-		loadedAt: time.Now(),
+		loadedAt:    time.Now(),
+		neverExpire: true,
 	}
 
-	store.Policies[adminPolicy] = &Policy{
-		PolicyID: adminPolicy,
-		Document: &PolicyDocument{
-			Version: latestPolicyDocumentVersion,
-			Statement: []Statement{
-				{
-					Effect:   allow,
-					Action:   []Action{Action(Any)},
-					Resource: []string{Any},
+	store.Policies[adminPolicy] = &cachedPolicy{
+		policy: &Policy{
+			PolicyID: adminPolicy,
+			Document: &PolicyDocument{
+				Version: latestPolicyDocumentVersion,
+				Statement: []Statement{
+					{
+						Effect:   allow,
+						Action:   []Action{Action(Any)},
+						Resource: []string{Any},
+					},
 				},
 			},
 		},
+		loadedAt:    time.Now(),
+		neverExpire: true,
 	}
 
 	return nil
