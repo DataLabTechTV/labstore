@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
@@ -12,21 +13,25 @@ import (
 )
 
 const IAMDBFilename = "iam.db"
+const defaultTTL = 15 * time.Minute
 
 type Store struct {
-	Users    map[string]*User
+	Users    map[string]*cachedUser
 	Groups   map[string]*Group
 	Policies map[string]*Policy
 
 	readDB  *sqlx.DB
 	writeDB *sqlx.DB
+
+	ttl time.Duration
 }
 
 func NewStore() *Store {
 	return &Store{
-		Users:    make(map[string]*User),
+		Users:    make(map[string]*cachedUser),
 		Groups:   make(map[string]*Group),
 		Policies: make(map[string]*Policy),
+		ttl:      defaultTTL,
 	}
 }
 

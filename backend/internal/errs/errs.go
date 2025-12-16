@@ -10,8 +10,10 @@ import (
 )
 
 const (
-	ErrEntityTypeUser   = "user"
-	ErrEntityTypePolicy = "policy"
+	ErrEntityTypeUser        = "user"
+	ErrEntityTypePolicy      = "policy"
+	ErrEntityTypeUserPolicy  = "user_policy"
+	ErrEntityTypeGroupPolicy = "group_policy"
 )
 
 type ErrEntityType string
