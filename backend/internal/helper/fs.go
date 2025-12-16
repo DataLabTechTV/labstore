@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,7 +9,7 @@ import (
 
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+	return err == nil || !errors.Is(err, os.ErrNotExist)
 }
 
 func IsDir(path string) bool {

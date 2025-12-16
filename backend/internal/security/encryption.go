@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"log/slog"
 	"os"
 )
 
@@ -50,6 +51,8 @@ func EncryptAESGCM(plainText string, masterKeyPath string) (*EncryptedData, erro
 		Salt:  salt,
 	}
 
+	slog.Debug("encrypt aes gcm", "len(salt)", len(encrypted.Salt), "len(value)", len(encrypted.Value))
+
 	return encrypted, nil
 }
 
@@ -59,6 +62,8 @@ func DecryptAESGCM(encrypted *EncryptedData, masterKeyPath string) (string, erro
 	if err != nil {
 		return "", err
 	}
+
+	slog.Debug("decrypt aes gcm", "len(salt)", len(encrypted.Salt), "len(value)", len(encrypted.Value))
 
 	decrypted, err := aesGCM.Open(nil, encrypted.Salt, encrypted.Value, nil)
 	if err != nil {
