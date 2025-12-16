@@ -293,3 +293,23 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
 
 	core.WriteXML(w, http.StatusOK, response)
 }
+
+func GetGroupHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func DeleteGroupHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}

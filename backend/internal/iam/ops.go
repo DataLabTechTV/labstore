@@ -16,10 +16,6 @@ const (
 	OpGetUser                  IAMOp = "GetUser"
 	OpListAccessKeys           IAMOp = "ListAccessKeys"
 	OpListAttachedUserPolicies IAMOp = "ListAttachedUserPolicies"
-	OpGetUserPolicy            IAMOp = "GetUserPolicy"
-
-	// --- Users: Update ---
-	OpPutUserPolicy IAMOp = "PutUserPolicy"
 
 	// --- Users: Delete ---
 	OpDeleteUser       IAMOp = "DeleteUser"
@@ -38,10 +34,6 @@ const (
 	// --- Groups: Read ---
 	OpGetGroup                  IAMOp = "GetGroup"
 	OpListAttachedGroupPolicies IAMOp = "ListAttachedGroupPolicies"
-	OpGetGroupPolicy            IAMOp = "GetGroupPolicy"
-
-	// --- Groups: Update ---
-	OpPutGroupPolicy IAMOp = "PutGroupPolicy"
 
 	// --- Groups: Delete ---
 	OpDeleteGroup         IAMOp = "DeleteGroup"
@@ -57,9 +49,6 @@ const (
 
 	// --- Policies: Read ---
 	OpGetPolicy IAMOp = "GetPolicy"
-
-	// --- Policies: Update ---
-	// N/A
 
 	// --- Policies: Delete ---
 	OpDeletePolicy IAMOp = "DeletePolicy"
