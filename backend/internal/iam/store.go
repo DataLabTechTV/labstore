@@ -16,6 +16,7 @@ const IAMDBFilename = "iam.db"
 const defaultTTL = 15 * time.Minute
 
 type Store struct {
+	// TODO cached groups and policies
 	Users    map[string]*cachedUser
 	Groups   map[string]*Group
 	Policies map[string]*Policy
