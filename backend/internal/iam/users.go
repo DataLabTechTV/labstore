@@ -51,7 +51,6 @@ type CreateUserResult struct {
 }
 
 type UserResult struct {
-	// XMLName  xml.Name `xml:"User"`
 	Path     string
 	UserName string
 	UserId   string
@@ -106,6 +105,7 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 		return nil, err
 	}
 
+	// Load policies
 	policies, err := store.getPoliciesByEntityID(ArnUser, user.UserID)
 	if err != nil {
 		return nil, err
@@ -113,6 +113,16 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 	user.PolicyIDs = make([]string, len(policies))
 	for i, policy := range policies {
 		user.PolicyIDs[i] = policy.PolicyID
+	}
+
+	// Load groups
+	groups, err := store.getGroupsByUserID(user.UserID)
+	if err != nil {
+		return nil, err
+	}
+	user.GroupIDs = make([]string, len(groups))
+	for i, group := range groups {
+		user.GroupIDs[i] = group.GroupID
 	}
 
 	store.Users[user.AccessKeyID.String] = &cachedUser{
@@ -131,6 +141,7 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 		return nil, err
 	}
 
+	// Load policies
 	policies, err := store.getPoliciesByEntityID(ArnUser, user.UserID)
 	if err != nil {
 		return nil, err
@@ -138,6 +149,16 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 	user.PolicyIDs = make([]string, len(policies))
 	for i, policy := range policies {
 		user.PolicyIDs[i] = policy.PolicyID
+	}
+
+	// Load groups
+	groups, err := store.getGroupsByUserID(user.UserID)
+	if err != nil {
+		return nil, err
+	}
+	user.GroupIDs = make([]string, len(groups))
+	for i, group := range groups {
+		user.GroupIDs[i] = group.GroupID
 	}
 
 	if user.AccessKeyID.Valid {
@@ -148,6 +169,23 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (store *Store) getUsersByGroupID(groupID string) ([]*User, error) {
+	var users []*User
+
+	query := `
+	SELECT * FROM users WHERE user_id = (
+		SELECT user_id FROM group_users WHERE group_id = $1
+	)
+	`
+
+	if err := store.readDB.Select(&users, query, groupID); err != nil {
+		slog.Error("get groups by user id", "err", err)
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (store *Store) CreateUser(name string) (*User, error) {
@@ -171,12 +209,12 @@ func (store *Store) CreateUser(name string) (*User, error) {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				slog.Error("create user insert", "err", sqliteErr)
+				slog.Error("create user", "err", sqliteErr)
 				return nil, &errs.ErrExists{Type: errs.ErrEntityTypeUser, Resource: name}
 			}
 		}
 
-		slog.Error("create user insert", "err", err)
+		slog.Error("create user", "err", err)
 		return nil, err
 	}
 
