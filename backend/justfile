@@ -209,3 +209,12 @@ test-iam-attach-user-policy: check-deps
         "Action==AttachUserPolicy" \
         'PolicyArn==arn:aws:iam::000000000001:policy/{{test_policy_name}}' \
         'UserName=={{test_user}}'
+
+[group("test-iam")]
+test-db-delete-user-policy: check-deps
+    #!/bin/bash
+    echo "Deleting attached IAM policy {{test_policy_name}} to user {{test_user}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM user_policies \
+        WHERE user_id = (SELECT user_id FROM users WHERE name = '{{test_user}}') \
+        AND policy_id = (SELECT policy_id FROM policies WHERE name = '{{test_policy_name}}')"

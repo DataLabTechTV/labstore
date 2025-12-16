@@ -12,6 +12,10 @@ const Any = "*"
 
 var store *Store
 
+func GetStore() *Store {
+	return store
+}
+
 func Init() {
 	if err := ensureDirectories(); err != nil {
 		slog.Error("could not create iam directories", "err", err)
@@ -30,7 +34,7 @@ func Init() {
 }
 
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
-	user, err := GetUserByAccessKey(accessKey)
+	user, err := store.GetUserByAccessKey(accessKey)
 	if err != nil {
 		return false
 	}
@@ -55,6 +59,8 @@ func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 			}
 		}
 	}
+
+	// TODO: group policy check
 
 	return allowed
 }
