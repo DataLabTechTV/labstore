@@ -125,6 +125,11 @@ func (store *Store) ensureSchema() error {
 		updated_at DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 	);
 
+	CREATE TABLE IF NOT EXISTS group_users (
+		group_id TEXT UNIQUE,
+		user_id TEXT UNIQUE
+	);
+
 	CREATE TRIGGER IF NOT EXISTS policies_update_trigger
 	AFTER UPDATE ON policies
 	FOR EACH ROW

@@ -209,7 +209,7 @@ func (store *Store) CreateUser(name string) (*User, error) {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				slog.Error("create user", "err", sqliteErr)
+				slog.Warn("create user", "err", sqliteErr)
 				return nil, &errs.ErrExists{Type: errs.ErrEntityTypeUser, Resource: name}
 			}
 		}

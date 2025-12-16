@@ -35,14 +35,42 @@ func Init() {
 }
 
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
+	slog.Debug("check policy", "accessKey", accessKey, "bucket", bucket, "key", key, "action", action)
+
 	user, err := store.GetUserByAccessKey(accessKey)
 	if err != nil {
 		return false
 	}
 
-	allowed := false
+	var policyIDs []string
+	uniquePolicyIDs := make(map[string]bool)
 
 	for _, policyID := range user.PolicyIDs {
+		if _, ok := uniquePolicyIDs[policyID]; ok {
+			continue
+		}
+		uniquePolicyIDs[policyID] = true
+		policyIDs = append(policyIDs, policyID)
+	}
+
+	for _, groupID := range user.GroupIDs {
+		group, err := store.GetGroupByID(groupID)
+		if err != nil {
+			slog.Warn("group not found", "err", err)
+		}
+
+		for _, policyID := range group.PolicyIDs {
+			if _, ok := uniquePolicyIDs[policyID]; ok {
+				continue
+			}
+			uniquePolicyIDs[policyID] = true
+			policyIDs = append(policyIDs, policyID)
+		}
+	}
+
+	allowed := false
+
+	for _, policyID := range policyIDs {
 		policy, err := store.GetPolicyByID(policyID)
 		if err != nil {
 			slog.Warn("policy not found", "policy", policy, "err", err)
@@ -61,8 +89,6 @@ func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 			}
 		}
 	}
-
-	// TODO: group policy check
 
 	return allowed
 }

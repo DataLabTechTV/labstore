@@ -158,7 +158,7 @@ func (store *Store) CreateGroup(name string) (*Group, error) {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				slog.Error("create group", "err", sqliteErr)
+				slog.Warn("create group", "err", sqliteErr)
 				return nil, &errs.ErrExists{Type: errs.ErrEntityTypeGroup, Resource: name}
 			}
 		}
