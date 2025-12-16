@@ -105,11 +105,14 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 		return nil, err
 	}
 
-	policyIDs, err := store.getPolicyIDsByEntityID(ArnUser, user.UserID)
+	policies, err := store.getPoliciesByEntityID(ArnUser, user.UserID)
 	if err != nil {
 		return nil, err
 	}
-	user.PolicyIDs = policyIDs
+	user.PolicyIDs = make([]string, len(policies))
+	for i, policy := range policies {
+		user.PolicyIDs[i] = policy.PolicyID
+	}
 
 	store.Users[user.AccessKeyID.String] = &cachedUser{
 		user:     &user,
@@ -127,11 +130,14 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 		return nil, err
 	}
 
-	policyIDs, err := store.getPolicyIDsByEntityID(ArnUser, user.UserID)
+	policies, err := store.getPoliciesByEntityID(ArnUser, user.UserID)
 	if err != nil {
 		return nil, err
 	}
-	user.PolicyIDs = policyIDs
+	user.PolicyIDs = make([]string, len(policies))
+	for i, policy := range policies {
+		user.PolicyIDs[i] = policy.PolicyID
+	}
 
 	if user.AccessKeyID.Valid {
 		store.Users[user.AccessKeyID.String] = &cachedUser{
