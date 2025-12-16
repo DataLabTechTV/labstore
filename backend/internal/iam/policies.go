@@ -222,8 +222,8 @@ func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, err
 
 	_, err := store.writeDB.NamedExec(query, &policy)
 	if err != nil {
-		slog.Error("create policy", "err", err)
-		return nil, err
+		slog.Warn("create policy", "err", err)
+		return nil, &errs.ErrExists{Type: errs.ErrEntityTypePolicy, Resource: policyID}
 	}
 
 	policy, err = store.GetPolicyByID(policyID)
@@ -260,7 +260,7 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 		idFieldName = "user_id"
 		idFieldValue = entity.UserID
 	case ArnGroup:
-		entity, err := store.GetGroupByID(entityName)
+		entity, err := store.GetGroupByName(entityName)
 		if err != nil {
 			slog.Error("get group by name", "err", err)
 			return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: entityName}
@@ -328,6 +328,12 @@ func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMServiceFailure())
+			return
+		}
+
+		var errExists *errs.ErrExists
+		if errors.As(err, &errExists) {
+			errs.Handle(w, errs.IAMEntityAlreadyExists(errExists.Resource))
 			return
 		}
 
