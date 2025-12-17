@@ -58,6 +58,7 @@ func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
 			AccessKeyMetadata: &AccessKeyMetadata{
 				Member: members,
 			},
+			IsTruncated: false,
 		},
 		ResponseMetadata: &ResponseMetadata{
 			RequestId: core.NewRequestID(),

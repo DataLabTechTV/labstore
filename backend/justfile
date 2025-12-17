@@ -308,6 +308,22 @@ test-iam-get-policy: check-deps
     http POST "http://${host}:${port}?Action=GetPolicy&PolicyArn={{test_policy_arn}}"
 
 [group("test-iam")]
+test-iam-list-attached-user-policies: check-deps
+    #!/bin/bash
+    echo "Listing IAM attached policies to user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=ListAttachedUserPolicies&UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-list-attached-group-policies: check-deps
+    #!/bin/bash
+    echo "Listing IAM attached policies to group {{test_group}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=ListAttachedGroupPolicies&GroupName={{test_group}}"
+
+[group("test-iam")]
 test-db-delete-policy: check-deps
     #!/bin/bash
     echo "Deleting IAM policy: {{test_policy_name}}"
