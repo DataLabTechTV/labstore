@@ -40,7 +40,7 @@ type UserResult struct {
 	Arn      string
 }
 
-func (user *User) UserResult() *UserResult {
+func (user *User) Result() *UserResult {
 	userPath := "/"
 
 	return &UserResult{

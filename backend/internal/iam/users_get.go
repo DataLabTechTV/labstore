@@ -73,7 +73,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := &GetUserResponse{
 		GetUserResult: &GetUserResult{
-			User: user.UserResult(),
+			User: user.Result(),
 		},
 		ResponseMetadata: &ResponseMetadata{
 			RequestId: core.NewRequestID(),
