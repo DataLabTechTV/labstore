@@ -35,7 +35,7 @@ func (store *Store) RemoveUserFromGroup(userName, groupName string) error {
 	AND user_id = $2
 	`
 
-	res, err := store.writeDB.Exec(query, group.GroupID, user.UserID)
+	res, err := store.sqlExec(query, group.GroupID, user.UserID)
 	if err != nil {
 		slog.Error("remove user from group", "err", err)
 		return err

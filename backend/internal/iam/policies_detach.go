@@ -44,7 +44,7 @@ func (store *Store) DetachUserPolicy(userName, policyArn string) error {
 	AND policy_id = $2
 	`
 
-	res, err := store.writeDB.Exec(query, user.UserID, policy.PolicyID)
+	res, err := store.sqlExec(query, user.UserID, policy.PolicyID)
 	if err != nil {
 		slog.Error("detach user policy", "err", err)
 		return err
@@ -95,7 +95,7 @@ func (store *Store) DetachGroupPolicy(groupName, policyArn string) error {
 	AND policy_id = $2
 	`
 
-	res, err := store.writeDB.Exec(query, group.GroupID, policy.PolicyID)
+	res, err := store.sqlExec(query, group.GroupID, policy.PolicyID)
 	if err != nil {
 		slog.Error("detach group policy", "err", err)
 		return err

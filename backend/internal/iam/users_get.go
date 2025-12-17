@@ -60,7 +60,7 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 
 func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 	if cachedUser, ok := store.CachedUsers[accessKey]; ok {
-		if cachedUser.NeverExpire || time.Since(cachedUser.LoadedAt) < store.ttl {
+		if cachedUser.NeverExpire || time.Since(cachedUser.LoadedAt) < store.TTL {
 			return cachedUser.User, nil
 		}
 
