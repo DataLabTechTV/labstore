@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"log/slog"
 	"os"
 
@@ -37,7 +38,9 @@ func Init() {
 func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 	slog.Debug("check policy", "accessKey", accessKey, "bucket", bucket, "key", key, "action", action)
 
-	user, err := store.GetUserByAccessKey(accessKey)
+	ctx := context.Background()
+
+	user, err := store.GetUserByAccessKey(ctx, accessKey)
 	if err != nil {
 		return false
 	}
@@ -54,7 +57,7 @@ func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 	}
 
 	for _, groupID := range user.GroupIDs {
-		group, err := store.GetGroupByID(groupID)
+		group, err := store.GetGroupByID(ctx, groupID)
 		if err != nil {
 			slog.Warn("group not found", "err", err)
 		}
@@ -71,7 +74,7 @@ func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 	allowed := false
 
 	for _, policyID := range policyIDs {
-		policy, err := store.GetPolicyByID(policyID)
+		policy, err := store.GetPolicyByID(ctx, policyID)
 		if err != nil {
 			slog.Warn("policy not found", "policy", policy, "err", err)
 			continue

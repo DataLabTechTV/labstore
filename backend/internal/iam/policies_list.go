@@ -46,7 +46,9 @@ func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := store.GetUserByName(userName)
+	ctx := r.Context()
+
+	user, err := store.GetUserByName(ctx, userName)
 	if err != nil {
 		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypeUser), userName))
 		return
@@ -54,7 +56,7 @@ func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 
 	members := make([]*AttachedPoliciesMember, len(user.PolicyIDs))
 	for i, policyID := range user.PolicyIDs {
-		policy, err := store.GetPolicyByID(policyID)
+		policy, err := store.GetPolicyByID(ctx, policyID)
 		if err != nil {
 			errs.Handle(w, errs.IAMServiceFailure())
 			return
@@ -88,7 +90,9 @@ func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := store.GetGroupByName(groupName)
+	ctx := r.Context()
+
+	group, err := store.GetGroupByName(ctx, groupName)
 	if err != nil {
 		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypeGroup), groupName))
 		return
@@ -96,7 +100,7 @@ func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 
 	members := make([]*AttachedPoliciesMember, len(group.PolicyIDs))
 	for i, policyID := range group.PolicyIDs {
-		policy, err := store.GetPolicyByID(policyID)
+		policy, err := store.GetPolicyByID(ctx, policyID)
 		if err != nil {
 			errs.Handle(w, errs.IAMServiceFailure())
 			return

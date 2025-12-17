@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -22,15 +23,15 @@ type GetPolicyResult struct {
 	Policy *PolicyResult
 }
 
-func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
+func (store *Store) GetPolicyByArn(ctx context.Context, arn string) (*Policy, error) {
 	var policy Policy
 
 	query := `SELECT * FROM policies WHERE arn = $1`
-	if err := store.readDB.Get(&policy, query, arn); err != nil {
+	if err := store.readDB.GetContext(ctx, &policy, query, arn); err != nil {
 		return nil, err
 	}
 
-	attachments, err := store.countPolicyAttachments(&policy)
+	attachments, err := store.countPolicyAttachments(ctx, &policy)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
 	return &policy, nil
 }
 
-func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
+func (store *Store) GetPolicyByID(ctx context.Context, policyID string) (*Policy, error) {
 	if cachedPolicy, ok := store.CachedPolicies[policyID]; ok {
 		if cachedPolicy.NeverExpire || time.Since(cachedPolicy.LoadedAt) < store.TTL {
 			return cachedPolicy.Policy, nil
@@ -57,11 +58,11 @@ func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
 	var policy Policy
 
 	query := `SELECT * FROM policies WHERE policy_id = $1`
-	if err := store.readDB.Get(&policy, query, policyID); err != nil {
+	if err := store.readDB.GetContext(ctx, &policy, query, policyID); err != nil {
 		return nil, err
 	}
 
-	attachments, err := store.countPolicyAttachments(&policy)
+	attachments, err := store.countPolicyAttachments(ctx, &policy)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,7 @@ func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
 	return &policy, nil
 }
 
-func (store *Store) getPoliciesByEntityID(arnType ArnType, entityID string) ([]*Policy, error) {
+func (store *Store) getPoliciesByEntityID(ctx context.Context, arnType ArnType, entityID string) ([]*Policy, error) {
 	var policies []*Policy
 
 	var tableName string
@@ -99,7 +100,7 @@ func (store *Store) getPoliciesByEntityID(arnType ArnType, entityID string) ([]*
 	`
 	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
 
-	if err := store.readDB.Select(&policies, query, entityID); err != nil {
+	if err := store.readDB.SelectContext(ctx, &policies, query, entityID); err != nil {
 		slog.Error("get policies by entity id", "err", err)
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func (store *Store) getPoliciesByEntityID(arnType ArnType, entityID string) ([]*
 	return policies, nil
 }
 
-func (store *Store) countPolicyAttachments(policy *Policy) (int, error) {
+func (store *Store) countPolicyAttachments(ctx context.Context, policy *Policy) (int, error) {
 	var attachments int
 	query := `
 	SELECT count(*)
@@ -118,7 +119,7 @@ func (store *Store) countPolicyAttachments(policy *Policy) (int, error) {
 	)
 	`
 
-	if err := store.readDB.Get(&attachments, query, policy.PolicyID); err != nil {
+	if err := store.readDB.GetContext(ctx, &attachments, query, policy.PolicyID); err != nil {
 		return -1, err
 	}
 
@@ -132,7 +133,9 @@ func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	policy, err := store.GetPolicyByArn(policyArn)
+	ctx := r.Context()
+
+	policy, err := store.GetPolicyByArn(ctx, policyArn)
 	if err != nil {
 		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypePolicy), policyArn))
 		return

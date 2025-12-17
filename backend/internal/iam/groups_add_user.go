@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"log/slog"
@@ -17,14 +18,14 @@ type AddUserToGroupResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) AddUserToGroup(userName, groupName string) error {
-	user, err := store.GetUserByName(userName)
+func (store *Store) AddUserToGroup(ctx context.Context, userName, groupName string) error {
+	user, err := store.GetUserByName(ctx, userName)
 	if err != nil {
 		slog.Error("get user by name", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: userName}
 	}
 
-	group, err := store.GetGroupByName(groupName)
+	group, err := store.GetGroupByName(ctx, groupName)
 	if err != nil {
 		slog.Error("get group by name", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
@@ -34,7 +35,7 @@ func (store *Store) AddUserToGroup(userName, groupName string) error {
 		INSERT INTO group_users (group_id, user_id)
 		VALUES ($1, $2)
 	`
-	_, err = store.sqlExec(query, group.GroupID, user.UserID)
+	_, err = store.sqlExecContext(ctx, query, group.GroupID, user.UserID)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
@@ -48,7 +49,7 @@ func (store *Store) AddUserToGroup(userName, groupName string) error {
 		return err
 	}
 
-	user, err = store.GetUserByName(userName)
+	user, err = store.GetUserByName(ctx, userName)
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,9 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.AddUserToGroup(userName, groupName); err != nil {
+	ctx := r.Context()
+
+	if err := store.AddUserToGroup(ctx, userName, groupName); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))

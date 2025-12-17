@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"database/sql"
 	"encoding/xml"
 	"errors"
@@ -17,7 +18,7 @@ type DeleteAccessKeyResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) DeleteAccessKey(userName, accessKeyID string) error {
+func (store *Store) DeleteAccessKey(ctx context.Context, userName, accessKeyID string) error {
 	if userName == defaultAdminUserName {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeUser, Resource: userName}
 	}
@@ -26,7 +27,7 @@ func (store *Store) DeleteAccessKey(userName, accessKeyID string) error {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeAccessKey, Resource: accessKeyID}
 	}
 
-	user, err := store.GetUserByAccessKey(accessKeyID)
+	user, err := store.GetUserByAccessKey(ctx, accessKeyID)
 	if err != nil {
 		slog.Error("delete access key", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeAccessKey, Resource: accessKeyID}
@@ -41,7 +42,7 @@ func (store *Store) DeleteAccessKey(userName, accessKeyID string) error {
 	WHERE name = :name AND access_key = :access_key
 	`
 
-	_, err = store.sqlNamedExec(query, &user)
+	_, err = store.sqlNamedExecContext(ctx, query, &user)
 	if err != nil {
 		slog.Error("delete user", "err", err)
 		return err
@@ -71,7 +72,9 @@ func DeleteAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.DeleteAccessKey(userName, accessKeyId); err != nil {
+	ctx := r.Context()
+
+	if err := store.DeleteAccessKey(ctx, userName, accessKeyId); err != nil {
 		var errForbidden *errs.ErrForbidden
 		if errors.As(err, &errForbidden) {
 			errs.Handle(w, errs.IAMDeleteConflict(errForbidden.Resource))
