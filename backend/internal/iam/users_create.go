@@ -88,7 +88,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := &CreateUserResponse{
 		CreateUserResult: &CreateUserResult{
-			User: user.UserResult(),
+			User: user.Result(),
 			ResponseMetadata: &ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},
