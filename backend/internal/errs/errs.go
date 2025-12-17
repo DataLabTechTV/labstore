@@ -61,8 +61,16 @@ func (e *ErrUserPolicyNotAttached) Error() string {
 	return fmt.Sprintf("Policy %s not attached to user %s", e.PolicyID, e.UserID)
 }
 
+func (e *ErrUserPolicyNotAttached) Description() string {
+	return fmt.Sprintf("{UserID=%s, PolicyID=%s}", e.UserID, e.PolicyID)
+}
+
 func (e *ErrGroupPolicyNotAttached) Error() string {
 	return fmt.Sprintf("Policy %s not attached to group %s", e.PolicyID, e.GroupID)
+}
+
+func (e *ErrGroupPolicyNotAttached) Description() string {
+	return fmt.Sprintf("{GroupID=%s, PolicyID=%s}", e.GroupID, e.PolicyID)
 }
 
 func Handle(w http.ResponseWriter, err error) {
