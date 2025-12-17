@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"log/slog"
@@ -15,8 +16,8 @@ type DeletePolicyResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) DeletePolicy(arn string) error {
-	policy, err := store.GetPolicyByArn(arn)
+func (store *Store) DeletePolicy(ctx context.Context, arn string) error {
+	policy, err := store.GetPolicyByArn(ctx, arn)
 	if err != nil {
 		slog.Error("delete policy", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: arn}
@@ -27,7 +28,7 @@ func (store *Store) DeletePolicy(arn string) error {
 	WHERE arn = $1
 	`
 
-	_, err = store.sqlExec(query, policy.Arn)
+	_, err = store.sqlExecContext(ctx, query, policy.Arn)
 	if err != nil {
 		slog.Error("delete policy", "err", err)
 		return err
@@ -45,7 +46,9 @@ func DeletePolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.DeletePolicy(policyArn); err != nil {
+	ctx := r.Context()
+
+	if err := store.DeletePolicy(ctx, policyArn); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))

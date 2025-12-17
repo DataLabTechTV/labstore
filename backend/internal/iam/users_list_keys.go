@@ -37,7 +37,9 @@ func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := store.GetUserByName(userName)
+	ctx := r.Context()
+
+	user, err := store.GetUserByName(ctx, userName)
 	if err != nil {
 		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypeUser), userName))
 		return

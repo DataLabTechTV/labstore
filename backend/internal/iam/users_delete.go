@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"log/slog"
@@ -15,12 +16,12 @@ type DeleteUserResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) DeleteUser(name string) error {
+func (store *Store) DeleteUser(ctx context.Context, name string) error {
 	if name == defaultAdminUserName {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeUser, Resource: name}
 	}
 
-	user, err := store.GetUserByName(name)
+	user, err := store.GetUserByName(ctx, name)
 	if err != nil {
 		slog.Error("delete user", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: name}
@@ -31,7 +32,7 @@ func (store *Store) DeleteUser(name string) error {
 	WHERE name = $1
 	`
 
-	_, err = store.sqlExec(query, user.Name)
+	_, err = store.sqlExecContext(ctx, query, user.Name)
 	if err != nil {
 		slog.Error("delete user", "err", err)
 		return err
@@ -49,7 +50,9 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.DeleteUser(userName); err != nil {
+	ctx := r.Context()
+
+	if err := store.DeleteUser(ctx, userName); err != nil {
 		var errForbidden *errs.ErrForbidden
 		if errors.As(err, &errForbidden) {
 			errs.Handle(w, errs.IAMDeleteConflict(errForbidden.Resource))

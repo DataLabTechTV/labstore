@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"log/slog"
@@ -22,7 +23,7 @@ type CreateGroupResult struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) CreateGroup(name string) (*Group, error) {
+func (store *Store) CreateGroup(ctx context.Context, name string) (*Group, error) {
 	group := &Group{
 		GroupID: GenerateUniqueID(IAMGroupUniqueID),
 		Name:    name,
@@ -34,7 +35,7 @@ func (store *Store) CreateGroup(name string) (*Group, error) {
 	VALUES (:group_id, :name, :arn)
 	`
 
-	_, err := store.sqlNamedExec(query, &group)
+	_, err := store.sqlNamedExecContext(ctx, query, &group)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
@@ -48,7 +49,7 @@ func (store *Store) CreateGroup(name string) (*Group, error) {
 		return nil, err
 	}
 
-	group, err = store.GetGroupByName(name)
+	group, err = store.GetGroupByName(ctx, name)
 	if err != nil {
 		slog.Error("get group by name", "err", err)
 		return nil, &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: name}
@@ -64,7 +65,9 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := store.CreateGroup(groupName)
+	ctx := r.Context()
+
+	group, err := store.CreateGroup(ctx, groupName)
 	if err != nil {
 		var errExists *errs.ErrExists
 		if errors.As(err, &errExists) {

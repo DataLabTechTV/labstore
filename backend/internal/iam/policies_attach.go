@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -18,10 +19,10 @@ type AttachUserPolicyResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) error {
+func (store *Store) AttachPolicy(ctx context.Context, arnType ArnType, policyArn, entityName string) error {
 	var entity any
 
-	policy, err := store.GetPolicyByArn(policyArn)
+	policy, err := store.GetPolicyByArn(ctx, policyArn)
 	if err != nil {
 		slog.Error("get policy by arn", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: policyArn}
@@ -33,7 +34,7 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 
 	switch arnType {
 	case ArnUser:
-		user, err := store.GetUserByName(entityName)
+		user, err := store.GetUserByName(ctx, entityName)
 		if err != nil {
 			slog.Error("get user by name", "err", err)
 			return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: entityName}
@@ -44,7 +45,7 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 		idFieldValue = user.UserID
 		entity = user
 	case ArnGroup:
-		group, err := store.GetGroupByName(entityName)
+		group, err := store.GetGroupByName(ctx, entityName)
 		if err != nil {
 			slog.Error("get group by name", "err", err)
 			return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: entityName}
@@ -64,7 +65,7 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 	`
 	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
 
-	_, err = store.sqlExec(query, idFieldValue, policy.PolicyID)
+	_, err = store.sqlExecContext(ctx, query, idFieldValue, policy.PolicyID)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
@@ -107,7 +108,9 @@ func AttachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.AttachPolicy(ArnUser, policyArn, userName); err != nil {
+	ctx := r.Context()
+
+	if err := store.AttachPolicy(ctx, ArnUser, policyArn, userName); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
@@ -140,7 +143,9 @@ func AttachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.AttachPolicy(ArnGroup, policyArn, groupName); err != nil {
+	ctx := r.Context()
+
+	if err := store.AttachPolicy(ctx, ArnGroup, policyArn, groupName); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))

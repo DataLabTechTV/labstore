@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"log/slog"
 	"net/http"
@@ -20,16 +21,16 @@ type GetUserResult struct {
 	User *UserResult
 }
 
-func (store *Store) GetUserByName(name string) (*User, error) {
+func (store *Store) GetUserByName(ctx context.Context, name string) (*User, error) {
 	var user User
 
-	if err := store.readDB.Get(&user, `SELECT * FROM users WHERE name = $1`, name); err != nil {
+	if err := store.readDB.GetContext(ctx, &user, `SELECT * FROM users WHERE name = $1`, name); err != nil {
 		slog.Error("get user by name", "err", err)
 		return nil, err
 	}
 
 	// Load policies
-	policies, err := store.getPoliciesByEntityID(ArnUser, user.UserID)
+	policies, err := store.getPoliciesByEntityID(ctx, ArnUser, user.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +40,7 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 	}
 
 	// Load groups
-	groups, err := store.getGroupsByUserID(user.UserID)
+	groups, err := store.getGroupsByUserID(ctx, user.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 	return &user, nil
 }
 
-func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
+func (store *Store) GetUserByAccessKey(ctx context.Context, accessKey string) (*User, error) {
 	if cachedUser, ok := store.CachedUsers[accessKey]; ok {
 		if cachedUser.NeverExpire || time.Since(cachedUser.LoadedAt) < store.TTL {
 			return cachedUser.User, nil
@@ -69,12 +70,12 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 	}
 
 	var user User
-	if err := store.readDB.Get(&user, `SELECT * FROM users WHERE access_key = $1`, accessKey); err != nil {
+	if err := store.readDB.GetContext(ctx, &user, `SELECT * FROM users WHERE access_key = $1`, accessKey); err != nil {
 		return nil, err
 	}
 
 	// Load policies
-	policies, err := store.getPoliciesByEntityID(ArnUser, user.UserID)
+	policies, err := store.getPoliciesByEntityID(ctx, ArnUser, user.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,7 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 	}
 
 	// Load groups
-	groups, err := store.getGroupsByUserID(user.UserID)
+	groups, err := store.getGroupsByUserID(ctx, user.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +102,7 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 	return &user, nil
 }
 
-func (store *Store) getUsersByGroupID(groupID string) ([]*User, error) {
+func (store *Store) getUsersByGroupID(ctx context.Context, groupID string) ([]*User, error) {
 	var users []*User
 
 	query := `
@@ -110,7 +111,7 @@ func (store *Store) getUsersByGroupID(groupID string) ([]*User, error) {
 	)
 	`
 
-	if err := store.readDB.Select(&users, query, groupID); err != nil {
+	if err := store.readDB.SelectContext(ctx, &users, query, groupID); err != nil {
 		slog.Error("get groups by user id", "err", err)
 		return nil, err
 	}
@@ -125,7 +126,9 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := store.GetUserByName(userName)
+	ctx := r.Context()
+
+	user, err := store.GetUserByName(ctx, userName)
 	if err != nil {
 		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypeUser), userName))
 		return

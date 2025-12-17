@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"log/slog"
@@ -22,7 +23,7 @@ type CreateUserResult struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) CreateUser(name string) (*User, error) {
+func (store *Store) CreateUser(ctx context.Context, name string) (*User, error) {
 	if name == defaultAdminUserName {
 		return nil, &errs.ErrExists{Type: errs.ErrEntityTypeUser, Resource: name}
 	}
@@ -38,7 +39,7 @@ func (store *Store) CreateUser(name string) (*User, error) {
 	VALUES (:user_id, :name, :arn)
 	`
 
-	_, err := store.sqlNamedExec(query, &user)
+	_, err := store.sqlNamedExecContext(ctx, query, &user)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
@@ -52,7 +53,7 @@ func (store *Store) CreateUser(name string) (*User, error) {
 		return nil, err
 	}
 
-	user, err = store.GetUserByName(name)
+	user, err = store.GetUserByName(ctx, name)
 	if err != nil {
 		slog.Error("get user by name", "err", err)
 		return nil, &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: name}
@@ -68,7 +69,9 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := store.CreateUser(userName)
+	ctx := r.Context()
+
+	user, err := store.CreateUser(ctx, userName)
 	if err != nil {
 		var errExists *errs.ErrExists
 		if errors.As(err, &errExists) {

@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"database/sql"
 	"encoding/xml"
 	"log/slog"
@@ -40,7 +41,7 @@ const (
 )
 
 // Creates an access key and returns the secret key in plain text
-func (store *Store) CreateAccessKey(user *User) (string, error) {
+func (store *Store) CreateAccessKey(ctx context.Context, user *User) (string, error) {
 	secretKey, err := security.GeneratePassword(42)
 	if err != nil {
 		return "", err
@@ -68,7 +69,7 @@ func (store *Store) CreateAccessKey(user *User) (string, error) {
 	WHERE user_id = :user_id
 	`
 
-	if _, err := store.sqlNamedExec(query, user); err != nil {
+	if _, err := store.sqlNamedExecContext(ctx, query, user); err != nil {
 		return "", err
 	}
 
@@ -95,13 +96,15 @@ func CreateAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := store.GetUserByName(userName)
+	ctx := r.Context()
+
+	user, err := store.GetUserByName(ctx, userName)
 	if err != nil {
 		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypeUser), userName))
 		return
 	}
 
-	secretKey, err := store.CreateAccessKey(user)
+	secretKey, err := store.CreateAccessKey(ctx, user)
 	if err != nil {
 		slog.Error("create access key", "err", err)
 		errs.Handle(w, errs.IAMServiceFailure())

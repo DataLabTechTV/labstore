@@ -91,10 +91,6 @@ func (store *Store) sqlExecContext(ctx context.Context, query string, args ...an
 	return res.sqlRes, res.err
 }
 
-func (store *Store) sqlExec(query string, args ...any) (sql.Result, error) {
-	return store.sqlExecContext(context.Background(), query, args...)
-}
-
 func (store *Store) sqlNamedExecContext(ctx context.Context, query string, arg any) (sql.Result, error) {
 	resCh := make(chan sqlTaskResult, 1)
 
@@ -108,10 +104,6 @@ func (store *Store) sqlNamedExecContext(ctx context.Context, query string, arg a
 	res := <-resCh
 
 	return res.sqlRes, res.err
-}
-
-func (store *Store) sqlNamedExec(query string, arg any) (sql.Result, error) {
-	return store.sqlNamedExecContext(context.Background(), query, arg)
 }
 
 func (store *Store) open() error {
