@@ -132,7 +132,7 @@ func (store *Store) ensureSchema() error {
 			ON DELETE CASCADE
 			ON UPDATE CASCADE,
 		FOREIGN KEY(user_id)
-			REFERENCES groups(user_id)
+			REFERENCES users(user_id)
 			ON DELETE CASCADE
 			ON UPDATE CASCADE
 	);
