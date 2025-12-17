@@ -22,18 +22,6 @@ type CreatePolicyResult struct {
 	Policy *PolicyResult
 }
 
-type PolicyResult struct {
-	XMLName          xml.Name `xml:"Policy"`
-	PolicyName       string
-	DefaultVersionId string
-	PolicyId         string
-	Path             string
-	Arn              string
-	AttachmentCount  int
-	CreateDate       time.Time
-	UpdateDate       time.Time
-}
-
 func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, error) {
 	policyID := GenerateUniqueID(ManagedPolicyUniqueID)
 
@@ -107,20 +95,9 @@ func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	policyPath := "/"
-
 	response := &CreatePolicyResponse{
 		CreatePolicyResult: &CreatePolicyResult{
-			Policy: &PolicyResult{
-				PolicyName:       policy.Name,
-				DefaultVersionId: defaultPolicyVersion,
-				PolicyId:         policy.PolicyID,
-				Path:             policyPath,
-				Arn:              policy.Arn,
-				AttachmentCount:  policy.AttachmentCount,
-				CreateDate:       policy.CreatedAt,
-				UpdateDate:       policy.UpdatedAt,
-			},
+			Policy: policy.Result(),
 		},
 		ResponseMetadata: &ResponseMetadata{
 			RequestId: core.NewRequestID(),
