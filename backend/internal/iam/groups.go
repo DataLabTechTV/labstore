@@ -24,6 +24,24 @@ type Group struct {
 	PolicyIDs []string
 }
 
+type GroupResult struct {
+	Path      string
+	GroupName string
+	GroupId   string
+	Arn       string
+}
+
+func (group *Group) Result() *GroupResult {
+	groupPath := "/"
+
+	return &GroupResult{
+		Path:      groupPath,
+		GroupName: group.Name,
+		GroupId:   group.GroupID,
+		Arn:       group.Arn,
+	}
+}
+
 func (store *Store) GetGroupByID(groupID string) (*Group, error) {
 	if cachedGroup, ok := store.CachedGroups[groupID]; ok {
 		if cachedGroup.NeverExpire || time.Since(cachedGroup.LoadedAt) < store.ttl {
