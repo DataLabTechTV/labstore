@@ -34,7 +34,7 @@ func (store *Store) AddUserToGroup(userName, groupName string) error {
 		INSERT INTO group_users (group_id, user_id)
 		VALUES ($1, $2)
 	`
-	_, err = store.writeDB.Exec(query, group.GroupID, user.UserID)
+	_, err = store.sqlExec(query, group.GroupID, user.UserID)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {

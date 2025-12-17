@@ -37,7 +37,7 @@ func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, err
 	VALUES (:policy_id, :name, :arn, :document)
 	`
 
-	_, err := store.writeDB.NamedExec(query, &policy)
+	_, err := store.sqlNamedExec(query, &policy)
 	if err != nil {
 		slog.Warn("create policy", "err", err)
 		return nil, &errs.ErrExists{Type: errs.ErrEntityTypePolicy, Resource: policyID}

@@ -68,7 +68,7 @@ func (store *Store) CreateAccessKey(user *User) (string, error) {
 	WHERE user_id = :user_id
 	`
 
-	if _, err := store.writeDB.NamedExec(query, user); err != nil {
+	if _, err := store.sqlNamedExec(query, user); err != nil {
 		return "", err
 	}
 

@@ -41,7 +41,7 @@ func (store *Store) DeleteAccessKey(userName, accessKeyID string) error {
 	WHERE name = :name AND access_key = :access_key
 	`
 
-	_, err = store.writeDB.NamedExec(query, &user)
+	_, err = store.sqlNamedExec(query, &user)
 	if err != nil {
 		slog.Error("delete user", "err", err)
 		return err

@@ -44,7 +44,7 @@ func (group *Group) Result() *GroupResult {
 
 func (store *Store) GetGroupByID(groupID string) (*Group, error) {
 	if cachedGroup, ok := store.CachedGroups[groupID]; ok {
-		if cachedGroup.NeverExpire || time.Since(cachedGroup.LoadedAt) < store.ttl {
+		if cachedGroup.NeverExpire || time.Since(cachedGroup.LoadedAt) < store.TTL {
 			return cachedGroup.Group, nil
 		}
 

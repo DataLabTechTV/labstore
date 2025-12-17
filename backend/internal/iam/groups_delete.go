@@ -27,7 +27,7 @@ func (store *Store) DeleteGroup(name string) error {
 	WHERE name = $1
 	`
 
-	_, err = store.writeDB.Exec(query, group.Name)
+	_, err = store.sqlExec(query, group.Name)
 	if err != nil {
 		slog.Error("delete group", "err", err)
 		return err
