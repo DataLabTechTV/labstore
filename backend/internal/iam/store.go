@@ -125,8 +125,9 @@ func (store *Store) ensureSchema() error {
 	);
 
 	CREATE TABLE IF NOT EXISTS group_users (
-		group_id TEXT UNIQUE,
-		user_id TEXT UNIQUE,
+		group_id TEXT,
+		user_id TEXT,
+		PRIMARY KEY (group_id, user_id),
 		FOREIGN KEY(group_id)
 			REFERENCES groups(group_id)
 			ON DELETE CASCADE

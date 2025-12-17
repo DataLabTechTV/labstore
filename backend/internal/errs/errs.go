@@ -13,6 +13,7 @@ const (
 	ErrEntityTypeUser        = "user"
 	ErrEntityTypeAccessKey   = "access_key"
 	ErrEntityTypeGroup       = "group"
+	ErrEntityTypeUserGroup   = "user_group"
 	ErrEntityTypePolicy      = "policy"
 	ErrEntityTypeUserPolicy  = "user_policy"
 	ErrEntityTypeGroupPolicy = "group_policy"
@@ -45,6 +46,11 @@ type ErrGroupPolicyNotAttached struct {
 	PolicyID string
 }
 
+type ErrUserNotInGroup struct {
+	UserID  string
+	GroupID string
+}
+
 func (e *ErrExists) Error() string {
 	return fmt.Sprintf("%s exists: %s", e.Type, e.Resource)
 }
@@ -71,6 +77,14 @@ func (e *ErrGroupPolicyNotAttached) Error() string {
 
 func (e *ErrGroupPolicyNotAttached) Description() string {
 	return fmt.Sprintf("{GroupID=%s, PolicyID=%s}", e.GroupID, e.PolicyID)
+}
+
+func (e *ErrUserNotInGroup) Error() string {
+	return fmt.Sprintf("User %s does not belong to group %s", e.UserID, e.GroupID)
+}
+
+func (e *ErrUserNotInGroup) Description() string {
+	return fmt.Sprintf("{UserID=%s, GroupID=%s}", e.UserID, e.GroupID)
 }
 
 func Handle(w http.ResponseWriter, err error) {
