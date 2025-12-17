@@ -16,6 +16,11 @@ type DetachUserPolicyResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
+type DetachGroupPolicyResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DetachGroupPolicyResponse"`
+	ResponseMetadata *ResponseMetadata
+}
+
 func (store *Store) DetachUserPolicy(userName, policyArn string) error {
 	if userName == defaultAdminUserName {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeUser, Resource: userName}
@@ -52,7 +57,7 @@ func (store *Store) DetachUserPolicy(userName, policyArn string) error {
 	}
 	if n < 1 {
 		slog.Error("detach user policy: 0 deleted")
-		return &errs.ErrNotFound{Type: errs.ErrEntityTypeUserPolicy, Resource: policyArn}
+		return &errs.ErrUserPolicyNotAttached{UserID: user.UserID, PolicyID: policy.PolicyID}
 	}
 
 	user, err = store.GetUserByName(userName)
@@ -66,6 +71,55 @@ func (store *Store) DetachUserPolicy(userName, policyArn string) error {
 			store.CachedUsers[user.AccessKeyID.String].User = user
 			store.CachedUsers[user.AccessKeyID.String].LoadedAt = time.Now()
 		}
+	}
+
+	return nil
+}
+
+func (store *Store) DetachGroupPolicy(groupName, policyArn string) error {
+	group, err := store.GetGroupByName(groupName)
+	if err != nil {
+		slog.Error("detach group policy", "err", err)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
+	}
+
+	policy, err := store.GetPolicyByArn(policyArn)
+	if err != nil {
+		slog.Error("detach group policy", "err", err)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: policyArn}
+	}
+
+	query := `
+	DELETE FROM group_policies
+	WHERE group_id = $1
+	AND policy_id = $2
+	`
+
+	res, err := store.writeDB.Exec(query, group.GroupID, policy.PolicyID)
+	if err != nil {
+		slog.Error("detach group policy", "err", err)
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("detach group policy", "err", err)
+		return err
+	}
+	if n < 1 {
+		slog.Error("detach group policy: 0 deleted")
+		return &errs.ErrGroupPolicyNotAttached{GroupID: group.GroupID, PolicyID: policy.PolicyID}
+	}
+
+	group, err = store.GetGroupByName(groupName)
+	if err != nil {
+		slog.Error("detach group policy", "err", err)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
+	}
+
+	if _, ok := store.CachedGroups[group.GroupID]; ok {
+		store.CachedGroups[group.GroupID].Group = group
+		store.CachedGroups[group.GroupID].LoadedAt = time.Now()
 	}
 
 	return nil
@@ -99,7 +153,10 @@ func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 
 		var errUserPolicyNotAttached *errs.ErrUserPolicyNotAttached
 		if errors.As(err, &errUserPolicyNotAttached) {
-			errs.Handle(w, errs.IAMNoSuchEntity(errs.ErrEntityTypeUserPolicy, policyArn))
+			errs.Handle(w, errs.IAMNoSuchEntity(
+				errs.ErrEntityTypeUserPolicy,
+				errUserPolicyNotAttached.Description(),
+			))
 			return
 		}
 
@@ -117,5 +174,43 @@ func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	groupName := r.URL.Query().Get("GroupName")
+	if groupName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
+		return
+	}
+
+	policyArn := r.URL.Query().Get("PolicyArn")
+	if groupName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
+		return
+	}
+
+	if err := store.DetachGroupPolicy(groupName, policyArn); err != nil {
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
+			return
+		}
+
+		var errGroupPolicyNotAttached *errs.ErrGroupPolicyNotAttached
+		if errors.As(err, &errGroupPolicyNotAttached) {
+			errs.Handle(w, errs.IAMNoSuchEntity(
+				errs.ErrEntityTypeGroupPolicy,
+				errGroupPolicyNotAttached.Description(),
+			))
+			return
+		}
+
+		errs.Handle(w, errs.IAMServiceFailure())
+		return
+	}
+
+	response := &DetachUserPolicyResponse{
+		ResponseMetadata: &ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	core.WriteXML(w, http.StatusOK, response)
 }
