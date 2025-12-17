@@ -2,7 +2,6 @@ package iam
 
 import (
 	"database/sql"
-	"log/slog"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
@@ -56,66 +55,6 @@ func (user *User) EncryptedData() *security.EncryptedData {
 		Value: user.SecretKey,
 		Salt:  user.Salt,
 	}
-}
-
-func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
-	if cachedUser, ok := store.CachedUsers[accessKey]; ok {
-		if cachedUser.NeverExpire || time.Since(cachedUser.LoadedAt) < store.ttl {
-			return cachedUser.User, nil
-		}
-
-		slog.Debug("invalidating cached user", "accessKey", accessKey)
-		delete(store.CachedUsers, accessKey)
-	}
-
-	var user User
-	if err := store.readDB.Get(&user, `SELECT * FROM users WHERE access_key = $1`, accessKey); err != nil {
-		return nil, err
-	}
-
-	// Load policies
-	policies, err := store.getPoliciesByEntityID(ArnUser, user.UserID)
-	if err != nil {
-		return nil, err
-	}
-	user.PolicyIDs = make([]string, len(policies))
-	for i, policy := range policies {
-		user.PolicyIDs[i] = policy.PolicyID
-	}
-
-	// Load groups
-	groups, err := store.getGroupsByUserID(user.UserID)
-	if err != nil {
-		return nil, err
-	}
-	user.GroupIDs = make([]string, len(groups))
-	for i, group := range groups {
-		user.GroupIDs[i] = group.GroupID
-	}
-
-	store.CachedUsers[user.AccessKeyID.String] = &CachedUser{
-		User:     &user,
-		LoadedAt: time.Now(),
-	}
-
-	return &user, nil
-}
-
-func (store *Store) getUsersByGroupID(groupID string) ([]*User, error) {
-	var users []*User
-
-	query := `
-	SELECT * FROM users WHERE user_id = (
-		SELECT user_id FROM group_users WHERE group_id = $1
-	)
-	`
-
-	if err := store.readDB.Select(&users, query, groupID); err != nil {
-		slog.Error("get groups by user id", "err", err)
-		return nil, err
-	}
-
-	return users, nil
 }
 
 func (store *Store) setupAdmin() error {
