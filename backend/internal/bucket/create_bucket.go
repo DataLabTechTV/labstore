@@ -2,16 +2,23 @@ package bucket
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 func CreateBucket(bucket string) error {
 	path := filepath.Join(config.Storage.ObjectsPath, bucket)
+
+	if !security.IsSubdir(config.Storage.ObjectsPath, path) {
+		slog.Error("create bucket: unsafe path")
+		return errs.S3AccessDenied()
+	}
 
 	if _, err := os.Stat(path); err == nil {
 		return errs.S3BucketAlreadyExists()
