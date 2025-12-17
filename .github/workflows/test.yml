@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  pre-commit:
+  backend-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -22,7 +22,9 @@ jobs:
           go-version: "1.25"
 
       - name: install dependencies
+        working-directory: ./backend
         run: go mod download
 
       - name: go test
+        working-directory: ./backend
         run: go test -v ./...
