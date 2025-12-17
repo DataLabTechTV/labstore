@@ -64,7 +64,7 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 	`
 	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
 
-	_, err = store.writeDB.Exec(query, idFieldValue, policy.PolicyID)
+	_, err = store.sqlExec(query, idFieldValue, policy.PolicyID)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {

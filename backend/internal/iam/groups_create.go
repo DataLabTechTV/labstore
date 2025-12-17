@@ -34,7 +34,7 @@ func (store *Store) CreateGroup(name string) (*Group, error) {
 	VALUES (:group_id, :name, :arn)
 	`
 
-	_, err := store.writeDB.NamedExec(query, &group)
+	_, err := store.sqlNamedExec(query, &group)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {

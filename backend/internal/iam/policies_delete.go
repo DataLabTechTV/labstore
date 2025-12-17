@@ -27,7 +27,7 @@ func (store *Store) DeletePolicy(arn string) error {
 	WHERE arn = $1
 	`
 
-	_, err = store.writeDB.Exec(query, policy.Arn)
+	_, err = store.sqlExec(query, policy.Arn)
 	if err != nil {
 		slog.Error("delete policy", "err", err)
 		return err

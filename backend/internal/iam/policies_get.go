@@ -46,7 +46,7 @@ func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
 
 func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
 	if cachedPolicy, ok := store.CachedPolicies[policyID]; ok {
-		if cachedPolicy.NeverExpire || time.Since(cachedPolicy.LoadedAt) < store.ttl {
+		if cachedPolicy.NeverExpire || time.Since(cachedPolicy.LoadedAt) < store.TTL {
 			return cachedPolicy.Policy, nil
 		}
 

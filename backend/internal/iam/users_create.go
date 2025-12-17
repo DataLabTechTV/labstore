@@ -38,7 +38,7 @@ func (store *Store) CreateUser(name string) (*User, error) {
 	VALUES (:user_id, :name, :arn)
 	`
 
-	_, err := store.writeDB.NamedExec(query, &user)
+	_, err := store.sqlNamedExec(query, &user)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {

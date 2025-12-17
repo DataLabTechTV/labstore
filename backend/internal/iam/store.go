@@ -1,29 +1,47 @@
 package iam
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )
 
 const IAMDBFilename = "iam.db"
 const defaultTTL = 15 * time.Minute
+const writeChannelBufferSize = 32
 
 type Store struct {
 	CachedUsers    map[string]*CachedUser
 	CachedGroups   map[string]*CachedGroup
 	CachedPolicies map[string]*CachedPolicy
+	TTL            time.Duration
 
 	readDB  *sqlx.DB
-	writeDB *sqlx.DB
+	writeCh chan<- sqlTask
+}
 
-	ttl time.Duration
+type sqlTaskResult struct {
+	sqlRes sql.Result
+	err    error
+}
+
+type sqlFn func(ctx context.Context, db *sqlx.DB) sqlTaskResult
+
+type sqlTask struct {
+	uuid  string
+	ctx   context.Context
+	resCh chan<- sqlTaskResult
+	fn    sqlFn
 }
 
 func NewStore() *Store {
@@ -31,8 +49,69 @@ func NewStore() *Store {
 		CachedUsers:    make(map[string]*CachedUser),
 		CachedGroups:   make(map[string]*CachedGroup),
 		CachedPolicies: make(map[string]*CachedPolicy),
-		ttl:            defaultTTL,
+		TTL:            defaultTTL,
 	}
+}
+
+func newSQLTask(ctx context.Context, resCh chan<- sqlTaskResult, fn sqlFn) sqlTask {
+	return sqlTask{
+		uuid:  uuid.NewString(),
+		ctx:   ctx,
+		resCh: resCh,
+		fn:    fn,
+	}
+}
+
+func newWriterWorker(db *sqlx.DB) chan<- sqlTask {
+	taskCh := make(chan sqlTask, writeChannelBufferSize)
+
+	go func() {
+		for task := range taskCh {
+			slog.Debug("sql write task", "uuid", task.uuid)
+			sqlResp := task.fn(task.ctx, db)
+			task.resCh <- sqlResp
+		}
+	}()
+
+	return taskCh
+}
+
+func (store *Store) sqlExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	resCh := make(chan sqlTaskResult, 1)
+
+	store.writeCh <- newSQLTask(ctx, resCh,
+		func(ctx context.Context, db *sqlx.DB) sqlTaskResult {
+			res, err := db.ExecContext(ctx, query, args...)
+			return sqlTaskResult{sqlRes: res, err: err}
+		},
+	)
+
+	res := <-resCh
+
+	return res.sqlRes, res.err
+}
+
+func (store *Store) sqlExec(query string, args ...any) (sql.Result, error) {
+	return store.sqlExecContext(context.Background(), query, args...)
+}
+
+func (store *Store) sqlNamedExecContext(ctx context.Context, query string, arg any) (sql.Result, error) {
+	resCh := make(chan sqlTaskResult, 1)
+
+	store.writeCh <- newSQLTask(ctx, resCh,
+		func(ctx context.Context, db *sqlx.DB) sqlTaskResult {
+			res, err := db.NamedExecContext(ctx, query, arg)
+			return sqlTaskResult{sqlRes: res, err: err}
+		},
+	)
+
+	res := <-resCh
+
+	return res.sqlRes, res.err
+}
+
+func (store *Store) sqlNamedExec(query string, arg any) (sql.Result, error) {
+	return store.sqlNamedExecContext(context.Background(), query, arg)
 }
 
 func (store *Store) open() error {
@@ -83,7 +162,7 @@ func (store *Store) open() error {
 	writeDB.SetMaxIdleConns(1)
 
 	store.readDB = readDB
-	store.writeDB = writeDB
+	store.writeCh = newWriterWorker(writeDB)
 
 	return nil
 }

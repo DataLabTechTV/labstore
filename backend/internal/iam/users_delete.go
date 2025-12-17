@@ -31,7 +31,7 @@ func (store *Store) DeleteUser(name string) error {
 	WHERE name = $1
 	`
 
-	_, err = store.writeDB.Exec(query, user.Name)
+	_, err = store.sqlExec(query, user.Name)
 	if err != nil {
 		slog.Error("delete user", "err", err)
 		return err
