@@ -248,13 +248,15 @@ test-iam-delete-group: check-deps
     http POST "http://${host}:${port}?Action=DeleteGroup&GroupName={{test_group}}"
 
 [group("test-iam")]
-test-db-delete-user-from-group: check-deps
+test-iam-remove-user-from-group: check-deps
     #!/bin/bash
     echo "Deleting IAM user {{test_user}} from group {{test_group}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM group_users \
-        WHERE group_id = (SELECT group_id FROM groups WHERE name = '{{test_group}}') \
-        AND user_id = (SELECT user_id FROM users WHERE name = '{{test_user}}')"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}" \
+        "Action==RemoveUserFromGroup" \
+        "UserName=={{test_user}}" \
+        "GroupName=={{test_group}}"
 
 # ======================
 # POLICIES
