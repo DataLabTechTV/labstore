@@ -154,6 +154,10 @@ test-list-obj-s5cmd: check-deps test-bucket
     echo "==> Listing keys in {{test_bucket}}"
     s5cmd --endpoint-url $endpoint_url ls s3://{{test_bucket}}/
 
+# ======================
+# USERS
+# ======================
+
 [group("test-iam")]
 test-iam-create-user: check-deps
     #!/bin/bash
@@ -163,125 +167,12 @@ test-iam-create-user: check-deps
     http POST "http://${host}:${port}?Action=CreateUser&UserName={{test_user}}"
 
 [group("test-iam")]
-test-db-delete-user: check-deps
-    #!/bin/bash
-    echo "Deleting IAM user: {{test_user}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM users WHERE name = '{{test_user}}'"
-
-[group("test-iam")]
 test-iam-create-access-key: check-deps
     #!/bin/bash
     echo "Creating IAM access key for user {{test_user}}"
     host=$(yq ".backend.iam.server.host" {{config_path}})
     port=$(yq ".backend.iam.server.port" {{config_path}})
     http POST "http://${host}:${port}?Action=CreateAccessKey&UserName={{test_user}}"
-
-[group("debug")]
-print-test-policy-document:
-    @echo '{{test_policy_document}}' | jq
-
-[group("test-iam")]
-test-iam-create-policy: check-deps test-bucket
-    #!/bin/bash
-    echo "Creating IAM policy {{test_policy_name}}"
-    host=$(yq ".backend.iam.server.host" {{config_path}})
-    port=$(yq ".backend.iam.server.port" {{config_path}})
-    http POST "http://${host}:${port}" \
-        "Action==CreatePolicy" \
-        'PolicyName=={{test_policy_name}}' \
-        'PolicyDocument=={{test_policy_document}}'
-
-[group("test-iam")]
-test-db-delete-policy: check-deps
-    #!/bin/bash
-    echo "Deleting IAM policy: {{test_policy_name}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM policies WHERE name = '{{test_policy_name}}'"
-
-[group("test-iam")]
-test-iam-attach-user-policy: check-deps
-    #!/bin/bash
-    echo "Attaching IAM policy {{test_policy_name}} to user {{test_user}}"
-    host=$(yq ".backend.iam.server.host" {{config_path}})
-    port=$(yq ".backend.iam.server.port" {{config_path}})
-    http POST "http://${host}:${port}" \
-        "Action==AttachUserPolicy" \
-        'PolicyArn=={{test_policy_arn}}' \
-        'UserName=={{test_user}}'
-
-[group("test-iam")]
-test-db-delete-user-policy: check-deps
-    #!/bin/bash
-    echo "Deleting attached IAM policy {{test_policy_name}} to user {{test_user}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM user_policies \
-        WHERE user_id = (SELECT user_id FROM users WHERE name = '{{test_user}}') \
-        AND policy_id = (SELECT policy_id FROM policies WHERE name = '{{test_policy_name}}')"
-
-[group("test-iam")]
-test-iam-user-policy: test-iam-create-user test-iam-create-access-key \
-    test-iam-create-policy test-iam-attach-user-policy
-
-[group("test-iam")]
-test-iam-create-group: check-deps
-    #!/bin/bash
-    echo "Creating IAM group: {{test_group}}"
-    host=$(yq ".backend.iam.server.host" {{config_path}})
-    port=$(yq ".backend.iam.server.port" {{config_path}})
-    http POST "http://${host}:${port}?Action=CreateGroup&GroupName={{test_group}}"
-
-[group("test-iam")]
-test-db-delete-group: check-deps
-    #!/bin/bash
-    echo "Deleting IAM group: {{test_group}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM groups WHERE name = '{{test_group}}'"
-
-[group("test-iam")]
-test-iam-add-user-to-group: check-deps
-    #!/bin/bash
-    echo "Adding IAM user {{test_user}} to group {{test_group}}"
-    host=$(yq ".backend.iam.server.host" {{config_path}})
-    port=$(yq ".backend.iam.server.port" {{config_path}})
-    http POST "http://${host}:${port}" \
-        "Action==AddUserToGroup" \
-        'GroupName=={{test_group}}' \
-        'UserName=={{test_user}}'
-
-[group("test-iam")]
-test-db-delete-user-from-group: check-deps
-    #!/bin/bash
-    echo "Deleting IAM user {{test_user}} from group {{test_group}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM group_users \
-        WHERE group_id = (SELECT group_id FROM groups WHERE name = '{{test_group}}') \
-        AND user_id = (SELECT user_id FROM users WHERE name = '{{test_user}}')"
-
-[group("test-iam")]
-test-iam-attach-group-policy: check-deps
-    #!/bin/bash
-    echo "Attaching IAM policy {{test_policy_name}} to group {{test_group}}"
-    host=$(yq ".backend.iam.server.host" {{config_path}})
-    port=$(yq ".backend.iam.server.port" {{config_path}})
-    http POST "http://${host}:${port}" \
-        "Action==AttachGroupPolicy" \
-        'PolicyArn=={{test_policy_arn}}' \
-        'GroupName=={{test_group}}'
-
-[group("test-iam")]
-test-db-delete-group-policy: check-deps
-    #!/bin/bash
-    echo "Deleting attached IAM policy {{test_policy_name}} to group {{test_group}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM group_policies \
-        WHERE group_id = (SELECT group_id FROM groups WHERE name = '{{test_group}}') \
-        AND policy_id = (SELECT policy_id FROM policies WHERE name = '{{test_policy_name}}')"
-
-[group("test-iam")]
-test-iam-group-policy: test-iam-create-user test-iam-create-access-key \
-    test-iam-create-group test-iam-add-user-to-group \
-    test-iam-create-policy test-iam-attach-group-policy
 
 [group("test-iam")]
 test-iam-get-user: check-deps
@@ -317,6 +208,93 @@ test-iam-delete-access-key: check-deps
         "UserName=={{test_user}}" \
         "AccessKeyId=={{test_user}}"
 
+# ======================
+# GROUPS
+# ======================
+
+[group("test-iam")]
+test-iam-create-group: check-deps
+    #!/bin/bash
+    echo "Creating IAM group: {{test_group}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=CreateGroup&GroupName={{test_group}}"
+
+[group("test-iam")]
+test-iam-add-user-to-group: check-deps
+    #!/bin/bash
+    echo "Adding IAM user {{test_user}} to group {{test_group}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}" \
+        "Action==AddUserToGroup" \
+        'GroupName=={{test_group}}' \
+        'UserName=={{test_user}}'
+
+[group("test-iam")]
+test-db-delete-group: check-deps
+    #!/bin/bash
+    echo "Deleting IAM group: {{test_group}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM groups WHERE name = '{{test_group}}'"
+
+[group("test-iam")]
+test-db-delete-user-from-group: check-deps
+    #!/bin/bash
+    echo "Deleting IAM user {{test_user}} from group {{test_group}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM group_users \
+        WHERE group_id = (SELECT group_id FROM groups WHERE name = '{{test_group}}') \
+        AND user_id = (SELECT user_id FROM users WHERE name = '{{test_user}}')"
+
+# ======================
+# POLICIES
+# ======================
+
+[group("test-iam")]
+test-iam-create-policy: check-deps test-bucket
+    #!/bin/bash
+    echo "Creating IAM policy {{test_policy_name}}"
+
+    echo "Using policy document:"
+    echo '{{test_policy_document}}' | jq
+
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}" \
+        "Action==CreatePolicy" \
+        'PolicyName=={{test_policy_name}}' \
+        'PolicyDocument=={{test_policy_document}}'
+
+[group("test-iam")]
+test-iam-attach-user-policy: check-deps
+    #!/bin/bash
+    echo "Attaching IAM policy {{test_policy_name}} to user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}" \
+        "Action==AttachUserPolicy" \
+        'PolicyArn=={{test_policy_arn}}' \
+        'UserName=={{test_user}}'
+
+[group("test-iam")]
+test-iam-attach-group-policy: check-deps
+    #!/bin/bash
+    echo "Attaching IAM policy {{test_policy_name}} to group {{test_group}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}" \
+        "Action==AttachGroupPolicy" \
+        'PolicyArn=={{test_policy_arn}}' \
+        'GroupName=={{test_group}}'
+
+[group("test-iam")]
+test-db-delete-policy: check-deps
+    #!/bin/bash
+    echo "Deleting IAM policy: {{test_policy_name}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM policies WHERE name = '{{test_policy_name}}'"
+
 [group("test-iam")]
 test-iam-detach-user-policy: check-deps
     #!/bin/bash
@@ -326,3 +304,21 @@ test-iam-detach-user-policy: check-deps
     http POST "http://${host}:${port}?Action=DetachUserPolicy" \
         "UserName=={{test_user}}" \
         "PolicyArn=={{test_policy_arn}}"
+
+[group("test-iam")]
+test-db-delete-group-policy: check-deps
+    #!/bin/bash
+    echo "Deleting attached IAM policy {{test_policy_name}} to group {{test_group}}"
+    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
+    sqlite3 $iam_db "DELETE FROM group_policies \
+        WHERE group_id = (SELECT group_id FROM groups WHERE name = '{{test_group}}') \
+        AND policy_id = (SELECT policy_id FROM policies WHERE name = '{{test_policy_name}}')"
+
+[group("test-iam")]
+test-iam-user-policy: test-iam-create-user test-iam-create-access-key \
+    test-iam-create-policy test-iam-attach-user-policy
+
+[group("test-iam")]
+test-iam-group-policy: test-iam-create-user test-iam-create-access-key \
+    test-iam-create-group test-iam-add-user-to-group \
+    test-iam-create-policy test-iam-attach-group-policy
