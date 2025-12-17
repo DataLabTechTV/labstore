@@ -1,7 +1,66 @@
 package iam
 
-import "net/http"
+import (
+	"encoding/xml"
+	"errors"
+	"log/slog"
+	"net/http"
+
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+)
+
+type DeletePolicyResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DeletePolicyResponse"`
+	ResponseMetadata *ResponseMetadata
+}
+
+func (store *Store) DeletePolicy(arn string) error {
+	policy, err := store.GetPolicyByArn(arn)
+	if err != nil {
+		slog.Error("delete policy", "err", err)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: arn}
+	}
+
+	query := `
+	DELETE FROM policies
+	WHERE arn = $1
+	`
+
+	_, err = store.writeDB.Exec(query, policy.Arn)
+	if err != nil {
+		slog.Error("delete policy", "err", err)
+		return err
+	}
+
+	delete(store.CachedPolicies, policy.PolicyID)
+
+	return nil
+}
 
 func DeletePolicyHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	policyArn := r.URL.Query().Get("PolicyArn")
+	if policyArn == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
+		return
+	}
+
+	if err := store.DeletePolicy(policyArn); err != nil {
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
+			return
+		}
+
+		errs.Handle(w, errs.IAMServiceFailure())
+		return
+	}
+
+	response := &DeletePolicyResponse{
+		ResponseMetadata: &ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	core.WriteXML(w, http.StatusOK, response)
 }

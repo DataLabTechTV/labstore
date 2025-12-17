@@ -324,11 +324,12 @@ test-iam-list-attached-group-policies: check-deps
     http POST "http://${host}:${port}?Action=ListAttachedGroupPolicies&GroupName={{test_group}}"
 
 [group("test-iam")]
-test-db-delete-policy: check-deps
+test-iam-delete-policy: check-deps
     #!/bin/bash
     echo "Deleting IAM policy: {{test_policy_name}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM policies WHERE name = '{{test_policy_name}}'"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=DeletePolicy&PolicyArn={{test_policy_arn}}"
 
 [group("test-iam")]
 test-iam-detach-user-policy: check-deps
