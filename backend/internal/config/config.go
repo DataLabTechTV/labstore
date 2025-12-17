@@ -210,7 +210,7 @@ func setOverrides(rootCmd *cobra.Command) {
 	viper.AutomaticEnv()
 
 	if rootCmd == nil {
-		slog.Warn("set overrides without root command")
+		slog.Warn("setting overrides without root command")
 		return
 	}
 
