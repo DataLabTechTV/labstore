@@ -126,7 +126,15 @@ func (store *Store) ensureSchema() error {
 
 	CREATE TABLE IF NOT EXISTS group_users (
 		group_id TEXT UNIQUE,
-		user_id TEXT UNIQUE
+		user_id TEXT UNIQUE,
+		FOREIGN KEY(group_id)
+			REFERENCES groups(group_id)
+			ON DELETE CASCADE
+			ON UPDATE CASCADE,
+		FOREIGN KEY(user_id)
+			REFERENCES groups(user_id)
+			ON DELETE CASCADE
+			ON UPDATE CASCADE
 	);
 
 	CREATE TRIGGER IF NOT EXISTS policies_update_trigger
@@ -141,13 +149,29 @@ func (store *Store) ensureSchema() error {
 	CREATE TABLE IF NOT EXISTS user_policies (
 		user_id TEXT,
 		policy_id TEXT,
-		PRIMARY KEY (user_id, policy_id)
+		PRIMARY KEY (user_id, policy_id),
+		FOREIGN KEY(user_id)
+			REFERENCES users(user_id)
+			ON DELETE CASCADE
+			ON UPDATE CASCADE,
+		FOREIGN KEY(policy_id)
+			REFERENCES policies(policy_id)
+			ON DELETE CASCADE
+			ON UPDATE CASCADE
 	);
 
 	CREATE TABLE IF NOT EXISTS group_policies (
 		group_id TEXT,
 		policy_id TEXT,
-		PRIMARY KEY (group_id, policy_id)
+		PRIMARY KEY (group_id, policy_id),
+		FOREIGN KEY(group_id)
+			REFERENCES groups(group_id)
+			ON DELETE CASCADE
+			ON UPDATE CASCADE,
+		FOREIGN KEY(policy_id)
+			REFERENCES policies(policy_id)
+			ON DELETE CASCADE
+			ON UPDATE CASCADE
 	);
 	`
 
