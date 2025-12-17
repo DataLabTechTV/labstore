@@ -1,0 +1,116 @@
+package iam
+
+import (
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
+	var policy Policy
+
+	query := `SELECT * FROM policies WHERE arn = $1`
+	if err := store.readDB.Get(&policy, query, arn); err != nil {
+		return nil, err
+	}
+
+	attachments, err := store.countPolicyAttachments(&policy)
+	if err != nil {
+		return nil, err
+	}
+	policy.AttachmentCount = attachments
+
+	store.Policies[policy.PolicyID] = &CachedPolicy{
+		policy:   &policy,
+		loadedAt: time.Now(),
+	}
+
+	return &policy, nil
+}
+
+func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
+	if cachedPolicy, ok := store.Policies[policyID]; ok {
+		if cachedPolicy.neverExpire || time.Since(cachedPolicy.loadedAt) < store.ttl {
+			return cachedPolicy.policy, nil
+		}
+
+		slog.Debug("invalidating cached policy", "policyID", policyID)
+		delete(store.Policies, policyID)
+	}
+
+	var policy Policy
+
+	query := `SELECT * FROM policies WHERE policy_id = $1`
+	if err := store.readDB.Get(&policy, query, policyID); err != nil {
+		return nil, err
+	}
+
+	attachments, err := store.countPolicyAttachments(&policy)
+	if err != nil {
+		return nil, err
+	}
+	policy.AttachmentCount = attachments
+
+	store.Policies[policyID] = &CachedPolicy{
+		policy:   &policy,
+		loadedAt: time.Now(),
+	}
+
+	return &policy, nil
+}
+
+func (store *Store) getPoliciesByEntityID(arnType ArnType, entityID string) ([]*Policy, error) {
+	var policies []*Policy
+
+	var tableName string
+	var idFieldName string
+
+	switch arnType {
+	case ArnUser:
+		tableName = "user_policies"
+		idFieldName = "user_id"
+	case ArnGroup:
+		tableName = "group_policies"
+		idFieldName = "group_id"
+	default:
+		return nil, errors.New("unsupported arn type")
+	}
+
+	query_tmpl := `
+	SELECT * FROM policies WHERE policy_id = (
+		SELECT policy_id FROM %s WHERE %s = $1
+	)
+	`
+	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
+
+	if err := store.readDB.Select(&policies, query, entityID); err != nil {
+		slog.Error("get policies by entity id", "err", err)
+		return nil, err
+	}
+
+	return policies, nil
+}
+
+func (store *Store) countPolicyAttachments(policy *Policy) (int, error) {
+	var attachments int
+	query := `
+	SELECT count(*)
+	FROM (
+		SELECT 1 FROM user_policies WHERE policy_id = $1
+		UNION ALL
+		SELECT 1 FROM group_policies WHERE policy_id = $1
+	)
+	`
+
+	if err := store.readDB.Get(&attachments, query, policy.PolicyID); err != nil {
+		return -1, err
+	}
+
+	return attachments, nil
+}
+
+func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}

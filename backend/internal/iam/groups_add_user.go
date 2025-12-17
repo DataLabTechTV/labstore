@@ -1,0 +1,92 @@
+package iam
+
+import (
+	"encoding/xml"
+	"errors"
+	"log/slog"
+	"net/http"
+
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
+)
+
+type AddUserToGroupResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ AddUserToGroupResponse"`
+	ResponseMetadata *ResponseMetadata
+}
+
+func (store *Store) AddUserToGroup(userName, groupName string) error {
+	user, err := store.GetUserByName(userName)
+	if err != nil {
+		slog.Error("get user by name", "err", err)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: userName}
+	}
+
+	group, err := store.GetGroupByName(groupName)
+	if err != nil {
+		slog.Error("get group by name", "err", err)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
+	}
+
+	query := `
+		INSERT INTO group_users (group_id, user_id)
+		VALUES ($1, $2)
+	`
+	_, err = store.writeDB.Exec(query, group.GroupID, user.UserID)
+	if err != nil {
+		var sqliteErr *sqlite.Error
+		if errors.As(err, &sqliteErr) {
+			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
+				slog.Warn("add user to group", "userName", userName, "groupName", groupName, "err", sqliteErr)
+				return nil
+			}
+		}
+
+		slog.Error("add user to group", "userName", userName, "groupName", groupName, "err", sqliteErr)
+		return err
+	}
+
+	user, err = store.GetUserByName(userName)
+	if err != nil {
+		return err
+	}
+
+	group.UserIDs = append(group.UserIDs, user.UserID)
+
+	return nil
+}
+
+func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
+	userName := r.URL.Query().Get("UserName")
+	if userName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
+		return
+	}
+
+	groupName := r.URL.Query().Get("GroupName")
+	if groupName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
+		return
+	}
+
+	if err := store.AddUserToGroup(userName, groupName); err != nil {
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			errs.Handle(w, errs.IAMNoSuchEntity(errNotFound.Resource))
+			return
+		}
+
+		errs.Handle(w, errs.IAMServiceFailure())
+		return
+	}
+
+	response := &AddUserToGroupResponse{
+		ResponseMetadata: &ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	core.WriteXML(w, http.StatusOK, response)
+}
