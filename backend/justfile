@@ -300,6 +300,14 @@ test-iam-attach-group-policy: check-deps
         'GroupName=={{test_group}}'
 
 [group("test-iam")]
+test-iam-get-policy: check-deps
+    #!/bin/bash
+    echo "Getting IAM policy: {{test_policy_name}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=GetPolicy&PolicyArn={{test_policy_arn}}"
+
+[group("test-iam")]
 test-db-delete-policy: check-deps
     #!/bin/bash
     echo "Deleting IAM policy: {{test_policy_name}}"
