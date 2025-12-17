@@ -61,6 +61,11 @@ func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, err
 		return nil, &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: policyID}
 	}
 
+	store.CachedPolicies[policyID] = &CachedPolicy{
+		Policy:   policy,
+		LoadedAt: time.Now(),
+	}
+
 	return policy, nil
 }
 

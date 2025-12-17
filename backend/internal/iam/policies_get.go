@@ -22,22 +22,22 @@ func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
 	}
 	policy.AttachmentCount = attachments
 
-	store.Policies[policy.PolicyID] = &CachedPolicy{
-		policy:   &policy,
-		loadedAt: time.Now(),
+	store.CachedPolicies[policy.PolicyID] = &CachedPolicy{
+		Policy:   &policy,
+		LoadedAt: time.Now(),
 	}
 
 	return &policy, nil
 }
 
 func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
-	if cachedPolicy, ok := store.Policies[policyID]; ok {
-		if cachedPolicy.neverExpire || time.Since(cachedPolicy.loadedAt) < store.ttl {
-			return cachedPolicy.policy, nil
+	if cachedPolicy, ok := store.CachedPolicies[policyID]; ok {
+		if cachedPolicy.NeverExpire || time.Since(cachedPolicy.LoadedAt) < store.ttl {
+			return cachedPolicy.Policy, nil
 		}
 
 		slog.Debug("invalidating cached policy", "policyID", policyID)
-		delete(store.Policies, policyID)
+		delete(store.CachedPolicies, policyID)
 	}
 
 	var policy Policy
@@ -53,9 +53,9 @@ func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
 	}
 	policy.AttachmentCount = attachments
 
-	store.Policies[policyID] = &CachedPolicy{
-		policy:   &policy,
-		loadedAt: time.Now(),
+	store.CachedPolicies[policyID] = &CachedPolicy{
+		Policy:   &policy,
+		LoadedAt: time.Now(),
 	}
 
 	return &policy, nil

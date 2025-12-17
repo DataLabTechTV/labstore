@@ -40,7 +40,7 @@ func TestCreateAccessKeyIntegration(t *testing.T) {
 		t.Error(err)
 	}
 
-	delete(store.Users, user.Name)
+	delete(store.CachedUsers, user.Name)
 	fetchedUser, err := store.GetUserByAccessKey(user.AccessKeyID.String)
 	if err != nil {
 		t.Fatal(err)

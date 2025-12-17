@@ -74,7 +74,7 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
 	if err := store.AddUserToGroup(userName, groupName); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
-			errs.Handle(w, errs.IAMNoSuchEntity(errNotFound.Resource))
+			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
 			return
 		}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type IAMErrorResponse struct {
@@ -40,6 +41,15 @@ func IAMNotImplemented(action string) *IAMError {
 	}
 }
 
+func IAMServiceFailure() *IAMError {
+	return &IAMError{
+		Type:       IAMReceiverType,
+		Code:       "ServiceFailure",
+		Message:    "The request processing has failed because of an internal error.",
+		StatusCode: http.StatusInternalServerError,
+	}
+}
+
 func IAMEntityAlreadyExists(entityName string) *IAMError {
 	return &IAMError{
 		Type:       IAMReceiverType,
@@ -49,20 +59,24 @@ func IAMEntityAlreadyExists(entityName string) *IAMError {
 	}
 }
 
-func IAMNoSuchEntity(entityName string) *IAMError {
+func IAMNoSuchEntity(entityType, entityName string) *IAMError {
 	return &IAMError{
-		Type:       IAMReceiverType,
-		Code:       "NoSuchEntity",
-		Message:    fmt.Sprintf("The entity %s does not exist.", entityName),
+		Type: IAMReceiverType,
+		Code: "NoSuchEntity",
+		Message: fmt.Sprintf(
+			"The %s %s does not exist.",
+			strings.ReplaceAll(entityType, "_", " "),
+			entityName,
+		),
 		StatusCode: http.StatusNotFound,
 	}
 }
 
-func IAMServiceFailure() *IAMError {
+func IAMDeleteConflict(entityName string) *IAMError {
 	return &IAMError{
 		Type:       IAMReceiverType,
-		Code:       "ServiceFailure",
-		Message:    "The request processing has failed because of an internal error.",
-		StatusCode: http.StatusInternalServerError,
+		Code:       "DeleteConflict",
+		Message:    fmt.Sprintf("Cannot delete the entity %s.", entityName),
+		StatusCode: http.StatusConflict,
 	}
 }

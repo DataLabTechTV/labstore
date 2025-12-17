@@ -11,6 +11,7 @@ import (
 
 const (
 	ErrEntityTypeUser        = "user"
+	ErrEntityTypeAccessKey   = "access_key"
 	ErrEntityTypeGroup       = "group"
 	ErrEntityTypePolicy      = "policy"
 	ErrEntityTypeUserPolicy  = "user_policy"
@@ -29,12 +30,39 @@ type ErrNotFound struct {
 	Resource string
 }
 
+type ErrForbidden struct {
+	Type     ErrEntityType
+	Resource string
+}
+
+type ErrUserPolicyNotAttached struct {
+	UserID   string
+	PolicyID string
+}
+
+type ErrGroupPolicyNotAttached struct {
+	GroupID  string
+	PolicyID string
+}
+
 func (e *ErrExists) Error() string {
 	return fmt.Sprintf("%s exists: %s", e.Type, e.Resource)
 }
 
 func (e *ErrNotFound) Error() string {
 	return fmt.Sprintf("%s not found: %s", e.Type, e.Resource)
+}
+
+func (e *ErrForbidden) Error() string {
+	return fmt.Sprintf("Operation forbidden for %s: %s", e.Type, e.Resource)
+}
+
+func (e *ErrUserPolicyNotAttached) Error() string {
+	return fmt.Sprintf("Policy %s not attached to user %s", e.PolicyID, e.UserID)
+}
+
+func (e *ErrGroupPolicyNotAttached) Error() string {
+	return fmt.Sprintf("Policy %s not attached to group %s", e.PolicyID, e.GroupID)
 }
 
 func Handle(w http.ResponseWriter, err error) {
