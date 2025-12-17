@@ -14,7 +14,7 @@ all: build
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-BACKEND_SRCS := $(shell find $(BACKEND_DIR) -name "*.go")
+BACKEND_SRCS := $(shell find $(BACKEND_DIR) -name '*.go')
 
 $(BACKEND_CMD): $(BACKEND_SRCS) | $(BIN_DIR)
 	cd $(BACKEND_DIR) && go build -o ../$(BACKEND_CMD) ./cmd/labstore-server
@@ -48,8 +48,8 @@ profile: backend
 			-http=:8081 \
 			http://localhost:6060/debug/pprof/profile?seconds=60"
 
-test:
-	cd $(BACKEND_DIR) && go test -v ./...
+test: $(BACKEND_TEST_SRCS)
+	cd $(BACKEND_DIR) && go test ./... | grep -v '\[no test files\]'
 
 clean:
 	rm -rf $(BIN_DIR)

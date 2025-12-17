@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -171,7 +172,9 @@ func newSigV4Credential(credential string) (*sigV4Credential, error) {
 
 	accessKey := credentialParts[0]
 
-	user, err := iam.GetStore().GetUserByAccessKey(accessKey)
+	ctx := context.Background()
+
+	user, err := iam.GetStore().GetUserByAccessKey(ctx, accessKey)
 	if err != nil || !user.AccessKeyID.Valid {
 		slog.Error("get user by access key", "err", err)
 		return nil, errors.New("invalid access key")

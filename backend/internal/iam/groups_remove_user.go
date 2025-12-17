@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"log/slog"
@@ -16,14 +17,14 @@ type RemoveUserFromGroupResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) RemoveUserFromGroup(userName, groupName string) error {
-	group, err := store.GetGroupByName(groupName)
+func (store *Store) RemoveUserFromGroup(ctx context.Context, userName, groupName string) error {
+	group, err := store.GetGroupByName(ctx, groupName)
 	if err != nil {
 		slog.Error("remove user from group", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
 	}
 
-	user, err := store.GetUserByName(userName)
+	user, err := store.GetUserByName(ctx, userName)
 	if err != nil {
 		slog.Error("remove user from group", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: userName}
@@ -35,7 +36,7 @@ func (store *Store) RemoveUserFromGroup(userName, groupName string) error {
 	AND user_id = $2
 	`
 
-	res, err := store.sqlExec(query, group.GroupID, user.UserID)
+	res, err := store.sqlExecContext(ctx, query, group.GroupID, user.UserID)
 	if err != nil {
 		slog.Error("remove user from group", "err", err)
 		return err
@@ -51,7 +52,7 @@ func (store *Store) RemoveUserFromGroup(userName, groupName string) error {
 		return &errs.ErrUserNotInGroup{UserID: user.UserID, GroupID: group.GroupID}
 	}
 
-	group, err = store.GetGroupByName(groupName)
+	group, err = store.GetGroupByName(ctx, groupName)
 	if err != nil {
 		slog.Error("remove user from group", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
@@ -78,7 +79,9 @@ func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.RemoveUserFromGroup(userName, groupName); err != nil {
+	ctx := r.Context()
+
+	if err := store.RemoveUserFromGroup(ctx, userName, groupName); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))

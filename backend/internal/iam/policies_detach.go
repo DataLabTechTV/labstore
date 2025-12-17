@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"log/slog"
@@ -21,18 +22,18 @@ type DetachGroupPolicyResponse struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-func (store *Store) DetachUserPolicy(userName, policyArn string) error {
+func (store *Store) DetachUserPolicy(ctx context.Context, userName, policyArn string) error {
 	if userName == defaultAdminUserName {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeUser, Resource: userName}
 	}
 
-	user, err := store.GetUserByName(userName)
+	user, err := store.GetUserByName(ctx, userName)
 	if err != nil {
 		slog.Error("detach user policy", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeAccessKey, Resource: userName}
 	}
 
-	policy, err := store.GetPolicyByArn(policyArn)
+	policy, err := store.GetPolicyByArn(ctx, policyArn)
 	if err != nil {
 		slog.Error("detach user policy", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: policyArn}
@@ -44,7 +45,7 @@ func (store *Store) DetachUserPolicy(userName, policyArn string) error {
 	AND policy_id = $2
 	`
 
-	res, err := store.sqlExec(query, user.UserID, policy.PolicyID)
+	res, err := store.sqlExecContext(ctx, query, user.UserID, policy.PolicyID)
 	if err != nil {
 		slog.Error("detach user policy", "err", err)
 		return err
@@ -60,7 +61,7 @@ func (store *Store) DetachUserPolicy(userName, policyArn string) error {
 		return &errs.ErrUserPolicyNotAttached{UserID: user.UserID, PolicyID: policy.PolicyID}
 	}
 
-	user, err = store.GetUserByName(userName)
+	user, err = store.GetUserByName(ctx, userName)
 	if err != nil {
 		slog.Error("detach user policy", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: userName}
@@ -76,14 +77,14 @@ func (store *Store) DetachUserPolicy(userName, policyArn string) error {
 	return nil
 }
 
-func (store *Store) DetachGroupPolicy(groupName, policyArn string) error {
-	group, err := store.GetGroupByName(groupName)
+func (store *Store) DetachGroupPolicy(ctx context.Context, groupName, policyArn string) error {
+	group, err := store.GetGroupByName(ctx, groupName)
 	if err != nil {
 		slog.Error("detach group policy", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
 	}
 
-	policy, err := store.GetPolicyByArn(policyArn)
+	policy, err := store.GetPolicyByArn(ctx, policyArn)
 	if err != nil {
 		slog.Error("detach group policy", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: policyArn}
@@ -95,7 +96,7 @@ func (store *Store) DetachGroupPolicy(groupName, policyArn string) error {
 	AND policy_id = $2
 	`
 
-	res, err := store.sqlExec(query, group.GroupID, policy.PolicyID)
+	res, err := store.sqlExecContext(ctx, query, group.GroupID, policy.PolicyID)
 	if err != nil {
 		slog.Error("detach group policy", "err", err)
 		return err
@@ -111,7 +112,7 @@ func (store *Store) DetachGroupPolicy(groupName, policyArn string) error {
 		return &errs.ErrGroupPolicyNotAttached{GroupID: group.GroupID, PolicyID: policy.PolicyID}
 	}
 
-	group, err = store.GetGroupByName(groupName)
+	group, err = store.GetGroupByName(ctx, groupName)
 	if err != nil {
 		slog.Error("detach group policy", "err", err)
 		return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: groupName}
@@ -138,7 +139,9 @@ func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.DetachUserPolicy(userName, policyArn); err != nil {
+	ctx := r.Context()
+
+	if err := store.DetachUserPolicy(ctx, userName, policyArn); err != nil {
 		var errForbidden *errs.ErrForbidden
 		if errors.As(err, &errForbidden) {
 			errs.Handle(w, errs.IAMDeleteConflict(errForbidden.Resource))
@@ -186,7 +189,9 @@ func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.DetachGroupPolicy(groupName, policyArn); err != nil {
+	ctx := r.Context()
+
+	if err := store.DetachGroupPolicy(ctx, groupName, policyArn); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))

@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -22,7 +23,7 @@ type CreatePolicyResult struct {
 	Policy *PolicyResult
 }
 
-func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, error) {
+func (store *Store) CreatePolicy(ctx context.Context, name string, doc *PolicyDocument) (*Policy, error) {
 	policyID := GenerateUniqueID(ManagedPolicyUniqueID)
 
 	policy := &Policy{
@@ -37,13 +38,13 @@ func (store *Store) CreatePolicy(name string, doc *PolicyDocument) (*Policy, err
 	VALUES (:policy_id, :name, :arn, :document)
 	`
 
-	_, err := store.sqlNamedExec(query, &policy)
+	_, err := store.sqlNamedExecContext(ctx, query, &policy)
 	if err != nil {
 		slog.Warn("create policy", "err", err)
 		return nil, &errs.ErrExists{Type: errs.ErrEntityTypePolicy, Resource: policyID}
 	}
 
-	policy, err = store.GetPolicyByID(policyID)
+	policy, err = store.GetPolicyByID(ctx, policyID)
 	if err != nil {
 		slog.Error("get policy by id", "err", err)
 		return nil, &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: policyID}
@@ -77,7 +78,9 @@ func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	policy, err := store.CreatePolicy(name, &doc)
+	ctx := r.Context()
+
+	policy, err := store.CreatePolicy(ctx, name, &doc)
 	if err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
