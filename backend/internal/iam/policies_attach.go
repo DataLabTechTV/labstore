@@ -81,10 +81,14 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 	switch e := entity.(type) {
 	case *User:
 		if e.AccessKeyID.Valid {
-			store.CachedUsers[e.AccessKeyID.String].User.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+			if _, ok := store.CachedUsers[e.AccessKeyID.String]; ok {
+				store.CachedUsers[e.AccessKeyID.String].User.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+			}
 		}
 	case *Group:
-		store.CachedGroups[e.GroupID].Group.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+		if _, ok := store.CachedGroups[e.GroupID]; ok {
+			store.CachedGroups[e.GroupID].Group.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+		}
 	}
 
 	return nil
