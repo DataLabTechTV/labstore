@@ -307,7 +307,7 @@ test-db-delete-policy: check-deps
 [group("test-iam")]
 test-iam-detach-user-policy: check-deps
     #!/bin/bash
-    echo "Deleting IAM access keys for user {{test_user}}"
+    echo "Detaching IAM policy {{test_policy_name}} from user {{test_user}}"
     host=$(yq ".backend.iam.server.host" {{config_path}})
     port=$(yq ".backend.iam.server.port" {{config_path}})
     http POST "http://${host}:${port}?Action=DetachUserPolicy" \
@@ -315,13 +315,14 @@ test-iam-detach-user-policy: check-deps
         "PolicyArn=={{test_policy_arn}}"
 
 [group("test-iam")]
-test-db-delete-group-policy: check-deps
+test-iam-detach-group-policy: check-deps
     #!/bin/bash
-    echo "Deleting attached IAM policy {{test_policy_name}} to group {{test_group}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM group_policies \
-        WHERE group_id = (SELECT group_id FROM groups WHERE name = '{{test_group}}') \
-        AND policy_id = (SELECT policy_id FROM policies WHERE name = '{{test_policy_name}}')"
+    echo "Detaching IAM policy {{test_policy_name}} from group {{test_group}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=DetachGroupPolicy" \
+        "GroupName=={{test_group}}" \
+        "PolicyArn=={{test_policy_arn}}"
 
 [group("test-iam")]
 test-iam-user-policy: test-iam-create-user test-iam-create-access-key \
