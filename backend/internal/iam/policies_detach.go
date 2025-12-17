@@ -115,3 +115,7 @@ func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 
 	core.WriteXML(w, http.StatusOK, response)
 }
+
+func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}

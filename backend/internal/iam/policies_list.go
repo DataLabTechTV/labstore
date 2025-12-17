@@ -16,9 +16,8 @@ type ListAttachedUserPoliciesResult struct {
 	IsTruncated      bool
 }
 
-//nolint:unused
 type AttachedPolicies struct {
-	member *AttachedPoliciesMember
+	Member *AttachedPoliciesMember `xml:"member"`
 }
 
 type AttachedPoliciesMember struct {
@@ -27,5 +26,9 @@ type AttachedPoliciesMember struct {
 }
 
 func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
+func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO
 }
