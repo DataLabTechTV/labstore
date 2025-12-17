@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
 type GetUserResponse struct {
@@ -46,9 +49,9 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 	}
 
 	if user.AccessKeyID.Valid {
-		store.Users[user.AccessKeyID.String] = &CachedUser{
-			user:     &user,
-			loadedAt: time.Now(),
+		store.CachedUsers[user.AccessKeyID.String] = &CachedUser{
+			User:     &user,
+			LoadedAt: time.Now(),
 		}
 	}
 
@@ -56,5 +59,26 @@ func (store *Store) GetUserByName(name string) (*User, error) {
 }
 
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	userName := r.URL.Query().Get("UserName")
+	if userName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
+		return
+	}
+
+	user, err := store.GetUserByName(userName)
+	if err != nil {
+		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypeUser), userName))
+		return
+	}
+
+	response := &GetUserResponse{
+		GetUserResult: &GetUserResult{
+			User: user.UserResult(),
+		},
+		ResponseMetadata: &ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	core.WriteXML(w, http.StatusOK, response)
 }

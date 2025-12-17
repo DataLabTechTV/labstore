@@ -23,9 +23,9 @@ func (store *Store) GetGroupByName(name string) (*Group, error) {
 		group.PolicyIDs[i] = policy.PolicyID
 	}
 
-	store.Groups[group.Name] = &CachedGroup{
-		group:    &group,
-		loadedAt: time.Now(),
+	store.CachedGroups[group.Name] = &CachedGroup{
+		Group:    &group,
+		LoadedAt: time.Now(),
 	}
 
 	return &group, nil

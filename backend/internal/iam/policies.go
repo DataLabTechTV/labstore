@@ -17,9 +17,9 @@ const (
 )
 
 type CachedPolicy struct {
-	policy      *Policy
-	loadedAt    time.Time
-	neverExpire bool
+	Policy      *Policy
+	LoadedAt    time.Time
+	NeverExpire bool
 }
 
 type Policy struct {

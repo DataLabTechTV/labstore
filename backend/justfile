@@ -10,7 +10,7 @@ test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
     '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
     '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
     '"Resource":["arn:aws:s3:::' + test_bucket + '","arn:aws:s3:::' + test_bucket + '/*"]}]}'
-
+test_policy_arn := "arn:aws:iam::000000000001:policy/" + test_policy_name
 
 default:
     just -l
@@ -207,7 +207,7 @@ test-iam-attach-user-policy: check-deps
     port=$(yq ".backend.iam.server.port" {{config_path}})
     http POST "http://${host}:${port}" \
         "Action==AttachUserPolicy" \
-        'PolicyArn==arn:aws:iam::000000000001:policy/{{test_policy_name}}' \
+        'PolicyArn=={{test_policy_arn}}' \
         'UserName=={{test_user}}'
 
 [group("test-iam")]
@@ -266,7 +266,7 @@ test-iam-attach-group-policy: check-deps
     port=$(yq ".backend.iam.server.port" {{config_path}})
     http POST "http://${host}:${port}" \
         "Action==AttachGroupPolicy" \
-        'PolicyArn==arn:aws:iam::000000000001:policy/{{test_policy_name}}' \
+        'PolicyArn=={{test_policy_arn}}' \
         'GroupName=={{test_group}}'
 
 [group("test-iam")]
@@ -282,3 +282,47 @@ test-db-delete-group-policy: check-deps
 test-iam-group-policy: test-iam-create-user test-iam-create-access-key \
     test-iam-create-group test-iam-add-user-to-group \
     test-iam-create-policy test-iam-attach-group-policy
+
+[group("test-iam")]
+test-iam-get-user: check-deps
+    #!/bin/bash
+    echo "Getting IAM user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=GetUser&UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-list-access-keys: check-deps
+    #!/bin/bash
+    echo "Getting IAM access keys for user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=ListAccessKeys&UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-delete-user: check-deps
+    #!/bin/bash
+    echo "Deleting IAM user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=DeleteUser&UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-delete-access-key: check-deps
+    #!/bin/bash
+    echo "Deleting IAM access keys for user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=DeleteAccessKey" \
+        "UserName=={{test_user}}" \
+        "AccessKeyId=={{test_user}}"
+
+[group("test-iam")]
+test-iam-detach-user-policy: check-deps
+    #!/bin/bash
+    echo "Deleting IAM access keys for user {{test_user}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=DetachUserPolicy" \
+        "UserName=={{test_user}}" \
+        "PolicyArn=={{test_policy_arn}}"

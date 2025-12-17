@@ -16,10 +16,9 @@ const IAMDBFilename = "iam.db"
 const defaultTTL = 15 * time.Minute
 
 type Store struct {
-	// TODO cached groups and policies
-	Users    map[string]*CachedUser
-	Groups   map[string]*CachedGroup
-	Policies map[string]*CachedPolicy
+	CachedUsers    map[string]*CachedUser
+	CachedGroups   map[string]*CachedGroup
+	CachedPolicies map[string]*CachedPolicy
 
 	readDB  *sqlx.DB
 	writeDB *sqlx.DB
@@ -29,10 +28,10 @@ type Store struct {
 
 func NewStore() *Store {
 	return &Store{
-		Users:    make(map[string]*CachedUser),
-		Groups:   make(map[string]*CachedGroup),
-		Policies: make(map[string]*CachedPolicy),
-		ttl:      defaultTTL,
+		CachedUsers:    make(map[string]*CachedUser),
+		CachedGroups:   make(map[string]*CachedGroup),
+		CachedPolicies: make(map[string]*CachedPolicy),
+		ttl:            defaultTTL,
 	}
 }
 
