@@ -2,8 +2,15 @@ package helper
 
 import (
 	"fmt"
+	"os"
 	"strings"
+
+	"github.com/mattn/go-isatty"
 )
+
+func SupportsBox() bool {
+	return isatty.IsTerminal(os.Stdout.Fd())
+}
 
 func RuneDisplayWidth(r rune) int {
 	if r <= 0x1FFF {
