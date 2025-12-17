@@ -53,8 +53,6 @@ func loadIAMRoutes(router *http.ServeMux) {
 			iam.CreateUserHandler(w, r)
 		case iam.OpCreateAccessKey:
 			iam.CreateAccessKeyHandler(w, r)
-		case iam.OpAttachUserPolicy:
-			iam.AttachUserPolicyHandler(w, r)
 
 		// --- User: Read ---
 		case iam.OpGetUser:
@@ -69,16 +67,12 @@ func loadIAMRoutes(router *http.ServeMux) {
 			iam.DeleteUserHandler(w, r)
 		case iam.OpDeleteAccessKey:
 			iam.DeleteAccessKeyHandler(w, r)
-		case iam.OpDetachUserPolicy:
-			iam.DetachUserPolicyHandler(w, r)
 
 		// --- Groups: Create ---
 		case iam.OpCreateGroup:
 			iam.CreateGroupHandler(w, r)
 		case iam.OpAddUserToGroup:
 			iam.AddUserToGroupHandler(w, r)
-		case iam.OpAttachGroupPolicy:
-			iam.AttachGroupPolicyHandler(w, r)
 
 		// --- Groups: Read ---
 		case iam.OpGetGroup:
@@ -91,16 +85,26 @@ func loadIAMRoutes(router *http.ServeMux) {
 			iam.DeleteGroupHandler(w, r)
 		case iam.OpRemoveUserFromGroup:
 			iam.RemoveUserFromGroupHandler(w, r)
-		case iam.OpDetachGroupPolicy:
-			iam.DetachGroupPolicyHandler(w, r)
 
-		// --- Policies ---
+		// --- Policies: Create ---
 		case iam.OpCreatePolicy:
 			iam.CreatePolicyHandler(w, r)
+		case iam.OpAttachUserPolicy:
+			iam.AttachUserPolicyHandler(w, r)
+		case iam.OpAttachGroupPolicy:
+			iam.AttachGroupPolicyHandler(w, r)
+
+		// --- Policies: Read ---
 		case iam.OpGetPolicy:
 			iam.GetPolicyHandler(w, r)
+
+		// --- Policies: Delete ---
 		case iam.OpDeletePolicy:
 			iam.DeletePolicyHandler(w, r)
+		case iam.OpDetachUserPolicy:
+			iam.DetachUserPolicyHandler(w, r)
+		case iam.OpDetachGroupPolicy:
+			iam.DetachGroupPolicyHandler(w, r)
 
 		default:
 			errs.Handle(w, errs.IAMNotImplemented(action))

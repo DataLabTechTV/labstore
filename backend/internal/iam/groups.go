@@ -10,9 +10,9 @@ const (
 )
 
 type CachedGroup struct {
-	group       *Group
-	loadedAt    time.Time
-	neverExpire bool
+	Group       *Group
+	LoadedAt    time.Time
+	NeverExpire bool
 }
 
 type Group struct {
@@ -25,13 +25,13 @@ type Group struct {
 }
 
 func (store *Store) GetGroupByID(groupID string) (*Group, error) {
-	if cachedGroup, ok := store.Groups[groupID]; ok {
-		if cachedGroup.neverExpire || time.Since(cachedGroup.loadedAt) < store.ttl {
-			return cachedGroup.group, nil
+	if cachedGroup, ok := store.CachedGroups[groupID]; ok {
+		if cachedGroup.NeverExpire || time.Since(cachedGroup.LoadedAt) < store.ttl {
+			return cachedGroup.Group, nil
 		}
 
 		slog.Debug("invalidating cached group", "groupID", groupID)
-		delete(store.Groups, groupID)
+		delete(store.CachedGroups, groupID)
 	}
 
 	var group Group
@@ -61,9 +61,9 @@ func (store *Store) GetGroupByID(groupID string) (*Group, error) {
 		group.UserIDs[i] = user.UserID
 	}
 
-	store.Groups[groupID] = &CachedGroup{
-		group:    &group,
-		loadedAt: time.Now(),
+	store.CachedGroups[groupID] = &CachedGroup{
+		Group:    &group,
+		LoadedAt: time.Now(),
 	}
 
 	return &group, nil

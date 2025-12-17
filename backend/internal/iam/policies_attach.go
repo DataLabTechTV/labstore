@@ -33,7 +33,7 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 
 	switch arnType {
 	case ArnUser:
-		entity, err := store.GetUserByName(entityName)
+		user, err := store.GetUserByName(entityName)
 		if err != nil {
 			slog.Error("get user by name", "err", err)
 			return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: entityName}
@@ -41,9 +41,10 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 
 		tableName = "user_policies"
 		idFieldName = "user_id"
-		idFieldValue = entity.UserID
+		idFieldValue = user.UserID
+		entity = user
 	case ArnGroup:
-		entity, err := store.GetGroupByName(entityName)
+		group, err := store.GetGroupByName(entityName)
 		if err != nil {
 			slog.Error("get group by name", "err", err)
 			return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: entityName}
@@ -51,7 +52,8 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 
 		tableName = "group_policies"
 		idFieldName = "group_id"
-		idFieldValue = entity.GroupID
+		idFieldValue = group.GroupID
+		entity = group
 	default:
 		return errors.New("unsupported arn type")
 	}
@@ -77,10 +79,12 @@ func (store *Store) AttachPolicy(arnType ArnType, policyArn, entityName string) 
 	}
 
 	switch e := entity.(type) {
-	case User:
-		e.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
-	case Group:
-		e.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+	case *User:
+		if e.AccessKeyID.Valid {
+			store.CachedUsers[e.AccessKeyID.String].User.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+		}
+	case *Group:
+		store.CachedGroups[e.GroupID].Group.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
 	}
 
 	return nil
@@ -102,7 +106,7 @@ func AttachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if err := store.AttachPolicy(ArnUser, policyArn, userName); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
-			errs.Handle(w, errs.IAMNoSuchEntity(errNotFound.Resource))
+			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
 			return
 		}
 
@@ -135,7 +139,7 @@ func AttachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if err := store.AttachPolicy(ArnGroup, policyArn, groupName); err != nil {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
-			errs.Handle(w, errs.IAMNoSuchEntity(errNotFound.Resource))
+			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
 			return
 		}
 

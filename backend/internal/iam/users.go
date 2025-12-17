@@ -15,9 +15,9 @@ const (
 )
 
 type CachedUser struct {
-	user        *User
-	loadedAt    time.Time
-	neverExpire bool
+	User        *User
+	LoadedAt    time.Time
+	NeverExpire bool
 }
 
 type User struct {
@@ -40,6 +40,17 @@ type UserResult struct {
 	Arn      string
 }
 
+func (user *User) UserResult() *UserResult {
+	userPath := "/"
+
+	return &UserResult{
+		Path:     userPath,
+		UserName: user.Name,
+		UserId:   user.UserID,
+		Arn:      user.Arn,
+	}
+}
+
 func (user *User) EncryptedData() *security.EncryptedData {
 	return &security.EncryptedData{
 		Value: user.SecretKey,
@@ -48,13 +59,13 @@ func (user *User) EncryptedData() *security.EncryptedData {
 }
 
 func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
-	if cachedUser, ok := store.Users[accessKey]; ok {
-		if cachedUser.neverExpire || time.Since(cachedUser.loadedAt) < store.ttl {
-			return cachedUser.user, nil
+	if cachedUser, ok := store.CachedUsers[accessKey]; ok {
+		if cachedUser.NeverExpire || time.Since(cachedUser.LoadedAt) < store.ttl {
+			return cachedUser.User, nil
 		}
 
 		slog.Debug("invalidating cached user", "accessKey", accessKey)
-		delete(store.Users, accessKey)
+		delete(store.CachedUsers, accessKey)
 	}
 
 	var user User
@@ -82,9 +93,9 @@ func (store *Store) GetUserByAccessKey(accessKey string) (*User, error) {
 		user.GroupIDs[i] = group.GroupID
 	}
 
-	store.Users[user.AccessKeyID.String] = &CachedUser{
-		user:     &user,
-		loadedAt: time.Now(),
+	store.CachedUsers[user.AccessKeyID.String] = &CachedUser{
+		User:     &user,
+		LoadedAt: time.Now(),
 	}
 
 	return &user, nil
@@ -113,8 +124,8 @@ func (store *Store) setupAdmin() error {
 		return err
 	}
 
-	store.Users[config.Admin.Auth.AccessKey] = &CachedUser{
-		user: &User{
+	store.CachedUsers[config.Admin.Auth.AccessKey] = &CachedUser{
+		User: &User{
 			UserID: GenerateUniqueID(IAMUserUniqueID),
 			Name:   defaultAdminUserName,
 			Arn:    toArn(ArnUser, defaultUserPath+defaultAdminUserName),
@@ -126,12 +137,12 @@ func (store *Store) setupAdmin() error {
 			GroupIDs:  []string{},
 			PolicyIDs: []string{adminPolicy},
 		},
-		loadedAt:    time.Now(),
-		neverExpire: true,
+		LoadedAt:    time.Now(),
+		NeverExpire: true,
 	}
 
-	store.Policies[adminPolicy] = &CachedPolicy{
-		policy: &Policy{
+	store.CachedPolicies[adminPolicy] = &CachedPolicy{
+		Policy: &Policy{
 			PolicyID: adminPolicy,
 			Document: &PolicyDocument{
 				Version: latestPolicyDocumentVersion,
@@ -144,8 +155,8 @@ func (store *Store) setupAdmin() error {
 				},
 			},
 		},
-		loadedAt:    time.Now(),
-		neverExpire: true,
+		LoadedAt:    time.Now(),
+		NeverExpire: true,
 	}
 
 	return nil

@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"modernc.org/sqlite"
@@ -24,7 +23,7 @@ type CreateUserResult struct {
 }
 
 func (store *Store) CreateUser(name string) (*User, error) {
-	if name == config.Admin.Auth.AccessKey {
+	if name == defaultAdminUserName {
 		return nil, &errs.ErrExists{Type: errs.ErrEntityTypeUser, Resource: name}
 	}
 
@@ -87,16 +86,9 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userPath := "/"
-
 	response := &CreateUserResponse{
 		CreateUserResult: &CreateUserResult{
-			User: &UserResult{
-				Path:     userPath,
-				UserName: user.Name,
-				UserId:   user.UserID,
-				Arn:      user.Arn,
-			},
+			User: user.UserResult(),
 			ResponseMetadata: &ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},

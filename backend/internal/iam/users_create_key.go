@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
@@ -71,6 +72,19 @@ func (store *Store) CreateAccessKey(user *User) (string, error) {
 		return "", err
 	}
 
+	if user.AccessKeyID.Valid {
+		if _, ok := store.CachedUsers[user.AccessKeyID.String]; ok {
+			store.CachedUsers[user.AccessKeyID.String].User.AccessKeyID.String = user.AccessKeyID.String
+			store.CachedUsers[user.AccessKeyID.String].User.SecretKey = user.SecretKey
+			store.CachedUsers[user.AccessKeyID.String].User.Salt = user.Salt
+		} else {
+			store.CachedUsers[user.AccessKeyID.String] = &CachedUser{
+				User:     user,
+				LoadedAt: time.Now(),
+			}
+		}
+	}
+
 	return secretKey, nil
 }
 
@@ -83,7 +97,7 @@ func CreateAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := store.GetUserByName(userName)
 	if err != nil {
-		errs.Handle(w, errs.IAMNoSuchEntity(userName))
+		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypeUser), userName))
 		return
 	}
 
