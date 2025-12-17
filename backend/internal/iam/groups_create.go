@@ -22,13 +22,6 @@ type CreateGroupResult struct {
 	ResponseMetadata *ResponseMetadata
 }
 
-type GroupResult struct {
-	Path      string
-	GroupName string
-	GroupId   string
-	Arn       string
-}
-
 func (store *Store) CreateGroup(name string) (*Group, error) {
 	group := &Group{
 		GroupID: GenerateUniqueID(IAMGroupUniqueID),
@@ -89,16 +82,9 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupPath := "/"
-
 	response := &CreateGroupResponse{
 		CreateGroupResult: &CreateGroupResult{
-			Group: &GroupResult{
-				Path:      groupPath,
-				GroupName: group.Name,
-				GroupId:   group.GroupID,
-				Arn:       group.Arn,
-			},
+			Group: group.Result(),
 			ResponseMetadata: &ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},
