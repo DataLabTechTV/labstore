@@ -240,11 +240,12 @@ test-iam-get-group: check-deps
     http POST "http://${host}:${port}?Action=GetGroup&GroupName={{test_group}}"
 
 [group("test-iam")]
-test-db-delete-group: check-deps
+test-iam-delete-group: check-deps
     #!/bin/bash
     echo "Deleting IAM group: {{test_group}}"
-    iam_db=../$(yq ".backend.storage.data_dir" {{config_path}})/metadata/iam.db
-    sqlite3 $iam_db "DELETE FROM groups WHERE name = '{{test_group}}'"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=DeleteGroup&GroupName={{test_group}}"
 
 [group("test-iam")]
 test-db-delete-user-from-group: check-deps
