@@ -232,6 +232,14 @@ test-iam-add-user-to-group: check-deps
         'UserName=={{test_user}}'
 
 [group("test-iam")]
+test-iam-get-group: check-deps
+    #!/bin/bash
+    echo "Getting IAM group: {{test_group}}"
+    host=$(yq ".backend.iam.server.host" {{config_path}})
+    port=$(yq ".backend.iam.server.port" {{config_path}})
+    http POST "http://${host}:${port}?Action=GetGroup&GroupName={{test_group}}"
+
+[group("test-iam")]
 test-db-delete-group: check-deps
     #!/bin/bash
     echo "Deleting IAM group: {{test_group}}"
