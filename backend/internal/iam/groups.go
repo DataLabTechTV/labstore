@@ -17,6 +17,12 @@ const (
 	defaultGroupPath = "/"
 )
 
+type CachedGroup struct {
+	group       *Group
+	loadedAt    time.Time
+	neverExpire bool
+}
+
 type Group struct {
 	GroupID string `db:"group_id"`
 	Name    string `db:"name"`
@@ -24,12 +30,6 @@ type Group struct {
 
 	UserIDs   []string
 	PolicyIDs []string
-}
-
-type cachedGroup struct {
-	group       *Group
-	loadedAt    time.Time
-	neverExpire bool
 }
 
 type CreateGroupResponse struct {
@@ -91,7 +91,7 @@ func (store *Store) GetGroupByID(groupID string) (*Group, error) {
 		group.UserIDs[i] = user.UserID
 	}
 
-	store.Groups[groupID] = &cachedGroup{
+	store.Groups[groupID] = &CachedGroup{
 		group:    &group,
 		loadedAt: time.Now(),
 	}
@@ -116,7 +116,7 @@ func (store *Store) GetGroupByName(name string) (*Group, error) {
 		group.PolicyIDs[i] = policy.PolicyID
 	}
 
-	store.Groups[group.Name] = &cachedGroup{
+	store.Groups[group.Name] = &CachedGroup{
 		group:    &group,
 		loadedAt: time.Now(),
 	}

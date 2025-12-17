@@ -25,6 +25,12 @@ const (
 	adminPolicy = "admin-policy"
 )
 
+type CachedPolicy struct {
+	policy      *Policy
+	loadedAt    time.Time
+	neverExpire bool
+}
+
 type Policy struct {
 	PolicyID string `db:"policy_id"`
 	Name     string `db:"name"`
@@ -36,12 +42,6 @@ type Policy struct {
 	UpdatedAt time.Time `db:"updated_at"`
 
 	AttachmentCount int
-}
-
-type cachedPolicy struct {
-	policy      *Policy
-	loadedAt    time.Time
-	neverExpire bool
 }
 
 type PolicyDocument struct {
@@ -125,7 +125,7 @@ func (store *Store) GetPolicyByID(policyID string) (*Policy, error) {
 	}
 	policy.AttachmentCount = attachments
 
-	store.Policies[policyID] = &cachedPolicy{
+	store.Policies[policyID] = &CachedPolicy{
 		policy:   &policy,
 		loadedAt: time.Now(),
 	}
@@ -147,7 +147,7 @@ func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
 	}
 	policy.AttachmentCount = attachments
 
-	store.Policies[policy.PolicyID] = &cachedPolicy{
+	store.Policies[policy.PolicyID] = &CachedPolicy{
 		policy:   &policy,
 		loadedAt: time.Now(),
 	}

@@ -17,9 +17,9 @@ const defaultTTL = 15 * time.Minute
 
 type Store struct {
 	// TODO cached groups and policies
-	Users    map[string]*cachedUser
-	Groups   map[string]*cachedGroup
-	Policies map[string]*cachedPolicy
+	Users    map[string]*CachedUser
+	Groups   map[string]*CachedGroup
+	Policies map[string]*CachedPolicy
 
 	readDB  *sqlx.DB
 	writeDB *sqlx.DB
@@ -29,9 +29,9 @@ type Store struct {
 
 func NewStore() *Store {
 	return &Store{
-		Users:    make(map[string]*cachedUser),
-		Groups:   make(map[string]*cachedGroup),
-		Policies: make(map[string]*cachedPolicy),
+		Users:    make(map[string]*CachedUser),
+		Groups:   make(map[string]*CachedGroup),
+		Policies: make(map[string]*CachedPolicy),
 		ttl:      defaultTTL,
 	}
 }
