@@ -20,7 +20,12 @@ func NewRootCmd() *cobra.Command {
 		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			helper.Box(fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author))
+			welcomeMsg := fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author)
+			if helper.SupportsBox() {
+				helper.Box(welcomeMsg)
+			} else {
+				fmt.Println(welcomeMsg)
+			}
 
 			debug := helper.Must(cmd.Flags().GetBool("debug"))
 			logger.Init(logger.WithDebugFlag(debug))
