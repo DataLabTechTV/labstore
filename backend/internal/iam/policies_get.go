@@ -1,12 +1,26 @@
 package iam
 
 import (
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
+
+type GetPolicyResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ GetPolicyResponse"`
+	GetPolicyResult  *GetPolicyResult
+	ResponseMetadata *ResponseMetadata
+}
+
+type GetPolicyResult struct {
+	Policy *PolicyResult
+}
 
 func (store *Store) GetPolicyByArn(arn string) (*Policy, error) {
 	var policy Policy
@@ -112,5 +126,26 @@ func (store *Store) countPolicyAttachments(policy *Policy) (int, error) {
 }
 
 func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	policyArn := r.URL.Query().Get("PolicyArn")
+	if policyArn == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
+		return
+	}
+
+	policy, err := store.GetPolicyByArn(policyArn)
+	if err != nil {
+		errs.Handle(w, errs.IAMNoSuchEntity(string(errs.ErrEntityTypePolicy), policyArn))
+		return
+	}
+
+	response := &GetPolicyResponse{
+		GetPolicyResult: &GetPolicyResult{
+			Policy: policy.Result(),
+		},
+		ResponseMetadata: &ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	core.WriteXML(w, http.StatusOK, response)
 }

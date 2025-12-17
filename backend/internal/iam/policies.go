@@ -3,6 +3,7 @@ package iam
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"time"
 )
@@ -23,16 +24,16 @@ type CachedPolicy struct {
 }
 
 type Policy struct {
-	PolicyID string `db:"policy_id"`
-	Name     string `db:"name"`
+	PolicyID string `db:"policy_id" xml:"PolicyId"`
+	Name     string `db:"name" xml:"PolicyName"`
 	Arn      string `db:"arn"`
 
-	Document *PolicyDocument `db:"document"`
+	AttachmentCount int
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 
-	AttachmentCount int
+	Document *PolicyDocument `db:"document" xml:"-"`
 }
 
 type PolicyDocument struct {
@@ -44,6 +45,33 @@ type Statement struct {
 	Effect   Effect
 	Action   Actions
 	Resource Resources
+}
+
+type PolicyResult struct {
+	XMLName          xml.Name `xml:"Policy"`
+	PolicyName       string
+	DefaultVersionId string
+	PolicyId         string
+	Path             string
+	Arn              string
+	AttachmentCount  int
+	CreateDate       time.Time
+	UpdateDate       time.Time
+}
+
+func (policy *Policy) Result() *PolicyResult {
+	policyPath := "/"
+
+	return &PolicyResult{
+		PolicyName:       policy.Name,
+		DefaultVersionId: defaultPolicyVersion,
+		PolicyId:         policy.PolicyID,
+		Path:             policyPath,
+		Arn:              policy.Arn,
+		AttachmentCount:  policy.AttachmentCount,
+		CreateDate:       policy.CreatedAt,
+		UpdateDate:       policy.UpdatedAt,
+	}
 }
 
 func (pd *PolicyDocument) Value() (driver.Value, error) {
