@@ -30,9 +30,9 @@ func PutObject(bucket string, key string, reader io.Reader) error {
 	}
 	defer helper.CloseWithErr(f, &err)
 
-	writer := bufio.NewWriterSize(f, config.S3.Perf.BufferSize)
+	writer := bufio.NewWriterSize(f, config.S3.IO.BufferSize)
 
-	_, err = io.CopyBuffer(writer, reader, make([]byte, config.S3.Perf.BufferSize))
+	_, err = io.CopyBuffer(writer, reader, make([]byte, config.S3.IO.BufferSize))
 	if err != nil {
 		return errs.S3InternalError("Failed to write object")
 	}

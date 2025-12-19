@@ -22,8 +22,6 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
 
-const DefaultMaxKeys = 250
-const MaxKeysLimit = 1000
 const DefaultDelimiter = "/"
 
 type BaseListObjectsRequest struct {
@@ -96,17 +94,17 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if mk := q.Get("maxKeys"); mk == "" {
-		maxKeys = DefaultMaxKeys
+		maxKeys = config.S3.Paging.MaxKeys
 	} else {
 		if maxKeys, err = strconv.Atoi(mk); err != nil {
-			slog.Warn("invalid max-keys value, using default", "input", mk, "default", DefaultMaxKeys)
-			maxKeys = DefaultMaxKeys
+			slog.Warn("invalid max-keys value, using default", "input", mk, "default", config.S3.Paging.MaxKeys)
+			maxKeys = config.S3.Paging.MaxKeys
 		}
 	}
 
-	if maxKeys > MaxKeysLimit {
-		slog.Warn("max-keys capped", "input", maxKeys, "cap", MaxKeysLimit)
-		maxKeys = MaxKeysLimit
+	if maxKeys > config.S3.Paging.MaxKeys {
+		slog.Warn("max-keys capped", "input", maxKeys, "cap", config.S3.Paging.MaxKeys)
+		maxKeys = config.S3.Paging.MaxKeys
 	}
 
 	rBase := BaseListObjectsRequest{

@@ -18,7 +18,6 @@ import (
 
 const IAMDBFilename = "iam.db"
 const defaultTTL = 15 * time.Minute
-const writeChannelBufferSize = 32
 
 type Store struct {
 	CachedUsers    map[string]*CachedUser
@@ -63,7 +62,8 @@ func newSQLTask(ctx context.Context, resCh chan<- sqlTaskResult, fn sqlFn) sqlTa
 }
 
 func newWriterWorker(db *sqlx.DB) chan<- sqlTask {
-	taskCh := make(chan sqlTask, writeChannelBufferSize)
+	slog.Debug("new writer worker", "writeChanCap", config.IAM.DB.WriteChanCap)
+	taskCh := make(chan sqlTask, config.IAM.DB.WriteChanCap)
 
 	go func() {
 		for task := range taskCh {

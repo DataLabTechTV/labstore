@@ -16,6 +16,7 @@ backend:
     db:
       max_open_conns: 3
       max_idle_conns: 3
+      write_chan_cap: 32
       timeout_ms: 5000
       read_cache_size_kib: 65536
       writer_cache_size_kib: 16384
@@ -23,7 +24,9 @@ backend:
     server:
       host: 0.0.0.0
       port: 6789
-    perf:
+    paging:
+      max_keys: 1000
+    io:
       buffer_size: 262144
 
 web:
