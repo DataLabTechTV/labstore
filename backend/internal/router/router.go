@@ -46,8 +46,10 @@ func Start() {
 	go shutdownServers(ctx, serverDescriptors)
 	go waitAndClose(errCh, &wg)
 
-	if err := <-errCh; err != nil {
-		slog.Error("server error", "err", err)
+	for err := range errCh {
+		if err != nil {
+			slog.Error("server error", "err", err)
+		}
 	}
 
 	slog.Info("all servers shut down cleanly")
