@@ -127,7 +127,7 @@ func (store *Store) countPolicyAttachments(ctx context.Context, policy *Policy) 
 }
 
 func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	policyArn := r.URL.Query().Get("PolicyArn")
+	policyArn := r.Form.Get("PolicyArn")
 	if policyArn == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
 		return

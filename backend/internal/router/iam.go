@@ -45,7 +45,13 @@ func loadIAMRoutes(router *http.ServeMux) {
 	slog.Debug("loading iam routes")
 
 	router.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
-		action := r.URL.Query().Get("Action")
+		if err := r.ParseForm(); err != nil {
+			slog.Error("load iam router: could not parse form")
+			errs.Handle(w, errs.IAMServiceFailure())
+			return
+		}
+
+		action := r.Form.Get("Action")
 
 		switch iam.IAMOp(action) {
 		// --- User: Create ---

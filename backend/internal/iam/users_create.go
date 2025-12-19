@@ -63,7 +63,7 @@ func (store *Store) CreateUser(ctx context.Context, name string) (*User, error) 
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return

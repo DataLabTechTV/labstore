@@ -59,13 +59,13 @@ func (store *Store) CreatePolicy(ctx context.Context, name string, doc *PolicyDo
 }
 
 func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("PolicyName")
+	name := r.Form.Get("PolicyName")
 	if name == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyName"))
 		return
 	}
 
-	document := r.URL.Query().Get("PolicyDocument")
+	document := r.Form.Get("PolicyDocument")
 	if document == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyDocument"))
 		return

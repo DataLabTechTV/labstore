@@ -126,7 +126,7 @@ func (store *Store) getGroupsByUserID(ctx context.Context, userID string) ([]*Gr
 }
 
 func GetGroupHandler(w http.ResponseWriter, r *http.Request) {
-	groupName := r.URL.Query().Get("GroupName")
+	groupName := r.Form.Get("GroupName")
 	if groupName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
 		return

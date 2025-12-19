@@ -120,7 +120,7 @@ func (store *Store) getUsersByGroupID(ctx context.Context, groupID string) ([]*U
 }
 
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return

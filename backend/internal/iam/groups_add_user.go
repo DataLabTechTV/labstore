@@ -60,13 +60,13 @@ func (store *Store) AddUserToGroup(ctx context.Context, userName, groupName stri
 }
 
 func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return
 	}
 
-	groupName := r.URL.Query().Get("GroupName")
+	groupName := r.Form.Get("GroupName")
 	if groupName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
 		return
