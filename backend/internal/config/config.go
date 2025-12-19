@@ -28,17 +28,20 @@ const (
 	DefaultAdminAuthAccessKey = "admin"
 	DefaultAdminSecretKey     = DefaultAdminAuthAccessKey
 
-	DefaultIAMServerHost          = "0.0.0.0"
-	DefaultIAMServerPort          = 6788
-	DefaultIAMDBMaxOpenConns      = 3
-	DefaultIAMDBMaxIdleConns      = 3
+	DefaultIAMServerHost     = "0.0.0.0"
+	DefaultIAMServerPort     = 6788
+	DefaultIAMDBMaxOpenConns = 3
+	DefaultIAMDBMaxIdleConns = 3
+	DefaultIAMWriteChanCap   = 32
+
 	DefaultIAMDBTimeoutMs         = 5000
 	DefaultIAMDBReadCacheSizeKiB  = 65536
 	DefaultIAMDBWriteCacheSizeKiB = 16384
 
-	DefaultS3ServerHost     = "0.0.0.0"
-	DefaultS3ServerPort     = 6789
-	DefaultS3PerfBufferSize = 256 * helper.KiB
+	DefaultS3ServerHost    = "0.0.0.0"
+	DefaultS3ServerPort    = 6789
+	DefaultS3PagingMaxKeys = 1000
+	DefaultS3IOBufferSize  = 256 * helper.KiB
 )
 
 type AppConfig struct {
@@ -73,7 +76,8 @@ type IAMConfig struct {
 
 type S3Config struct {
 	Server *ServerConfig `mapstructure:"server"`
-	Perf   *PerfConfig   `mapstructure:"perf"`
+	Paging *PagingConfig `mapstructure:"paging"`
+	IO     *IOConfig     `mapstructure:"io"`
 }
 
 type ServerConfig struct {
@@ -89,12 +93,17 @@ type AuthConfig struct {
 type IAMDBConfig struct {
 	MaxOpenConns      int `mapstructure:"max_open_conns"`
 	MaxIdleConns      int `mapstructure:"max_idle_conns"`
+	WriteChanCap      int `mapstructure:"write_chan_cap"`
 	TimeoutMs         int `mapstructure:"timeout_ms"`
 	ReadCacheSizeKiB  int `mapstructure:"read_cache_size_kib"`
 	WriteCacheSizeKiB int `mapstructure:"write_cache_size_kib"`
 }
 
-type PerfConfig struct {
+type PagingConfig struct {
+	MaxKeys int `mapstructure:"max_keys"`
+}
+
+type IOConfig struct {
 	BufferSize int `mapstructure:"buffer_size"`
 }
 
@@ -127,6 +136,7 @@ func (config *IAMConfig) Debug() {
 	slog.Debug("config set", "name", "backend.iam.server.port", "value", config.Server.Port)
 	slog.Debug("config set", "name", "backend.iam.db.max_open_conns", "value", config.DB.MaxOpenConns)
 	slog.Debug("config set", "name", "backend.iam.db.max_idle_conns", "value", config.DB.MaxIdleConns)
+	slog.Debug("config set", "name", "backend.iam.db.write_chan_cap", "value", config.DB.WriteChanCap)
 	slog.Debug("config set", "name", "backend.iam.db.timeout_ms", "value", config.DB.TimeoutMs)
 	slog.Debug("config set", "name", "backend.iam.db.read_cache_size_kib", "value", config.DB.ReadCacheSizeKiB)
 	slog.Debug("config set", "name", "backend.iam.db.write_cache_size_kib", "value", config.DB.WriteCacheSizeKiB)
@@ -135,7 +145,8 @@ func (config *IAMConfig) Debug() {
 func (config *S3Config) Debug() {
 	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Server.Host)
 	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Server.Port)
-	slog.Debug("config set", "name", "backend.s3.perf.buffer_size", "value", config.Perf.BufferSize)
+	slog.Debug("config set", "name", "backend.s3.paging.max_keys", "value", config.Paging.MaxKeys)
+	slog.Debug("config set", "name", "backend.s3.io.buffer_size", "value", config.IO.BufferSize)
 }
 
 func Load(rootCmd *cobra.Command) {
@@ -191,6 +202,7 @@ func setDefaults() {
 	viper.SetDefault("backend.iam.server.port", DefaultIAMServerPort)
 	viper.SetDefault("backend.iam.db.max_open_conns", DefaultIAMDBMaxOpenConns)
 	viper.SetDefault("backend.iam.db.max_idle_conns", DefaultIAMDBMaxIdleConns)
+	viper.SetDefault("backend.iam.db.write_chan_cap", DefaultIAMWriteChanCap)
 	viper.SetDefault("backend.iam.db.timeout_ms", DefaultIAMDBTimeoutMs)
 	viper.SetDefault("backend.iam.db.read_cache_size_kib", DefaultIAMDBReadCacheSizeKiB)
 	viper.SetDefault("backend.iam.db.write_cache_size_kib", DefaultIAMDBWriteCacheSizeKiB)
@@ -198,7 +210,8 @@ func setDefaults() {
 	// s3
 	viper.SetDefault("backend.s3.server.host", DefaultS3ServerHost)
 	viper.SetDefault("backend.s3.server.port", DefaultS3ServerPort)
-	viper.SetDefault("backend.s3.perf.buffer_size", DefaultS3PerfBufferSize)
+	viper.SetDefault("backend.s3.paging.max_keys", DefaultS3PagingMaxKeys)
+	viper.SetDefault("backend.s3.io.buffer_size", DefaultS3IOBufferSize)
 }
 
 func setOverrides(rootCmd *cobra.Command) {
@@ -235,6 +248,7 @@ func setOverrides(rootCmd *cobra.Command) {
 	helper.CheckFatal(viper.BindPFlag("backend.aim.server.port", serverCmd.Flags().Lookup("iam-server-port")))
 	helper.CheckFatal(viper.BindPFlag("backend.iam.db.max_open_conns", serverCmd.Flags().Lookup("iam-db-max-open-conns")))
 	helper.CheckFatal(viper.BindPFlag("backend.iam.db.max_idle_conns", serverCmd.Flags().Lookup("iam-db-max-idle-conns")))
+	helper.CheckFatal(viper.BindPFlag("backend.iam.db.write_chan_cap", serverCmd.Flags().Lookup("iam-db-write-chan-cap")))
 	helper.CheckFatal(viper.BindPFlag("backend.iam.db.timeout_ms", serverCmd.Flags().Lookup("iam-db-timeout-ms")))
 	helper.CheckFatal(viper.BindPFlag("backend.iam.db.read_cache_size_kib", serverCmd.Flags().Lookup("iam-db-read-cache-size-kib")))
 	helper.CheckFatal(viper.BindPFlag("backend.iam.db.write_cache_size_kib", serverCmd.Flags().Lookup("iam-db-write-cache-size-kib")))
@@ -242,7 +256,8 @@ func setOverrides(rootCmd *cobra.Command) {
 	// s3
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.host", serverCmd.Flags().Lookup("s3-server-host")))
 	helper.CheckFatal(viper.BindPFlag("backend.s3.server.port", serverCmd.Flags().Lookup("s3-server-port")))
-	helper.CheckFatal(viper.BindPFlag("backend.s3.perf.buffer_size", serverCmd.Flags().Lookup("s3-perf-buffer-size")))
+	helper.CheckFatal(viper.BindPFlag("backend.s3.paging.max_keys", serverCmd.Flags().Lookup("s3-paging-max-keys")))
+	helper.CheckFatal(viper.BindPFlag("backend.s3.io.buffer_size", serverCmd.Flags().Lookup("s3-io-buffer-size")))
 }
 
 func readConfig() {

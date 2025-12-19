@@ -34,13 +34,15 @@ func NewServeCmd() *cobra.Command {
 	cmd.Flags().String("iam-server-port", config.DefaultIAMServerHost, "Listening port for IAM server")
 	cmd.Flags().Int("iam-db-max-open-conns", config.DefaultIAMDBMaxOpenConns, "Maximum open reader connections for the IAM database")
 	cmd.Flags().Int("iam-db-max-idle-conns", config.DefaultIAMDBMaxIdleConns, "Maximum idle reader connections for the IAM database")
+	cmd.Flags().Int("iam-db-write-chan-cap", config.DefaultIAMWriteChanCap, "Buffered channel capacity for writing requests to the IAM database")
 	cmd.Flags().Int("iam-db-timeout-ms", config.DefaultIAMDBTimeoutMs, "Connection timeout for the IAM database")
 	cmd.Flags().Int("iam-db-read-cache-size-kib", config.DefaultIAMDBReadCacheSizeKiB, "Cache size of each individual reader connection for the IAM database")
 	cmd.Flags().Int("iam-db-write-cache-size-kib", config.DefaultIAMDBWriteCacheSizeKiB, "Cache size of the writer connection for the IAM database")
 
 	cmd.Flags().String("s3-server-host", config.DefaultS3ServerHost, "Listening host for S3-compatible server")
 	cmd.Flags().Uint16("s3-server-port", config.DefaultS3ServerPort, "Listening port for S3-compatible server")
-	cmd.Flags().Int("s3-perf-buffer-size", config.DefaultS3PerfBufferSize, "Performance setting for buffer size in bytes")
+	cmd.Flags().Int("s3-paging-max-keys", config.DefaultS3PagingMaxKeys, "Hard limit for the maximum number of keys to return in paged requests")
+	cmd.Flags().Int("s3-io-buffer-size", config.DefaultS3IOBufferSize, "Input/output buffer size in bytes")
 
 	return cmd
 }
