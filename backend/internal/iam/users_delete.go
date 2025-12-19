@@ -44,7 +44,7 @@ func (store *Store) DeleteUser(ctx context.Context, name string) error {
 }
 
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return

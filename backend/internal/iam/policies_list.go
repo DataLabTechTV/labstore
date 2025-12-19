@@ -40,7 +40,7 @@ type AttachedPoliciesMember struct {
 }
 
 func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return
@@ -84,7 +84,7 @@ func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
-	groupName := r.URL.Query().Get("GroupName")
+	groupName := r.Form.Get("GroupName")
 	if groupName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
 		return

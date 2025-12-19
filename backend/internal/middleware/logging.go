@@ -36,14 +36,27 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 
 		slog.Debug("logging middleware")
 
-		slog.Info(
-			"request",
+		attrs := []any{
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
-			slog.String("query", r.URL.RawQuery),
-			slog.Int("status", rw.status),
-			slog.Int("size", rw.size),
-			slog.Float64("duration_ms", float64(time.Since(start).Nanoseconds())/1e6),
-		)
+		}
+
+		if r.URL.RawQuery != "" {
+			attrs = append(attrs, slog.String("query", r.URL.RawQuery))
+		}
+
+		if len(r.Form) > 0 {
+			attrs = append(attrs, slog.String("form", r.Form.Encode()))
+		}
+
+		attrs = append(attrs, slog.Int("status", rw.status))
+
+		if rw.size > 0 {
+			attrs = append(attrs, slog.Int("size", rw.size))
+		}
+
+		attrs = append(attrs, slog.Float64("duration_ms", float64(time.Since(start).Nanoseconds())/1e6))
+
+		slog.Info("request", attrs...)
 	})
 }

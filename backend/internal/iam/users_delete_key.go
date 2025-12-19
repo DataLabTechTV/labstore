@@ -61,13 +61,13 @@ func (store *Store) DeleteAccessKey(ctx context.Context, userName, accessKeyID s
 }
 
 func DeleteAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return
 	}
 
-	accessKeyId := r.URL.Query().Get("AccessKeyId")
+	accessKeyId := r.Form.Get("AccessKeyId")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("AccessKeyId"))
 		return

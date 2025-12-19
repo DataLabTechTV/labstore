@@ -31,7 +31,7 @@ type AccessKeyMetadataMember struct {
 }
 
 func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return

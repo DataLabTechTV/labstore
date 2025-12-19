@@ -127,13 +127,13 @@ func (store *Store) DetachGroupPolicy(ctx context.Context, groupName, policyArn 
 }
 
 func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("UserName")
+	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
 		return
 	}
 
-	policyArn := r.URL.Query().Get("PolicyArn")
+	policyArn := r.Form.Get("PolicyArn")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
 		return
@@ -177,13 +177,13 @@ func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	groupName := r.URL.Query().Get("GroupName")
+	groupName := r.Form.Get("GroupName")
 	if groupName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
 		return
 	}
 
-	policyArn := r.URL.Query().Get("PolicyArn")
+	policyArn := r.Form.Get("PolicyArn")
 	if groupName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
 		return

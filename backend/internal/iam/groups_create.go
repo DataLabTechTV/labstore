@@ -59,7 +59,7 @@ func (store *Store) CreateGroup(ctx context.Context, name string) (*Group, error
 }
 
 func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
-	groupName := r.URL.Query().Get("GroupName")
+	groupName := r.Form.Get("GroupName")
 	if groupName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
 		return
