@@ -53,13 +53,7 @@ func TestCreateAccessKeyIntegration(t *testing.T) {
 		t.Fatalf("expected %v, got %v", user.UserID, fetchedUser.UserID)
 	}
 
-	fetchedUserSecretKey, err := security.DecryptAESGCM(
-		&security.EncryptedData{
-			Value: fetchedUser.SecretKey,
-			Salt:  fetchedUser.Salt,
-		},
-		config.Storage.MasterKeyPath,
-	)
+	fetchedUserSecretKey, err := security.DecryptAESGCM(fetchedUser.SecretKey, config.Storage.MasterKeyPath)
 	if err != nil {
 		t.Error("failed to decrypt secret key after fetching user")
 	}

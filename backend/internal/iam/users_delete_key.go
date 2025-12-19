@@ -34,12 +34,14 @@ func (store *Store) DeleteAccessKey(ctx context.Context, userName, accessKeyID s
 	}
 
 	query := `
-	UPDATE users
+	UPDATE
+		users
 	SET
 		access_key = NULL,
-		secret_key = NULL,
-		salt = NUll
-	WHERE name = :name AND access_key = :access_key
+		secret_key = NULL
+	WHERE
+		name = :name
+		AND access_key = :access_key
 	`
 
 	_, err = store.sqlNamedExecContext(ctx, query, &user)
@@ -52,7 +54,6 @@ func (store *Store) DeleteAccessKey(ctx context.Context, userName, accessKeyID s
 		if _, ok := store.CachedUsers[user.AccessKeyID.String]; ok {
 			store.CachedUsers[user.AccessKeyID.String].User.AccessKeyID = sql.NullString{Valid: false}
 			store.CachedUsers[user.AccessKeyID.String].User.SecretKey = nil
-			store.CachedUsers[user.AccessKeyID.String].User.Salt = nil
 		}
 	}
 

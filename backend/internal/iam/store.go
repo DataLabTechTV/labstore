@@ -174,8 +174,7 @@ func (store *Store) ensureSchema() error {
 		name TEXT UNIQUE,
 		arn TEXT UNIQUE,
 		access_key TEXT,
-		secret_key BLOB,
-		salt BLOB
+		secret_key BLOB
 	);
 
 	CREATE TABLE IF NOT EXISTS groups (

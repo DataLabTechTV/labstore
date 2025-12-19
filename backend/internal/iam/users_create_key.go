@@ -52,21 +52,19 @@ func (store *Store) CreateAccessKey(ctx context.Context, user *User) (string, er
 		Valid:  user.Name != "",
 	}
 
-	encryptedSecretKey, err := security.EncryptAESGCM(secretKey, config.Storage.MasterKeyPath)
+	user.SecretKey, err = security.EncryptAESGCM(secretKey, config.Storage.MasterKeyPath)
 	if err != nil {
 		return "", err
 	}
 
-	user.SecretKey = encryptedSecretKey.Value
-	user.Salt = encryptedSecretKey.Salt
-
 	query := `
-	UPDATE users
+	UPDATE
+		users
 	SET
 		access_key = :access_key,
-		secret_key = :secret_key,
-		salt = :salt
-	WHERE user_id = :user_id
+		secret_key = :secret_key
+	WHERE
+		user_id = :user_id
 	`
 
 	if _, err := store.sqlNamedExecContext(ctx, query, user); err != nil {
@@ -77,7 +75,6 @@ func (store *Store) CreateAccessKey(ctx context.Context, user *User) (string, er
 		if _, ok := store.CachedUsers[user.AccessKeyID.String]; ok {
 			store.CachedUsers[user.AccessKeyID.String].User.AccessKeyID.String = user.AccessKeyID.String
 			store.CachedUsers[user.AccessKeyID.String].User.SecretKey = user.SecretKey
-			store.CachedUsers[user.AccessKeyID.String].User.Salt = user.Salt
 		} else {
 			store.CachedUsers[user.AccessKeyID.String] = &CachedUser{
 				User:     user,
