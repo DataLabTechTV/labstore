@@ -26,7 +26,6 @@ type User struct {
 
 	AccessKeyID sql.NullString `db:"access_key"`
 	SecretKey   []byte         `db:"secret_key"`
-	Salt        []byte         `db:"salt"`
 
 	GroupIDs  []string
 	PolicyIDs []string
@@ -50,15 +49,8 @@ func (user *User) Result() *UserResult {
 	}
 }
 
-func (user *User) EncryptedData() *security.EncryptedData {
-	return &security.EncryptedData{
-		Value: user.SecretKey,
-		Salt:  user.Salt,
-	}
-}
-
 func (store *Store) setupAdmin() error {
-	encryptedData, err := security.EncryptAESGCM(config.Admin.Auth.SecretKey, config.Storage.MasterKeyPath)
+	encrypted, err := security.EncryptAESGCM(config.Admin.Auth.SecretKey, config.Storage.MasterKeyPath)
 	if err != nil {
 		return err
 	}
@@ -70,8 +62,7 @@ func (store *Store) setupAdmin() error {
 			Arn:    toArn(ArnUser, defaultUserPath+defaultAdminUserName),
 
 			AccessKeyID: sql.NullString{String: config.Admin.Auth.AccessKey, Valid: true},
-			SecretKey:   encryptedData.Value,
-			Salt:        encryptedData.Salt,
+			SecretKey:   encrypted,
 
 			GroupIDs:  []string{},
 			PolicyIDs: []string{adminPolicy},
