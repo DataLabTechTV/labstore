@@ -24,8 +24,8 @@ type CachedPolicy struct {
 }
 
 type Policy struct {
-	PolicyID string `db:"policy_id" xml:"PolicyId"`
-	Name     string `db:"name" xml:"PolicyName"`
+	PolicyID string `db:"policy_id"`
+	Name     string `db:"name"`
 	Arn      string `db:"arn"`
 
 	AttachmentCount int
@@ -33,7 +33,7 @@ type Policy struct {
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 
-	Document *PolicyDocument `db:"document" xml:"-"`
+	Document *PolicyDocument `db:"document"`
 }
 
 type PolicyDocument struct {
