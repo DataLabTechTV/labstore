@@ -7,7 +7,12 @@ FRONTEND_DIR := web
 FRONTEND_SRC_DIRS := $(FRONTEND_DIR)/src $(FRONTEND_DIR)/static
 FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/build
 
-.PHONY: all backend frontend build run profile test clean
+CLI_DIR := cli
+CLI_CMD := $(BIN_DIR)/labstore
+
+CLIENT_DIR := shared/client
+
+.PHONY: all backend frontend cli build run profile test clean
 
 all: build
 
@@ -29,7 +34,14 @@ $(FRONTEND_BUILD_DIR): $(FRONTEND_SRCS)
 
 frontend: $(FRONTEND_BUILD_DIR)
 
-build: backend frontend
+CLI_SRCS := $(shell find $(CLI_DIR) $(CLIENT_DIR) -name '*.go')
+
+$(CLI_CMD): $(CLI_SRCS) | $(BIN_DIR)
+	cd $(CLI_DIR) && go build -o ../$(CLI_CMD) ./cmd/labstore
+
+cli: $(CLI_CMD)
+
+build: backend frontend cli
 
 run: build
 	npx concurrently \
