@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/xml"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -33,7 +34,7 @@ type ListAllMyBucketsResult struct {
 func ListBuckets(accessKey string) (*ListAllMyBucketsResult, error) {
 	entries, err := os.ReadDir(config.Storage.ObjectsPath)
 	if err != nil {
-		return nil, errs.S3InternalError("Failed to list buckets")
+		return nil, err
 	}
 
 	res := ListAllMyBucketsResult{}
@@ -56,7 +57,8 @@ func ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 
 	res, err := ListBuckets(accessKey)
 	if err != nil {
-		errs.Handle(w, err)
+		slog.Error("list buckets", "err", err)
+		errs.Handle(w, errs.S3InternalError())
 		return
 	}
 

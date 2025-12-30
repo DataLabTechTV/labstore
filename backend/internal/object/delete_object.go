@@ -1,20 +1,27 @@
 package object
 
 import (
+	"errors"
+	"log/slog"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 func DeleteObject(bucket, key string) error {
-	objPath := filepath.Join(config.Storage.ObjectsPath, bucket, key)
+	objPath := core.ObjectSystemPath(bucket, key)
+
+	if !security.IsSubdir(config.Storage.ObjectsPath, objPath) {
+		return &errs.ErrForbidden{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(bucket, key)}
+	}
 
 	err := os.Remove(objPath)
 	if err != nil {
-		return errs.S3NoSuchKey(key)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(bucket, key)}
 	}
 
 	return nil
@@ -26,7 +33,22 @@ func DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 
 	if err := DeleteObject(bucket, key); err != nil {
-		errs.Handle(w, err)
+		var errForbidden *errs.ErrForbidden
+		if errors.As(err, &errForbidden) {
+			slog.Error("delete object", "err", errForbidden)
+			errs.Handle(w, errs.S3AccessDenied())
+			return
+		}
+
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			slog.Error("delete object", "err", errNotFound)
+			errs.Handle(w, errs.S3NoSuchKey(errNotFound.Resource))
+			return
+		}
+
+		slog.Error("delete object", "err", err)
+		errs.Handle(w, errs.S3InternalError())
 		return
 	}
 
