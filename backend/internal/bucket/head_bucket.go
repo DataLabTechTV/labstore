@@ -2,11 +2,26 @@ package bucket
 
 import (
 	"net/http"
+
+	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 func HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
-	// *NOTE: This will likely share code with GET due to using the same headers.
-	// TODO: organize shared code somewhere
+	bucket := r.PathValue("bucket")
+
+	bucketPath := core.BucketSystemPath(bucket)
+
+	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	if !core.BucketExists(bucket) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 }

@@ -14,12 +14,12 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
-	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 const DefaultDelimiter = "/"
@@ -132,7 +132,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		var token []byte
 		token, err = base64.StdEncoding.DecodeString(continuationToken)
 		if err != nil {
-			errs.Handle(w, errs.S3InternalError("Invalid continuation token"))
+			errs.Handle(w, errs.S3InternalError())
 			return
 		}
 		rBase.afterKey = string(token)
@@ -158,7 +158,14 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		errs.Handle(w, err)
+		var errForbidden *errs.ErrForbidden
+		if errors.As(err, &errForbidden) {
+			slog.Error("list objects", "err", errForbidden)
+			errs.Handle(w, errs.S3AccessDenied())
+		}
+
+		slog.Error("list objects", "err", err)
+		errs.Handle(w, errs.S3InternalError())
 		return
 	}
 
@@ -218,36 +225,24 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
 
 // Lists objects as Contents, and directories as CommonPrefixes, for a given fs path
 func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
-	bucketPath := filepath.Join(config.Storage.ObjectsPath, r.Bucket)
+	bucketPath := core.BucketSystemPath(r.Bucket)
 
-	var paths []string
-	var basePath string
-
-	if strings.HasSuffix(r.Prefix, r.Delimiter) {
-		// full prefix
-		var entries []os.DirEntry
-		basePath = filepath.Join(bucketPath, r.Prefix)
-		entries, err := os.ReadDir(basePath)
-
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return errors.New("could not read files")
-		}
-
-		for _, e := range entries {
-			paths = append(paths, filepath.Join(basePath, e.Name()))
-		}
-
-		slices.Sort(paths)
-	} else {
-		// partial prefix
-		filter := fmt.Sprintf("%s/%s*", bucketPath, r.Prefix)
-
-		var err error
-		paths, err = filepath.Glob(filter)
-		if err != nil {
-			return errors.New("could not filter files")
-		}
+	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
+		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: r.Bucket}
 	}
+
+	filterPath := fmt.Sprintf("%s%c%s*", bucketPath, os.PathSeparator, r.Prefix)
+
+	if !security.IsSubdir(config.Storage.ObjectsPath, filterPath) {
+		return &errs.ErrForbidden{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(r.Bucket, r.Prefix)}
+	}
+
+	paths, err := filepath.Glob(filterPath)
+	if err != nil {
+		return errors.New("could not filter files")
+	}
+
+	slices.Sort(paths)
 
 	hash := md5.New()
 	keyCount := 0

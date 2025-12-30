@@ -2,8 +2,8 @@ package iam
 
 import (
 	"encoding/json"
-	"strings"
 
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/gobwas/glob"
 )
 
@@ -25,7 +25,7 @@ func (r *Resources) UnmarshalJSON(data []byte) error {
 }
 
 func Resource(bucket, key string) string {
-	path := strings.TrimSuffix(bucket, "/") + "/" + strings.TrimPrefix(key, "/")
+	path := core.ObjectPath(bucket, key)
 	resource := toArn(ArnS3, path)
 	return resource
 }

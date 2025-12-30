@@ -1,12 +1,12 @@
 package object
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 )
@@ -16,20 +16,33 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 	key := r.PathValue("key")
 
-	if !core.BucketExists(bucket) {
-		errs.Handle(w, errs.S3NoSuchBucket(bucket))
-		return
-	}
-
-	path := core.BucketKeyPath(bucket, key)
-	if helper.IsDir(path) {
-		errs.Handle(w, errs.S3NoSuchKey(key))
-		return
-	}
-
 	res, err := GetObject(bucket, key)
 	if err != nil {
-		errs.Handle(w, err)
+		var errForbidden *errs.ErrForbidden
+		if errors.As(err, &errForbidden) {
+			slog.Error("head object", "err", errForbidden)
+			errs.Handle(w, errs.S3AccessDenied())
+			return
+		}
+
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			slog.Error("head object", "err", errNotFound)
+
+			switch errNotFound.Type {
+			case errs.ErrEntityTypeObject:
+				errs.Handle(w, errs.S3NoSuchKey(errNotFound.Resource))
+			case errs.ErrEntityTypeBucket:
+				errs.Handle(w, errs.S3NoSuchBucket(bucket))
+			default:
+				errs.Handle(w, errs.S3InternalError())
+			}
+
+			return
+		}
+
+		slog.Error("head object", "err", err)
+		errs.Handle(w, errs.S3InternalError())
 		return
 	}
 	defer helper.CloseWithErr(res.Content, &err)
@@ -38,7 +51,8 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	n, err := res.Content.Read(buf)
 	if err != nil {
-		errs.Handle(w, err)
+		slog.Error("head object", "err", err)
+		errs.Handle(w, errs.S3InternalError())
 		return
 	}
 

@@ -1,20 +1,27 @@
 package bucket
 
 import (
+	"errors"
+	"log/slog"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 func DeleteBucket(bucket string) error {
-	path := filepath.Join(config.Storage.ObjectsPath, bucket)
+	path := core.BucketSystemPath(bucket)
+
+	if !security.IsSubdir(config.Storage.ObjectsPath, path) {
+		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: bucket}
+	}
 
 	err := os.RemoveAll(path)
 	if err != nil {
-		return errs.S3NoSuchBucket(bucket)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypeBucket, Resource: bucket}
 	}
 
 	return nil
@@ -25,7 +32,22 @@ func DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 
 	if err := DeleteBucket(bucket); err != nil {
-		errs.Handle(w, err)
+		var errForbidden *errs.ErrForbidden
+		if errors.As(err, &errForbidden) {
+			slog.Error("delete bucket", "err", errForbidden)
+			errs.Handle(w, errs.S3AccessDenied())
+			return
+		}
+
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			slog.Error("delete bucket", "err", errNotFound)
+			errs.Handle(w, errs.S3NoSuchBucket(errNotFound.Resource))
+			return
+		}
+
+		slog.Error("delete bucket", "err", err)
+		errs.Handle(w, errs.S3InternalError())
 		return
 	}
 
