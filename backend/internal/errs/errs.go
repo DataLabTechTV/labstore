@@ -58,6 +58,10 @@ type ErrPathTraversal struct {
 	Path    string
 }
 
+type ErrNotDirectory struct {
+	Path string
+}
+
 func (e *ErrExists) Error() string {
 	return fmt.Sprintf("%s exists: %s", e.Type, e.Resource)
 }
@@ -96,6 +100,10 @@ func (e *ErrUserNotInGroup) Description() string {
 
 func (e *ErrPathTraversal) Error() string {
 	return fmt.Sprintf("Invalid path traversal {BaseDir=%s, Path=%s}", e.BaseDir, e.Path)
+}
+
+func (e *ErrNotDirectory) Error() string {
+	return fmt.Sprintf("Not a directory: %s", e.Path)
 }
 
 func Handle(w http.ResponseWriter, err error) {

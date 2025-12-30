@@ -91,3 +91,13 @@ func S3NoSuchKey(key string) *S3Error {
 		StatusCode: http.StatusNotFound,
 	}
 }
+
+func S3OperationAborted(bucket, key string) *S3Error {
+	return &S3Error{
+		BucketName: bucket,
+		Key:        key,
+		Code:       "OperationAborted",
+		Message:    "Operation aborted due to internal conflict.",
+		StatusCode: http.StatusConflict,
+	}
+}
