@@ -10,6 +10,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 )
 
 type DeleteObjectsRequest struct {
@@ -40,10 +41,14 @@ func (req DeleteObjectsRequest) LogValue() slog.Value {
 
 func DeleteObjects(bucket string, r *DeleteObjectsRequest) *DeleteResult {
 	res := &DeleteResult{}
-	bucketPath := filepath.Join(config.Storage.ObjectsPath, bucket)
+	bucketPath := core.BucketSystemPath(bucket)
 
 	for _, obj := range r.Object {
 		objPath := filepath.Join(bucketPath, obj.Key)
+
+		if !security.IsSubdir(config.Storage.ObjectsPath, objPath) {
+			res.Error = append(res.Error, *errs.S3AccessDenied())
+		}
 
 		err := os.RemoveAll(objPath)
 		if err != nil {
@@ -75,7 +80,8 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	var req DeleteObjectsRequest
 	err := core.ReadXML(w, r, &req)
 	if err != nil {
-		errs.Handle(w, err)
+		slog.Error("delete objects", "err", err)
+		errs.Handle(w, errs.S3InternalError())
 		return
 	}
 

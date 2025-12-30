@@ -42,10 +42,10 @@ func (e *S3Error) WithResource(resource string) *S3Error {
 	return e
 }
 
-func S3InternalError(message string) *S3Error {
+func S3InternalError() *S3Error {
 	return &S3Error{
 		Code:       "InternalError",
-		Message:    message,
+		Message:    "An internal server error has been logged.",
 		StatusCode: http.StatusInternalServerError,
 	}
 }

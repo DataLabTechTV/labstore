@@ -10,6 +10,8 @@ import (
 )
 
 const (
+	ErrEntityTypeBucket      = "bucket"
+	ErrEntityTypeObject      = "object"
 	ErrEntityTypeUser        = "user"
 	ErrEntityTypeAccessKey   = "access_key"
 	ErrEntityTypeGroup       = "group"
@@ -51,6 +53,11 @@ type ErrUserNotInGroup struct {
 	GroupID string
 }
 
+type ErrPathTraversal struct {
+	BaseDir string
+	Path    string
+}
+
 func (e *ErrExists) Error() string {
 	return fmt.Sprintf("%s exists: %s", e.Type, e.Resource)
 }
@@ -85,6 +92,10 @@ func (e *ErrUserNotInGroup) Error() string {
 
 func (e *ErrUserNotInGroup) Description() string {
 	return fmt.Sprintf("{UserID=%s, GroupID=%s}", e.UserID, e.GroupID)
+}
+
+func (e *ErrPathTraversal) Error() string {
+	return fmt.Sprintf("Invalid path traversal {BaseDir=%s, Path=%s}", e.BaseDir, e.Path)
 }
 
 func Handle(w http.ResponseWriter, err error) {
