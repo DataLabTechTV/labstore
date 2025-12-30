@@ -28,7 +28,16 @@ func PutObject(bucket string, key string, reader io.Reader) error {
 	}
 
 	objPath := filepath.Join(bucketPath, key)
+
+	if helper.IsDir(objPath) {
+		return nil
+	}
+
 	objDir := filepath.Dir(objPath)
+	if helper.FileExists(objDir) && !helper.IsDir(objDir) {
+		return &errs.ErrNotDirectory{Path: objDir}
+	}
+
 	if err := os.MkdirAll(objDir, 0755); err != nil {
 		return err
 	}
@@ -57,7 +66,7 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	if err := PutObject(bucket, key, r.Body); err != nil {
 		var errForbidden *errs.ErrForbidden
 		if errors.As(err, &errForbidden) {
-			slog.Error("put object: unsafe path", "err", errForbidden)
+			slog.Error("put object", "err", errForbidden)
 			errs.Handle(w, errs.S3AccessDenied())
 			return
 		}
@@ -65,10 +74,17 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 		var errNotFound *errs.ErrNotFound
 		if errors.As(err, &errNotFound) {
 			if errNotFound.Type == errs.ErrEntityTypeBucket {
-				slog.Error("put object: bucket not found", "err", errNotFound)
+				slog.Error("put object", "err", errNotFound)
 				errs.Handle(w, errs.S3NoSuchBucket(errNotFound.Resource))
 				return
 			}
+		}
+
+		var errNotDirectory *errs.ErrNotDirectory
+		if errors.As(err, &errNotDirectory) {
+			slog.Error("put object", "err", errNotDirectory)
+			errs.Handle(w, errs.S3OperationAborted(bucket, key))
+			return
 		}
 
 		slog.Error("put object", "err", err)

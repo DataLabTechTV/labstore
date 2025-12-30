@@ -50,7 +50,7 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	buf := make([]byte, 512)
 
 	n, err := res.Content.Read(buf)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		slog.Error("head object", "err", err)
 		errs.Handle(w, errs.S3InternalError())
 		return
