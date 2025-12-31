@@ -8,11 +8,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 )
 
 type GetObjectResult struct {

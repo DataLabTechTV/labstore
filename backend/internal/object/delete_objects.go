@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 )
 
 type DeleteObjectsRequest struct {

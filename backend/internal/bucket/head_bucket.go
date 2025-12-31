@@ -3,9 +3,9 @@ package bucket
 import (
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 )
 
 func HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
