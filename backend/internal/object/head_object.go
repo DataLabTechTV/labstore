@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 )
 
 // HeadObjectHandler: Head /:bucket/:key

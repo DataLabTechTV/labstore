@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/google/uuid"
 )
 

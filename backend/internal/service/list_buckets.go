@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 )
 
 // !FIXME: move types to a proper location

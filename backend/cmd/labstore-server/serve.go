@@ -3,8 +3,8 @@ package main
 import (
 	"log/slog"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/config"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/router"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/spf13/cobra"
 )
 
