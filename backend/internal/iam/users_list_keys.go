@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 

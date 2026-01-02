@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 )

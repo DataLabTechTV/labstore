@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 )
 
 func NewIAMServerDescriptor(host string, port uint16) *ServerDescriptor {

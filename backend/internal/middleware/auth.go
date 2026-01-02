@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/auth"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 )
 
 type ContextKey string
