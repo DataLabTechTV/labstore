@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 )
 
 const (
@@ -112,10 +112,10 @@ func Handle(w http.ResponseWriter, err error) {
 
 	if errors.As(err, &s3Err) {
 		slog.Error("s3 error", "err", s3Err)
-		core.WriteXML(w, s3Err.StatusCode, s3Err)
+		helper.WriteXMLResponse(w, s3Err.StatusCode, s3Err)
 	} else if errors.As(err, &iamErr) {
 		slog.Error("iam error", "err", iamErr)
-		core.WriteXML(w, iamErr.StatusCode, IAMErrorResponse{
+		helper.WriteXMLResponse(w, iamErr.StatusCode, IAMErrorResponse{
 			Error:     iamErr,
 			RequestId: iamErr.RequestId,
 		})

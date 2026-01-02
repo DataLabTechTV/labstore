@@ -143,7 +143,7 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Server", "LabStore")
 	w.Header().Set("X-Amz-Request-Id", requestID)
 
-	core.WriteXML(w, http.StatusOK, res)
+	helper.WriteXMLResponse(w, http.StatusOK, res)
 }
 
 func ListObjects(r *ListObjectsRequest) (*t.ListBucketResult, error) {
