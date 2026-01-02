@@ -26,7 +26,6 @@ const (
 	DefaultAdminServerHost    = "0.0.0.0"
 	DefaultAdminServerPort    = 6787
 	DefaultAdminAuthAccessKey = "admin"
-	DefaultAdminSecretKey     = DefaultAdminAuthAccessKey
 
 	DefaultIAMServerHost     = "0.0.0.0"
 	DefaultIAMServerPort     = 6788
@@ -42,6 +41,10 @@ const (
 	DefaultS3ServerPort    = 6789
 	DefaultS3PagingMaxKeys = 1000
 	DefaultS3IOBufferSize  = 256 * helper.KiB
+)
+
+var (
+	DefaultAdminSecretKey string = DefaultAdminAuthAccessKey
 )
 
 type AppConfig struct {
@@ -188,14 +191,14 @@ func setDefaults() {
 	viper.SetDefault("backend.admin.server.port", DefaultAdminServerPort)
 	viper.SetDefault("backend.admin.auth.access_key", DefaultAdminAuthAccessKey)
 
-	defaultAdminAuthSecretKey, err := security.GeneratePassword(32)
+	randomSecretKey, err := security.GeneratePassword(32)
 	if err != nil {
-		slog.Error("admin password generation", "err", err)
-		defaultAdminAuthSecretKey = DefaultAdminSecretKey
+		slog.Warn("admin password generation", "err", err)
+	} else {
+		DefaultAdminSecretKey = randomSecretKey
 	}
 
-	viper.SetDefault("backend.admin.auth.secret_key", defaultAdminAuthSecretKey)
-	fmt.Printf("🔑 Default admin secret key: %s\n", defaultAdminAuthSecretKey)
+	viper.SetDefault("backend.admin.auth.secret_key", DefaultAdminSecretKey)
 
 	// iam
 	viper.SetDefault("backend.iam.server.host", DefaultIAMServerHost)
@@ -306,4 +309,12 @@ func parseConfig() {
 
 	Storage.MasterKeyPath = filepath.Join(Storage.KeysDir, DefaultMasterKeyFilename)
 	slog.Debug("master key path set", "path", Storage.MasterKeyPath)
+
+	if Admin.Auth.SecretKey == DefaultAdminSecretKey {
+		slog.Warn("no secret ket set for admin, randomly generating")
+		fmt.Printf(
+			"🔑 Temporary secret key for %s: %s\n",
+			Admin.Auth.AccessKey, DefaultAdminSecretKey,
+		)
+	}
 }
