@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

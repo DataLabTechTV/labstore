@@ -16,8 +16,8 @@ import (
 	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/security"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 )
 
 type sigV4Request struct {
