@@ -8,6 +8,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 
 	"modernc.org/sqlite"
@@ -89,5 +90,5 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	core.WriteXML(w, http.StatusOK, response)
+	helper.WriteXMLResponse(w, http.StatusOK, response)
 }

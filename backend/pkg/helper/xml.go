@@ -1,13 +1,14 @@
-package core
+package helper
 
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"log/slog"
 	"net/http"
 )
 
-func WriteXML(w http.ResponseWriter, status int, v any) {
+func WriteXMLResponse(w http.ResponseWriter, status int, v any) {
 	var buf bytes.Buffer
 	enc := xml.NewEncoder(&buf)
 
@@ -26,4 +27,15 @@ func WriteXML(w http.ResponseWriter, status int, v any) {
 	if _, err := w.Write(buf.Bytes()); err != nil {
 		slog.Error("write xml", "err", err)
 	}
+}
+
+func ReadXMLRequest(r *http.Request, dst any) error {
+	decoder := xml.NewDecoder(r.Body)
+	defer CloseWithErr(r.Body, nil)
+
+	if err := decoder.Decode(&dst); err != nil {
+		return fmt.Errorf("failed to decode XML: %w", err)
+	}
+
+	return nil
 }

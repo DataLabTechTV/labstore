@@ -9,6 +9,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
@@ -52,7 +53,7 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 
 	var req t.DeleteObjectsRequest
-	err := core.ReadXML(w, r, &req)
+	err := helper.ReadXMLRequest(r, &req)
 	if err != nil {
 		slog.Error("delete objects", "err", err)
 		errs.Handle(w, errs.S3InternalError())
@@ -62,5 +63,5 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("delete objects", "request", req)
 
 	resp := DeleteObjects(bucket, &req)
-	core.WriteXML(w, http.StatusOK, resp)
+	helper.WriteXMLResponse(w, http.StatusOK, resp)
 }
