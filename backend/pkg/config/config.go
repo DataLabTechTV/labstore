@@ -237,30 +237,37 @@ func setOverrides(rootCmd *cobra.Command) {
 	}
 
 	// storage
-	helper.CheckFatal(viper.BindPFlag("backend.storage.data_dir", serverCmd.Flags().Lookup("storage-data-dir")))
-	helper.CheckFatal(viper.BindPFlag("backend.storage.keys_dir", serverCmd.Flags().Lookup("storage-keys-dir")))
+	bindPFlagIfExists("backend.storage.data_dir", serverCmd, "storage-data-dir")
+	bindPFlagIfExists("backend.storage.keys_dir", serverCmd, "storage-keys-dir")
 
 	// admin
-	helper.CheckFatal(viper.BindPFlag("backend.admin.server.host", serverCmd.Flags().Lookup("admin-server-host")))
-	helper.CheckFatal(viper.BindPFlag("backend.admin.server.port", serverCmd.Flags().Lookup("admin-server-port")))
-	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.access_key", serverCmd.Flags().Lookup("admin-auth-access-key")))
-	helper.CheckFatal(viper.BindPFlag("backend.admin.auth.secret_key", serverCmd.Flags().Lookup("admin-auth-secret-key")))
+	bindPFlagIfExists("backend.admin.server.host", serverCmd, "admin-server-host")
+	bindPFlagIfExists("backend.admin.server.port", serverCmd, "admin-server-port")
+	bindPFlagIfExists("backend.admin.auth.access_key", serverCmd, "admin-auth-access-key")
+	bindPFlagIfExists("backend.admin.auth.secret_key", serverCmd, "admin-auth-secret-key")
 
 	// iam
-	helper.CheckFatal(viper.BindPFlag("backend.iam.server.host", serverCmd.Flags().Lookup("iam-server-host")))
-	helper.CheckFatal(viper.BindPFlag("backend.aim.server.port", serverCmd.Flags().Lookup("iam-server-port")))
-	helper.CheckFatal(viper.BindPFlag("backend.iam.db.max_open_conns", serverCmd.Flags().Lookup("iam-db-max-open-conns")))
-	helper.CheckFatal(viper.BindPFlag("backend.iam.db.max_idle_conns", serverCmd.Flags().Lookup("iam-db-max-idle-conns")))
-	helper.CheckFatal(viper.BindPFlag("backend.iam.db.write_chan_cap", serverCmd.Flags().Lookup("iam-db-write-chan-cap")))
-	helper.CheckFatal(viper.BindPFlag("backend.iam.db.timeout_ms", serverCmd.Flags().Lookup("iam-db-timeout-ms")))
-	helper.CheckFatal(viper.BindPFlag("backend.iam.db.read_cache_size_kib", serverCmd.Flags().Lookup("iam-db-read-cache-size-kib")))
-	helper.CheckFatal(viper.BindPFlag("backend.iam.db.write_cache_size_kib", serverCmd.Flags().Lookup("iam-db-write-cache-size-kib")))
+	bindPFlagIfExists("backend.iam.server.host", serverCmd, "iam-server-host")
+	bindPFlagIfExists("backend.aim.server.port", serverCmd, "iam-server-port")
+	bindPFlagIfExists("backend.iam.db.max_open_conns", serverCmd, "iam-db-max-open-conns")
+	bindPFlagIfExists("backend.iam.db.max_idle_conns", serverCmd, "iam-db-max-idle-conns")
+	bindPFlagIfExists("backend.iam.db.write_chan_cap", serverCmd, "iam-db-write-chan-cap")
+	bindPFlagIfExists("backend.iam.db.timeout_ms", serverCmd, "iam-db-timeout-ms")
+	bindPFlagIfExists("backend.iam.db.read_cache_size_kib", serverCmd, "iam-db-read-cache-size-kib")
+	bindPFlagIfExists("backend.iam.db.write_cache_size_kib", serverCmd, "iam-db-write-cache-size-kib")
 
 	// s3
-	helper.CheckFatal(viper.BindPFlag("backend.s3.server.host", serverCmd.Flags().Lookup("s3-server-host")))
-	helper.CheckFatal(viper.BindPFlag("backend.s3.server.port", serverCmd.Flags().Lookup("s3-server-port")))
-	helper.CheckFatal(viper.BindPFlag("backend.s3.paging.max_keys", serverCmd.Flags().Lookup("s3-paging-max-keys")))
-	helper.CheckFatal(viper.BindPFlag("backend.s3.io.buffer_size", serverCmd.Flags().Lookup("s3-io-buffer-size")))
+	bindPFlagIfExists("backend.s3.server.host", serverCmd, "s3-server-host")
+	bindPFlagIfExists("backend.s3.server.port", serverCmd, "s3-server-port")
+	bindPFlagIfExists("backend.s3.paging.max_keys", serverCmd, "s3-paging-max-keys")
+	bindPFlagIfExists("backend.s3.io.buffer_size", serverCmd, "s3-io-buffer-size")
+}
+
+func bindPFlagIfExists(configKey string, cmd *cobra.Command, flagName string) {
+	flag := cmd.Flags().Lookup(flagName)
+	if flag != nil {
+		helper.CheckFatal(viper.BindPFlag(configKey, flag))
+	}
 }
 
 func readConfig() {
