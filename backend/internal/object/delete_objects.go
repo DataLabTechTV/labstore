@@ -53,7 +53,7 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	bucket := r.PathValue("bucket")
 
 	var req t.DeleteObjectsRequest
-	err := helper.ReadXMLRequest(r, &req)
+	err := helper.ReadXML(r.Body, &req)
 	if err != nil {
 		slog.Error("delete objects", "err", err)
 		errs.Handle(w, errs.S3InternalError())

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 )
@@ -29,9 +30,9 @@ func WriteXMLResponse(w http.ResponseWriter, status int, v any) {
 	}
 }
 
-func ReadXMLRequest(r *http.Request, dst any) error {
-	decoder := xml.NewDecoder(r.Body)
-	defer CloseWithErr(r.Body, nil)
+func ReadXML(r io.ReadCloser, dst any) error {
+	decoder := xml.NewDecoder(r)
+	defer CloseWithErr(r, nil)
 
 	if err := decoder.Decode(&dst); err != nil {
 		return fmt.Errorf("failed to decode XML: %w", err)
