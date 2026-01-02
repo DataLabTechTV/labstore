@@ -1,43 +1,12 @@
 package iam
 
 import (
-	"encoding/xml"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type ListAttachedUserPoliciesResponse struct {
-	XMLName                        xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ ListAttachedUserPoliciesResponse"`
-	ListAttachedUserPoliciesResult *ListAttachedUserPoliciesResult
-	ResponseMetadata               *ResponseMetadata
-}
-
-type ListAttachedUserPoliciesResult struct {
-	AttachedPolicies *AttachedPolicies
-	IsTruncated      bool
-}
-
-type ListAttachedGroupPoliciesResponse struct {
-	XMLName                         xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ ListAttachedGroupPoliciesResponse"`
-	ListAttachedGroupPoliciesResult *ListAttachedGroupPoliciesResult
-	ResponseMetadata                *ResponseMetadata
-}
-
-type ListAttachedGroupPoliciesResult struct {
-	AttachedPolicies *AttachedPolicies
-	IsTruncated      bool
-}
-
-type AttachedPolicies struct {
-	Member []*AttachedPoliciesMember `xml:"member"`
-}
-
-type AttachedPoliciesMember struct {
-	PolicyName string
-	PolicyArn  string
-}
 
 func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 	userName := r.Form.Get("UserName")
@@ -54,7 +23,7 @@ func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members := make([]*AttachedPoliciesMember, len(user.PolicyIDs))
+	members := make([]*t.AttachedPoliciesMember, len(user.PolicyIDs))
 	for i, policyID := range user.PolicyIDs {
 		policy, err := store.GetPolicyByID(ctx, policyID)
 		if err != nil {
@@ -62,20 +31,20 @@ func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		members[i] = &AttachedPoliciesMember{
+		members[i] = &t.AttachedPoliciesMember{
 			PolicyName: policy.Name,
 			PolicyArn:  policy.Arn,
 		}
 	}
 
-	response := &ListAttachedUserPoliciesResponse{
-		ListAttachedUserPoliciesResult: &ListAttachedUserPoliciesResult{
-			AttachedPolicies: &AttachedPolicies{
+	response := &t.ListAttachedUserPoliciesResponse{
+		ListAttachedUserPoliciesResult: &t.ListAttachedUserPoliciesResult{
+			AttachedPolicies: &t.AttachedPolicies{
 				Member: members,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &ResponseMetadata{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}
@@ -98,7 +67,7 @@ func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members := make([]*AttachedPoliciesMember, len(group.PolicyIDs))
+	members := make([]*t.AttachedPoliciesMember, len(group.PolicyIDs))
 	for i, policyID := range group.PolicyIDs {
 		policy, err := store.GetPolicyByID(ctx, policyID)
 		if err != nil {
@@ -106,20 +75,20 @@ func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		members[i] = &AttachedPoliciesMember{
+		members[i] = &t.AttachedPoliciesMember{
 			PolicyName: policy.Name,
 			PolicyArn:  policy.Arn,
 		}
 	}
 
-	response := &ListAttachedGroupPoliciesResponse{
-		ListAttachedGroupPoliciesResult: &ListAttachedGroupPoliciesResult{
-			AttachedPolicies: &AttachedPolicies{
+	response := &t.ListAttachedGroupPoliciesResponse{
+		ListAttachedGroupPoliciesResult: &t.ListAttachedGroupPoliciesResult{
+			AttachedPolicies: &t.AttachedPolicies{
 				Member: members,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &ResponseMetadata{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

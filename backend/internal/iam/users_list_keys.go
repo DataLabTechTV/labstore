@@ -1,34 +1,12 @@
 package iam
 
 import (
-	"encoding/xml"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type ListAccessKeysResponse struct {
-	XMLName              xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ ListAccessKeysResponse"`
-	ListAccessKeysResult *ListAccessKeysResult
-	ResponseMetadata     *ResponseMetadata
-}
-
-type ListAccessKeysResult struct {
-	UserName          string
-	AccessKeyMetadata *AccessKeyMetadata
-	IsTruncated       bool
-}
-
-type AccessKeyMetadata struct {
-	Member []*AccessKeyMetadataMember `xml:"member"`
-}
-
-type AccessKeyMetadataMember struct {
-	UserName    string
-	AccessKeyId string
-	Status      AccessKeyStatus
-}
 
 func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
 	userName := r.Form.Get("UserName")
@@ -45,24 +23,24 @@ func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members := []*AccessKeyMetadataMember{}
+	members := []*t.AccessKeyMetadataMember{}
 	if user.AccessKeyID.Valid {
-		members = append(members, &AccessKeyMetadataMember{
+		members = append(members, &t.AccessKeyMetadataMember{
 			UserName:    user.Name,
 			AccessKeyId: user.AccessKeyID.String,
-			Status:      AccessKeyActive,
+			Status:      t.AccessKeyActive,
 		})
 	}
 
-	response := &ListAccessKeysResponse{
-		ListAccessKeysResult: &ListAccessKeysResult{
+	response := &t.ListAccessKeysResponse{
+		ListAccessKeysResult: &t.ListAccessKeysResult{
 			UserName: user.Name,
-			AccessKeyMetadata: &AccessKeyMetadata{
+			AccessKeyMetadata: &t.AccessKeyMetadata{
 				Member: members,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &ResponseMetadata{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

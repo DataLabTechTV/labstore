@@ -3,7 +3,6 @@ package iam
 import (
 	"context"
 	"database/sql"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -11,12 +10,8 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type DeleteAccessKeyResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DeleteAccessKeyResponse"`
-	ResponseMetadata *ResponseMetadata
-}
 
 func (store *Store) DeleteAccessKey(ctx context.Context, userName, accessKeyID string) error {
 	if userName == defaultAdminUserName {
@@ -92,8 +87,8 @@ func DeleteAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &DeleteAccessKeyResponse{
-		ResponseMetadata: &ResponseMetadata{
+	response := &t.DeleteAccessKeyResponse{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

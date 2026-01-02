@@ -2,19 +2,14 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type DeleteUserResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DeleteUserResponse"`
-	ResponseMetadata *ResponseMetadata
-}
 
 func (store *Store) DeleteUser(ctx context.Context, name string) error {
 	if name == defaultAdminUserName {
@@ -69,8 +64,8 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &DeleteUserResponse{
-		ResponseMetadata: &ResponseMetadata{
+	response := &t.DeleteUserResponse{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

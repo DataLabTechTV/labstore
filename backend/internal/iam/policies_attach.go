@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -10,14 +9,10 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
-
-type AttachUserPolicyResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ AttachUserPolicyResponse"`
-	ResponseMetadata *ResponseMetadata
-}
 
 func (store *Store) AttachPolicy(ctx context.Context, arnType ArnType, policyArn, entityName string) error {
 	var entity any
@@ -121,8 +116,8 @@ func AttachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &AttachUserPolicyResponse{
-		ResponseMetadata: &ResponseMetadata{
+	response := &t.AttachUserPolicyResponse{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}
@@ -156,8 +151,8 @@ func AttachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &AttachUserPolicyResponse{
-		ResponseMetadata: &ResponseMetadata{
+	response := &t.AttachUserPolicyResponse{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

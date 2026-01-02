@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/xml"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,39 +10,22 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
-// !FIXME: move types to a proper location
-
-type Bucket struct {
-	Name         string
-	CreationDate string
-}
-
-type ListAllMyBucketsResult struct {
-	XMLName xml.Name `xml:"ListAllMyBucketsResult"`
-	Owner   struct {
-		ID          string
-		DisplayName string
-	}
-	Buckets struct {
-		Bucket []Bucket
-	}
-}
-
-func ListBuckets(accessKey string) (*ListAllMyBucketsResult, error) {
+func ListBuckets(accessKey string) (*t.ListAllMyBucketsResult, error) {
 	entries, err := os.ReadDir(config.Storage.ObjectsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	res := ListAllMyBucketsResult{}
+	res := t.ListAllMyBucketsResult{}
 	res.Owner.ID = accessKey
 	res.Owner.DisplayName = accessKey
 
 	for _, e := range entries {
 		if e.IsDir() {
-			b := Bucket{Name: e.Name(), CreationDate: time.Now().Format(time.RFC3339)}
+			b := t.Bucket{Name: e.Name(), CreationDate: time.Now().Format(time.RFC3339)}
 			res.Buckets.Bucket = append(res.Buckets.Bucket, b)
 		}
 	}

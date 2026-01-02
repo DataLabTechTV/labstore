@@ -2,24 +2,14 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type GetUserResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ GetUserResponse"`
-	GetUserResult    *GetUserResult
-	ResponseMetadata *ResponseMetadata
-}
-
-type GetUserResult struct {
-	User *UserResult
-}
 
 func (store *Store) GetUserByName(ctx context.Context, name string) (*User, error) {
 	var user User
@@ -134,11 +124,11 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &GetUserResponse{
-		GetUserResult: &GetUserResult{
+	response := &t.GetUserResponse{
+		GetUserResult: &t.GetUserResult{
 			User: user.Result(),
 		},
-		ResponseMetadata: &ResponseMetadata{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

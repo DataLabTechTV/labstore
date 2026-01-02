@@ -2,26 +2,19 @@ package object
 
 import (
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
-type GetObjectResult struct {
-	Content      io.ReadSeekCloser
-	ObjectSize   int
-	DateModified time.Time
-}
-
-func GetObject(bucket, key string) (*GetObjectResult, error) {
+func GetObject(bucket, key string) (*t.GetObjectResult, error) {
 	bucketPath := core.BucketSystemPath(bucket)
 
 	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
@@ -52,7 +45,7 @@ func GetObject(bucket, key string) (*GetObjectResult, error) {
 		return nil, err
 	}
 
-	res := &GetObjectResult{
+	res := &t.GetObjectResult{
 		Content:      file,
 		ObjectSize:   int(info.Size()),
 		DateModified: info.ModTime(),

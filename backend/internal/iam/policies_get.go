@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -11,17 +10,8 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type GetPolicyResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ GetPolicyResponse"`
-	GetPolicyResult  *GetPolicyResult
-	ResponseMetadata *ResponseMetadata
-}
-
-type GetPolicyResult struct {
-	Policy *PolicyResult
-}
 
 func (store *Store) GetPolicyByArn(ctx context.Context, arn string) (*Policy, error) {
 	var policy Policy
@@ -141,11 +131,11 @@ func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &GetPolicyResponse{
-		GetPolicyResult: &GetPolicyResult{
+	response := &t.GetPolicyResponse{
+		GetPolicyResult: &t.GetPolicyResult{
 			Policy: policy.Result(),
 		},
-		ResponseMetadata: &ResponseMetadata{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

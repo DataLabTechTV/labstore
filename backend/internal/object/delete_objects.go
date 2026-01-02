@@ -1,7 +1,6 @@
 package object
 
 import (
-	"encoding/xml"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,36 +10,11 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
-type DeleteObjectsRequest struct {
-	XMLName xml.Name `xml:"Delete"`
-	Object  []core.ObjectIdentifier
-	Quiet   bool
-}
-
-type DeleteResult struct {
-	Deleted []DeletedObject
-	Error   []errs.S3Error
-}
-
-type DeletedObject struct {
-	DeleteMarker          bool
-	DeleteMarkerVersionId string
-	Key                   string
-	VersionId             string
-}
-
-func (req DeleteObjectsRequest) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.Any("XMLName", req.XMLName),
-		slog.Int("Objects", len(req.Object)),
-		slog.Bool("Quiet", req.Quiet),
-	)
-}
-
-func DeleteObjects(bucket string, r *DeleteObjectsRequest) *DeleteResult {
-	res := &DeleteResult{}
+func DeleteObjects(bucket string, r *t.DeleteObjectsRequest) *t.DeleteResult {
+	res := &t.DeleteResult{}
 	bucketPath := core.BucketSystemPath(bucket)
 
 	for _, obj := range r.Object {
@@ -56,7 +30,7 @@ func DeleteObjects(bucket string, r *DeleteObjectsRequest) *DeleteResult {
 			continue
 		}
 
-		deleted := DeletedObject{
+		deleted := t.DeletedObject{
 			DeleteMarker: false,
 			Key:          obj.Key,
 		}
@@ -77,7 +51,7 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	bucket := r.PathValue("bucket")
 
-	var req DeleteObjectsRequest
+	var req t.DeleteObjectsRequest
 	err := core.ReadXML(w, r, &req)
 	if err != nil {
 		slog.Error("delete objects", "err", err)
