@@ -34,7 +34,7 @@ $(FRONTEND_BUILD_DIR): $(FRONTEND_SRCS)
 
 frontend: $(FRONTEND_BUILD_DIR)
 
-CLI_SRCS := $(shell find $(CLI_DIR) $(CLIENT_DIR) -name '*.go')
+CLI_SRCS := $(shell find $(CLI_DIR) $(BACKEND_DIR) $(CLIENT_DIR) -name '*.go')
 
 $(CLI_CMD): $(CLI_SRCS) | $(BIN_DIR)
 	cd $(CLI_DIR) && go build -o ../$(CLI_CMD) ./cmd/labstore
