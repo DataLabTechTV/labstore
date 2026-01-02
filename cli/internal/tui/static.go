@@ -3,6 +3,7 @@ package tui
 import "fmt"
 
 func PrintError(err error) {
+	// TODO: add support for S3 and IAM errors
 	// TODO: replace with lipgloss
 	fmt.Println(err.Error())
 }

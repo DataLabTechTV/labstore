@@ -40,6 +40,7 @@ func NewS3Cmd() *cobra.Command {
 				config.S3.Server.Port,
 				profile.AccessKey,
 				profile.SecretKey,
+				false,
 			)
 
 			handler := handlers.NewS3Handler(client)
