@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -10,17 +9,8 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type DetachUserPolicyResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DetachUserPolicyResponse"`
-	ResponseMetadata *ResponseMetadata
-}
-
-type DetachGroupPolicyResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DetachGroupPolicyResponse"`
-	ResponseMetadata *ResponseMetadata
-}
 
 func (store *Store) DetachUserPolicy(ctx context.Context, userName, policyArn string) error {
 	if userName == defaultAdminUserName {
@@ -167,8 +157,8 @@ func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &DetachUserPolicyResponse{
-		ResponseMetadata: &ResponseMetadata{
+	response := &t.DetachUserPolicyResponse{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}
@@ -211,8 +201,8 @@ func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &DetachUserPolicyResponse{
-		ResponseMetadata: &ResponseMetadata{
+	response := &t.DetachUserPolicyResponse{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

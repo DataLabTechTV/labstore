@@ -2,6 +2,8 @@ package iam
 
 import (
 	"time"
+
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 const (
@@ -23,17 +25,10 @@ type Group struct {
 	PolicyIDs []string
 }
 
-type GroupResult struct {
-	Path      string
-	GroupName string
-	GroupId   string
-	Arn       string
-}
-
-func (group *Group) Result() *GroupResult {
+func (group *Group) Result() *t.GroupResult {
 	groupPath := "/"
 
-	return &GroupResult{
+	return &t.GroupResult{
 		Path:      groupPath,
 		GroupName: group.Name,
 		GroupId:   group.GroupID,

@@ -9,6 +9,8 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 )
 
+type ContextKey string
+
 const accessKeyCtx ContextKey = "accessKey"
 
 func GetRequestAccessKey(r *http.Request) string {

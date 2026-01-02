@@ -2,30 +2,14 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type GetGroupResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ GetGroupResponse"`
-	GetGroupResult   *GetGroupResult
-	ResponseMetadata *ResponseMetadata
-}
-
-type GetGroupResult struct {
-	Group       *GroupResult
-	Users       *UserMembers
-	IsTruncated bool
-}
-
-type UserMembers struct {
-	Member []*UserResult `xml:"member"`
-}
 
 func (store *Store) GetGroupByName(ctx context.Context, name string) (*Group, error) {
 	var group Group
@@ -146,20 +130,20 @@ func GetGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userResults := make([]*UserResult, len(users))
+	userResults := make([]*t.UserResult, len(users))
 	for i, user := range users {
 		userResults[i] = user.Result()
 	}
 
-	response := &GetGroupResponse{
-		GetGroupResult: &GetGroupResult{
+	response := &t.GetGroupResponse{
+		GetGroupResult: &t.GetGroupResult{
 			Group: group.Result(),
-			Users: &UserMembers{
+			Users: &t.UserMembers{
 				Member: userResults,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &ResponseMetadata{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

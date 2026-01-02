@@ -3,7 +3,6 @@ package iam
 import (
 	"context"
 	"database/sql"
-	"encoding/xml"
 	"log/slog"
 	"net/http"
 	"time"
@@ -12,32 +11,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
-)
-
-type CreateAccessKeyResponse struct {
-	XMLName               xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ CreateAccessKeyResponse"`
-	CreateAccessKeyResult *CreateAccessKeyResult
-}
-
-type CreateAccessKeyResult struct {
-	AccessKey        *AccessKeyResult
-	ResponseMetadata *ResponseMetadata
-}
-
-type AccessKeyResult struct {
-	XMLName         xml.Name `xml:"AccessKey"`
-	UserName        string
-	AccessKeyId     string
-	Status          AccessKeyStatus
-	SecretAccessKey string
-}
-
-type AccessKeyStatus string
-
-const (
-	AccessKeyActive   AccessKeyStatus = "Active"
-	AccessKeyInactive AccessKeyStatus = "Inactive"
-	AccessKeyExpired  AccessKeyStatus = "Expired"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 // Creates an access key and returns the secret key in plain text
@@ -108,15 +82,15 @@ func CreateAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &CreateAccessKeyResponse{
-		CreateAccessKeyResult: &CreateAccessKeyResult{
-			AccessKey: &AccessKeyResult{
+	response := &t.CreateAccessKeyResponse{
+		CreateAccessKeyResult: &t.CreateAccessKeyResult{
+			AccessKey: &t.AccessKeyResult{
 				UserName:        user.Name,
 				AccessKeyId:     user.AccessKeyID.String,
-				Status:          AccessKeyActive,
+				Status:          t.AccessKeyActive,
 				SecretAccessKey: secretKey,
 			},
-			ResponseMetadata: &ResponseMetadata{
+			ResponseMetadata: &t.ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},
 		},

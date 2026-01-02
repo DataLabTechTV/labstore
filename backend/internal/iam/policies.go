@@ -3,9 +3,10 @@ package iam
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"time"
+
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 const (
@@ -47,22 +48,10 @@ type Statement struct {
 	Resource Resources
 }
 
-type PolicyResult struct {
-	XMLName          xml.Name `xml:"Policy"`
-	PolicyName       string
-	DefaultVersionId string
-	PolicyId         string
-	Path             string
-	Arn              string
-	AttachmentCount  int
-	CreateDate       time.Time
-	UpdateDate       time.Time
-}
-
-func (policy *Policy) Result() *PolicyResult {
+func (policy *Policy) Result() *t.PolicyResult {
 	policyPath := "/"
 
-	return &PolicyResult{
+	return &t.PolicyResult{
 		PolicyName:       policy.Name,
 		DefaultVersionId: defaultPolicyVersion,
 		PolicyId:         policy.PolicyID,

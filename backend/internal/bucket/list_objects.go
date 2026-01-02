@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +19,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 const DefaultDelimiter = "/"
@@ -42,35 +42,6 @@ type ListObjectsRequestV2 struct {
 	ContinuationToken string
 	StartAfter        string
 	FetchOwner        bool
-}
-
-type BaseListBucketResult struct {
-	XMLName        xml.Name `xml:"ListBucketResult"`
-	Name           string
-	Prefix         string
-	MaxKeys        int
-	Contents       []core.Object
-	CommonPrefixes []CommonPrefixes
-	IsTruncated    bool
-	untilKey       string
-}
-
-type ListBucketResult struct {
-	BaseListBucketResult
-	Marker     string
-	NextMarker string
-}
-
-type ListBucketResultV2 struct {
-	BaseListBucketResult
-	KeyCount              int
-	ContinuationToken     string
-	NextContinuationToken string
-	StartAfter            string
-}
-
-type CommonPrefixes struct {
-	Prefix string
 }
 
 // ListObjectsHandler: GET /:bucket
@@ -175,41 +146,41 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	core.WriteXML(w, http.StatusOK, res)
 }
 
-func ListObjects(r *ListObjectsRequest) (*ListBucketResult, error) {
+func ListObjects(r *ListObjectsRequest) (*t.ListBucketResult, error) {
 	slog.Debug("list objects", "request", r)
 
-	res := &ListBucketResult{
-		BaseListBucketResult: BaseListBucketResult{
+	res := &t.ListBucketResult{
+		BaseListBucketResult: t.BaseListBucketResult{
 			Name:        r.Bucket,
 			MaxKeys:     r.MaxKeys,
 			IsTruncated: false,
 		},
 	}
 
-	err := res.list(&r.BaseListObjectsRequest)
+	err := list(&res.BaseListBucketResult, &r.BaseListObjectsRequest)
 	if err != nil {
 		return nil, err
 	}
 
 	res.MaxKeys = r.MaxKeys
 	res.Marker = r.Marker
-	res.NextMarker = res.untilKey
+	res.NextMarker = res.UntilKey
 
 	return res, nil
 }
 
-func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
+func ListObjectsV2(r *ListObjectsRequestV2) (*t.ListBucketResultV2, error) {
 	slog.Debug("list objects v2", "request", r)
 
-	res := &ListBucketResultV2{
-		BaseListBucketResult: BaseListBucketResult{
+	res := &t.ListBucketResultV2{
+		BaseListBucketResult: t.BaseListBucketResult{
 			Name:        r.Bucket,
 			MaxKeys:     r.MaxKeys,
 			IsTruncated: false,
 		},
 	}
 
-	err := res.list(&r.BaseListObjectsRequest)
+	err := list(&res.BaseListBucketResult, &r.BaseListObjectsRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -217,24 +188,24 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*ListBucketResultV2, error) {
 	res.MaxKeys = r.MaxKeys
 	res.StartAfter = r.StartAfter
 	res.ContinuationToken = r.ContinuationToken
-	res.NextContinuationToken = base64.StdEncoding.EncodeToString([]byte(res.untilKey))
+	res.NextContinuationToken = base64.StdEncoding.EncodeToString([]byte(res.UntilKey))
 	res.KeyCount = len(res.Contents)
 
 	return res, nil
 }
 
 // Lists objects as Contents, and directories as CommonPrefixes, for a given fs path
-func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
-	bucketPath := core.BucketSystemPath(r.Bucket)
+func list(res *t.BaseListBucketResult, req *BaseListObjectsRequest) error {
+	bucketPath := core.BucketSystemPath(req.Bucket)
 
 	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
-		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: r.Bucket}
+		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: req.Bucket}
 	}
 
-	filterPath := fmt.Sprintf("%s%c%s*", bucketPath, os.PathSeparator, r.Prefix)
+	filterPath := fmt.Sprintf("%s%c%s*", bucketPath, os.PathSeparator, req.Prefix)
 
 	if !security.IsSubdir(config.Storage.ObjectsPath, filterPath) {
-		return &errs.ErrForbidden{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(r.Bucket, r.Prefix)}
+		return &errs.ErrForbidden{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(req.Bucket, req.Prefix)}
 	}
 
 	paths, err := filepath.Glob(filterPath)
@@ -258,18 +229,18 @@ func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
 			return errors.New("could not resolve key")
 		}
 
-		if r.afterKey > key {
+		if req.afterKey > key {
 			continue
 		}
 
 		if info.IsDir() {
 			// !FIXME: MaxKeys should affect CommonPrefixes as well
-			key += r.Delimiter
-			res.CommonPrefixes = append(res.CommonPrefixes, CommonPrefixes{Prefix: key})
+			key += req.Delimiter
+			res.CommonPrefixes = append(res.CommonPrefixes, t.CommonPrefixes{Prefix: key})
 			continue
 		}
 
-		lastModified := core.Timestamp(info.ModTime())
+		lastModified := t.Timestamp(info.ModTime())
 
 		file, err := os.Open(path)
 		if err != nil {
@@ -284,8 +255,8 @@ func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
 
 		size := info.Size()
 
-		obj := core.Object{
-			BaseObject: core.BaseObject{
+		obj := t.Object{
+			BaseObject: t.BaseObject{
 				Key:          key,
 				LastModified: lastModified,
 				ETag:         eTag,
@@ -297,7 +268,7 @@ func (res *BaseListBucketResult) list(r *BaseListObjectsRequest) error {
 		res.Contents = append(res.Contents, obj)
 
 		if keyCount++; keyCount > res.MaxKeys {
-			res.untilKey = key
+			res.UntilKey = key
 			res.IsTruncated = true
 			return nil
 		}

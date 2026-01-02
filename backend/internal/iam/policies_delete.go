@@ -2,19 +2,14 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type DeletePolicyResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DeletePolicyResponse"`
-	ResponseMetadata *ResponseMetadata
-}
 
 func (store *Store) DeletePolicy(ctx context.Context, arn string) error {
 	policy, err := store.GetPolicyByArn(ctx, arn)
@@ -59,8 +54,8 @@ func DeletePolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &DeletePolicyResponse{
-		ResponseMetadata: &ResponseMetadata{
+	response := &t.DeletePolicyResponse{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

@@ -2,26 +2,17 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
-
-type CreateUserResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ CreateUserResponse"`
-	CreateUserResult *CreateUserResult
-}
-
-type CreateUserResult struct {
-	User             *UserResult
-	ResponseMetadata *ResponseMetadata
-}
 
 func (store *Store) CreateUser(ctx context.Context, name string) (*User, error) {
 	if name == defaultAdminUserName {
@@ -89,10 +80,10 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &CreateUserResponse{
-		CreateUserResult: &CreateUserResult{
+	response := &t.CreateUserResponse{
+		CreateUserResult: &t.CreateUserResult{
 			User: user.Result(),
-			ResponseMetadata: &ResponseMetadata{
+			ResponseMetadata: &t.ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},
 		},

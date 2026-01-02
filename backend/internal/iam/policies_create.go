@@ -3,7 +3,6 @@ package iam
 import (
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -11,17 +10,8 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type CreatePolicyResponse struct {
-	XMLName            xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ CreatePolicyResponse"`
-	CreatePolicyResult *CreatePolicyResult
-	ResponseMetadata   *ResponseMetadata
-}
-
-type CreatePolicyResult struct {
-	Policy *PolicyResult
-}
 
 func (store *Store) CreatePolicy(ctx context.Context, name string, doc *PolicyDocument) (*Policy, error) {
 	policyID := GenerateUniqueID(ManagedPolicyUniqueID)
@@ -98,11 +88,11 @@ func CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &CreatePolicyResponse{
-		CreatePolicyResult: &CreatePolicyResult{
+	response := &t.CreatePolicyResponse{
+		CreatePolicyResult: &t.CreatePolicyResult{
 			Policy: policy.Result(),
 		},
-		ResponseMetadata: &ResponseMetadata{
+		ResponseMetadata: &t.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

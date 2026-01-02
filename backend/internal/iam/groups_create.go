@@ -2,26 +2,16 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
-
-type CreateGroupResponse struct {
-	XMLName           xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ CreateGroupResponse"`
-	CreateGroupResult *CreateGroupResult
-}
-
-type CreateGroupResult struct {
-	Group            *GroupResult
-	ResponseMetadata *ResponseMetadata
-}
 
 func (store *Store) CreateGroup(ctx context.Context, name string) (*Group, error) {
 	group := &Group{
@@ -85,10 +75,10 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &CreateGroupResponse{
-		CreateGroupResult: &CreateGroupResult{
+	response := &t.CreateGroupResponse{
+		CreateGroupResult: &t.CreateGroupResult{
 			Group: group.Result(),
-			ResponseMetadata: &ResponseMetadata{
+			ResponseMetadata: &t.ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},
 		},
