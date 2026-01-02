@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 )
 
 type BaseObject struct {
