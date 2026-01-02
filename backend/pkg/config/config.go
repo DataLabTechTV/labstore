@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	configBasename = "labstore"
+	Basename = "labstore"
 
 	DefaultStorageDataDir     = "./data"
 	DefaultStorageObjectsDir  = "objects"
@@ -164,17 +164,17 @@ func Load(rootCmd *cobra.Command) {
 func setLookupPaths() {
 	slog.Debug("setting config lookup paths")
 
-	viper.SetConfigName(configBasename)
+	viper.SetConfigName(Basename)
 
 	viper.AddConfigPath(".")
 
-	systemConfigPath := filepath.Join("/etc", configBasename)
+	systemConfigPath := filepath.Join("/etc", Basename)
 	viper.AddConfigPath(systemConfigPath)
 
 	if configDir, err := os.UserConfigDir(); err != nil {
 		slog.Warn("user config dir skipped", "err", err)
 	} else {
-		userConfigPath := filepath.Join(configDir, configBasename)
+		userConfigPath := filepath.Join(configDir, Basename)
 		viper.AddConfigPath(userConfigPath)
 	}
 }
@@ -220,7 +220,7 @@ func setDefaults() {
 func setOverrides(rootCmd *cobra.Command) {
 	slog.Debug("setting config env and cli overrides")
 
-	viper.SetEnvPrefix(configBasename)
+	viper.SetEnvPrefix(Basename)
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	viper.AutomaticEnv()
