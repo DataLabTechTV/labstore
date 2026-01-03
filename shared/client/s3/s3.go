@@ -60,7 +60,7 @@ func (client *S3Client) ListBuckets() ([]string, error) {
 
 		var list []string
 		for _, bucket := range result.Buckets.Bucket {
-			list = append(list, bucket.Name)
+			list = append(list, fmt.Sprintf("%s/", bucket.Name))
 		}
 
 		return list, nil
