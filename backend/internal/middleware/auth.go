@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/auth"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 )
 

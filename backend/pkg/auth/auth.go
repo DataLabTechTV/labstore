@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	unsignedPayload  = "UNSIGNED-PAYLOAD"
-	streamingPayload = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
+	UnsignedPayload  = "UNSIGNED-PAYLOAD"
+	StreamingPayload = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD"
 )
 
-func computeSignature(cred *sigV4Credential, stringToSign string) (string, error) {
-	scopeParts := strings.Split(cred.scope, "/")
+func ComputeSignature(cred *SigV4Credential, stringToSign string) (string, error) {
+	scopeParts := strings.Split(cred.Scope, "/")
 
 	if len(scopeParts) != 4 {
 		return "", errors.New("scope must contain 4 parts")
@@ -24,7 +24,7 @@ func computeSignature(cred *sigV4Credential, stringToSign string) (string, error
 	region := scopeParts[1]
 	service := scopeParts[2]
 
-	dateKey := hmacSHA256([]byte("AWS4"+cred.secretKey), []byte(date))
+	dateKey := hmacSHA256([]byte("AWS4"+cred.SecretKey), []byte(date))
 	dateRegionKey := hmacSHA256(dateKey, []byte(region))
 	dateRegionServiceKey := hmacSHA256(dateRegionKey, []byte(service))
 	signingKey := hmacSHA256(dateRegionServiceKey, []byte("aws4_request"))
