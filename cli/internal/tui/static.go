@@ -1,6 +1,10 @@
 package tui
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 func PrintError(err error) {
 	// TODO: add support for S3 and IAM errors
@@ -9,8 +13,11 @@ func PrintError(err error) {
 }
 
 func PrintFileList(paths []string) {
-	// TODO: replace with lipgloss
+	fileStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("201")).
+		Bold(false)
+
 	for _, path := range paths {
-		fmt.Println(path)
+		fmt.Println(fileStyle.Render(path))
 	}
 }
