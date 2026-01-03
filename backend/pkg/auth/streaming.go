@@ -19,7 +19,7 @@ import (
 type sigV4ChunkedReader struct {
 	body       io.ReadCloser
 	prevSig    string
-	credential *sigV4Credential
+	credential *SigV4Credential
 	timestamp  string
 
 	reader *bufio.Reader
@@ -32,7 +32,7 @@ type sigV4ChunkHeader struct {
 	signature string
 }
 
-func NewSigV4ChunkedReader(r *http.Request, res *sigV4Result) *sigV4ChunkedReader {
+func NewSigV4ChunkedReader(r *http.Request, res *SigV4Result) *sigV4ChunkedReader {
 	return &sigV4ChunkedReader{
 		body:       r.Body,
 		prevSig:    res.Signature,
@@ -143,7 +143,7 @@ func (r *sigV4ChunkedReader) verifyChunkSigV4() error {
 	stringToSign := r.buildChunkStringToSign()
 	slog.Debug("string to sign", "string_to_sign", security.TruncLastLines(stringToSign, 3))
 
-	recomputedSignature, err := computeSignature(r.credential, stringToSign)
+	recomputedSignature, err := ComputeSignature(r.credential, stringToSign)
 
 	if err != nil {
 		return err
@@ -181,7 +181,7 @@ func (r *sigV4ChunkedReader) buildChunkStringToSign() string {
 	stringToSign.WriteString(r.timestamp)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.credential.scope)
+	stringToSign.WriteString(r.credential.Scope)
 	stringToSign.WriteString("\n")
 
 	stringToSign.WriteString(r.prevSig)
