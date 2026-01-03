@@ -46,7 +46,7 @@ func NewS3Client(host string, port uint16, accessKey, secretKey string, tls bool
 }
 
 func (client *S3Client) ListBuckets() ([]string, error) {
-	resp, err := http.Get(client.uri)
+	resp, err := client.DoSigV4Request("GET", client.uri, nil)
 	if err != nil {
 		return nil, err
 	}
