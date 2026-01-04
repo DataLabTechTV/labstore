@@ -37,6 +37,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewS3Cmd())
 	cmd.AddCommand(NewIAMCmd())
 	cmd.AddCommand(NewAdminCmd())
+	cmd.AddCommand(NewTUICmd())
 
 	return cmd
 }
