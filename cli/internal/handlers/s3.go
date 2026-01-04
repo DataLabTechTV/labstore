@@ -18,12 +18,12 @@ func NewS3Handler(client *s3.S3Client) *S3Handler {
 }
 
 func (h *S3Handler) ListBuckets() {
-	paths, err := h.Client.ListBuckets()
+	buckets, err := h.Client.ListBuckets()
 	if err != nil {
 		tui.PrintError(err)
 	}
 
-	tui.PrintFileList(paths)
+	tui.PrintBuckets(buckets)
 }
 
 func (h *S3Handler) ListObjects(path string) {
@@ -31,10 +31,10 @@ func (h *S3Handler) ListObjects(path string) {
 	bucket := parts[0]
 	key := strings.Join(parts[1:], "/")
 
-	paths, err := h.Client.ListObjects(bucket, key)
+	objects, err := h.Client.ListObjects(bucket, key)
 	if err != nil {
 		tui.PrintError(err)
 	}
 
-	tui.PrintFileList(paths)
+	tui.PrintObjects(bucket, objects)
 }
