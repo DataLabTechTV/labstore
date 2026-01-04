@@ -45,7 +45,7 @@ func NewS3Client(host string, port uint16, accessKey, secretKey string, tls bool
 	return client
 }
 
-func (client *S3Client) ListBuckets() ([]string, error) {
+func (client *S3Client) ListBuckets() ([]t.Bucket, error) {
 	resp, err := client.DoSigV4Request("GET", client.uri, nil)
 	if err != nil {
 		return nil, err
@@ -58,12 +58,7 @@ func (client *S3Client) ListBuckets() ([]string, error) {
 			return nil, err
 		}
 
-		var list []string
-		for _, bucket := range result.Buckets.Bucket {
-			list = append(list, fmt.Sprintf("%s/", bucket.Name))
-		}
-
-		return list, nil
+		return result.Buckets.Bucket, nil
 	}
 
 	var s3Err errs.S3Error
@@ -74,7 +69,7 @@ func (client *S3Client) ListBuckets() ([]string, error) {
 	return nil, &s3Err
 }
 
-func (client *S3Client) ListObjects(bucket, key string) ([]string, error) {
+func (client *S3Client) ListObjects(bucket, key string) ([]t.Object, error) {
 	// TODO: implement
-	return []string{}, nil
+	return []t.Object{}, nil
 }
