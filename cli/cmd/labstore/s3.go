@@ -63,6 +63,10 @@ func NewS3Cmd() *cobra.Command {
 	return cmd
 }
 
+// ======================
+// BUCKETS
+// ======================
+
 func NewBucketsCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "buckets",
@@ -87,13 +91,35 @@ func NewBucketsListCmd() *cobra.Command {
 	return cmd
 }
 
+// ======================
+// OBJECTS
+// ======================
+
 func NewObjectsCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "objects",
 		Short: "Handle S3 object operations",
+	}
+
+	cmd.AddCommand(NewObjectsListCmd())
+
+	return cmd
+}
+
+func NewObjectsListCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "list BUCKET [PATH]",
+		Short: "List S3 objects",
+		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
-			handler.ListObjects(args[0])
+			var path *string
+			if len(args) > 2 {
+				path = helper.StringPtr(args[1])
+			} else {
+				path = nil
+			}
+			handler.ListObjects(args[0], path)
 		},
 	}
 
