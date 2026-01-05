@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
@@ -31,6 +34,10 @@ func NewRootCmd() *cobra.Command {
 			config.Load(cmd)
 		},
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	cmd.SetContext(ctx)
 
 	cmd.PersistentFlags().Bool("debug", false, "Set debug level for logging")
 
