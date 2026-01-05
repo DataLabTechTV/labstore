@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"strings"
-
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
 	"github.com/IllumiKnowLabs/labstore/client/s3"
 )
@@ -26,12 +25,12 @@ func (h *S3Handler) ListBuckets() {
 	tui.PrintBuckets(buckets)
 }
 
-func (h *S3Handler) ListObjects(path string) {
-	parts := strings.Split(path, "/")
-	bucket := parts[0]
-	key := strings.Join(parts[1:], "/")
+func (h *S3Handler) ListObjects(bucket string, key *string) {
+	if key == nil {
+		key = helper.StringPtr("/")
+	}
 
-	objects, err := h.Client.ListObjects(bucket, key)
+	objects, err := h.Client.ListObjects(bucket, *key)
 	if err != nil {
 		tui.PrintError(err)
 	}
