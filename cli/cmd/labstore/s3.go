@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 
@@ -16,7 +17,8 @@ func NewS3Cmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "s3",
 		Short: "S3 client",
-		Run: func(cmd *cobra.Command, args []string) {
+
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			credentials.Init()
 
 			profileName := helper.Must(cmd.Flags().GetString("profile"))
@@ -45,20 +47,55 @@ func NewS3Cmd() *cobra.Command {
 
 			handler := handlers.NewS3Handler(client)
 
-			switch {
-			case args[0] == "ls":
-				handler.ListBuckets()
-
-			case args[0] == "ls" && len(args) >= 2:
-				handler.ListObjects(args[1])
-			}
+			ctx := context.WithValue(cmd.Context(), "handler", handler)
+			cmd.SetContext(ctx)
 		},
 	}
 
-	cmd.Flags().String("profile", "", "Profile used for authentication")
+	cmd.PersistentFlags().String("profile", "", "Profile used for authentication")
 
-	cmd.Flags().String("s3-server-host", config.DefaultS3ServerHost, "Listening host for S3-compatible server")
-	cmd.Flags().Uint16("s3-server-port", config.DefaultS3ServerPort, "Listening port for S3-compatible server")
+	cmd.PersistentFlags().String("s3-server-host", config.DefaultS3ServerHost, "Listening host for S3-compatible server")
+	cmd.PersistentFlags().Uint16("s3-server-port", config.DefaultS3ServerPort, "Listening port for S3-compatible server")
+
+	cmd.AddCommand(NewBucketsCmd())
+	cmd.AddCommand(NewObjectsCmd())
+
+	return cmd
+}
+
+func NewBucketsCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "buckets",
+		Short: "Handle S3 bucket operations",
+	}
+
+	cmd.AddCommand(NewBucketsListCmd())
+
+	return cmd
+}
+
+func NewBucketsListCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "list",
+		Short: "List S3 buckets",
+		Run: func(cmd *cobra.Command, args []string) {
+			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
+			handler.ListBuckets()
+		},
+	}
+
+	return cmd
+}
+
+func NewObjectsCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "objects",
+		Short: "Handle S3 object operations",
+		Run: func(cmd *cobra.Command, args []string) {
+			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
+			handler.ListObjects(args[0])
+		},
+	}
 
 	return cmd
 }
