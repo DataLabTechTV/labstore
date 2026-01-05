@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
@@ -11,6 +12,8 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+
+	"github.com/djherbis/times"
 )
 
 func ListBuckets(accessKey string) (*t.ListAllMyBucketsResult, error) {
@@ -23,10 +26,24 @@ func ListBuckets(accessKey string) (*t.ListAllMyBucketsResult, error) {
 	res.Owner.ID = accessKey
 	res.Owner.DisplayName = accessKey
 
-	for _, e := range entries {
-		if e.IsDir() {
-			b := t.Bucket{Name: e.Name(), CreationDate: time.Now().Format(time.RFC3339)}
-			res.Buckets.Bucket = append(res.Buckets.Bucket, b)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			var birthDate time.Time
+
+			path := filepath.Join(config.Storage.ObjectsPath, entry.Name())
+
+			stat, err := times.Stat(path)
+			if err != nil {
+				birthDate = time.Unix(0, 0).UTC()
+			} else {
+				birthDate = stat.BirthTime()
+			}
+
+			bucket := t.Bucket{
+				Name:         entry.Name(),
+				CreationDate: birthDate.Format(time.RFC3339),
+			}
+			res.Buckets.Bucket = append(res.Buckets.Bucket, bucket)
 		}
 	}
 
