@@ -30,7 +30,7 @@ func (h *S3Handler) ListObjects(bucket string, key *string) {
 		key = helper.StringPtr("/")
 	}
 
-	objects, err := h.Client.ListObjects(bucket, *key)
+	objects, err := h.Client.ListObjects(bucket, *key, true)
 	if err != nil {
 		tui.PrintError(err)
 	}
