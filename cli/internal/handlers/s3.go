@@ -20,6 +20,7 @@ func (h *S3Handler) ListBuckets() {
 	buckets, err := h.Client.ListBuckets()
 	if err != nil {
 		tui.PrintError(err)
+		return
 	}
 
 	tui.PrintBuckets(buckets)
@@ -30,10 +31,13 @@ func (h *S3Handler) ListObjects(bucket string, key *string) {
 		key = helper.StringPtr("/")
 	}
 
-	objects, err := h.Client.ListObjects(bucket, *key, true)
-	if err != nil {
-		tui.PrintError(err)
-	}
+	res := h.Client.ListObjects(bucket, *key, true)
+	for r := range res {
+		if r.Err != nil {
+			tui.PrintError(r.Err)
+			return
+		}
 
-	tui.PrintObjects(bucket, objects)
+		tui.PrintObject(bucket, r.Value)
+	}
 }
