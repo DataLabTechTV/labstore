@@ -1,7 +1,9 @@
 package s3
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -11,6 +13,7 @@ import (
 )
 
 type S3Client struct {
+	Ctx       context.Context
 	Host      string
 	Port      uint16
 	AccessKey string
@@ -20,8 +23,14 @@ type S3Client struct {
 	baseURL *url.URL
 }
 
-func NewS3Client(host string, port uint16, accessKey, secretKey string, tls bool) *S3Client {
+type Result[T any] struct {
+	Value T
+	Err   error
+}
+
+func NewS3Client(ctx context.Context, host string, port uint16, accessKey, secretKey string, tls bool) *S3Client {
 	client := &S3Client{
+		Ctx:       ctx,
 		Host:      host,
 		Port:      port,
 		AccessKey: accessKey,
@@ -44,10 +53,22 @@ func NewS3Client(host string, port uint16, accessKey, secretKey string, tls bool
 	return client
 }
 
-func (client *S3Client) ListBuckets() ([]t.Bucket, error) {
-	url := client.baseURL
+func (client *S3Client) IsDone() bool {
+	select {
+	case <-client.Ctx.Done():
+		return true
+	default:
+		return false
+	}
+}
 
-	resp, err := client.DoSigV4Request("GET", url.String(), nil)
+func (client *S3Client) ListBuckets() ([]t.Bucket, error) {
+	reqURL, err := client.baseURL.Parse("/")
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.DoSigV4Request("GET", reqURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -70,41 +91,96 @@ func (client *S3Client) ListBuckets() ([]t.Bucket, error) {
 	return nil, &s3Err
 }
 
-func (client *S3Client) ListObjects(bucket, key string, useV2 bool) ([]t.Object, error) {
-	url, err := client.baseURL.Parse(fmt.Sprintf("%s%s", bucket, key))
-	if err != nil {
-		return nil, err
-	}
+func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Result[t.Object] {
+	out := make(chan Result[t.Object])
 
-	if useV2 {
-		q := url.Query()
-		q.Set("list-type", "2")
-		url.RawQuery = q.Encode()
-	}
+	go func() {
+		reqURL, err := client.baseURL.Parse(bucket)
+		if err != nil {
+			out <- Result[t.Object]{Err: err}
+			close(out)
+			return
+		}
 
-	resp, err := client.DoSigV4Request("GET", url.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	defer helper.CloseWithErr(resp.Body, &err)
+		q := reqURL.Query()
 
-	if resp.StatusCode == http.StatusOK {
+		q.Set("prefix", key)
+
 		if useV2 {
-			var result t.ListBucketResultV2
-			if err := helper.ReadXML(resp.Body, &result); err != nil {
-				return nil, err
+			q.Set("list-type", "2")
+		}
+
+		reqURL.RawQuery = q.Encode()
+
+		for {
+			if client.IsDone() {
+				close(out)
+				return
 			}
 
-			return result.Contents, nil
+			slog.Debug("list objects", "reqURL", reqURL)
+			resp, err := client.DoSigV4Request("GET", reqURL.String(), nil)
+			if err != nil {
+				out <- Result[t.Object]{Err: err}
+				close(out)
+				return
+			}
+			defer helper.CloseWithErr(resp.Body, &err)
+
+			if resp.StatusCode != http.StatusOK {
+				var s3Error errs.S3Error
+				if err := helper.ReadXML(resp.Body, &s3Error); err != nil {
+					out <- Result[t.Object]{Err: err}
+					return
+				}
+				out <- Result[t.Object]{Err: &s3Error}
+				close(out)
+				return
+			}
+
+			if useV2 {
+				var r t.ListBucketResultV2
+				if err := helper.ReadXML(resp.Body, &r); err != nil {
+					out <- Result[t.Object]{Err: err}
+					close(out)
+					return
+				}
+
+				for _, object := range r.Contents {
+					out <- Result[t.Object]{Value: object}
+				}
+
+				if r.NextContinuationToken == "" {
+					close(out)
+					return
+				}
+
+				q := reqURL.Query()
+				q.Set("continuation-token", r.ContinuationToken)
+				reqURL.RawQuery = q.Encode()
+			} else {
+				var r t.ListBucketResult
+				if err := helper.ReadXML(resp.Body, &r); err != nil {
+					out <- Result[t.Object]{Err: err}
+					close(out)
+					return
+				}
+
+				for _, object := range r.Contents {
+					out <- Result[t.Object]{Value: object}
+				}
+
+				if !r.IsTruncated {
+					close(out)
+					return
+				}
+
+				q := reqURL.Query()
+				q.Set("marker", r.NextMarker)
+				reqURL.RawQuery = q.Encode()
+			}
 		}
+	}()
 
-		var result t.ListBucketResult
-		if err := helper.ReadXML(resp.Body, &result); err != nil {
-			return nil, err
-		}
-
-		return result.Contents, nil
-	}
-
-	return []t.Object{}, nil
+	return out
 }

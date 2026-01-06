@@ -6,12 +6,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
@@ -19,7 +21,7 @@ const DefaultRequestTimeout = 1 * time.Minute
 const DefaultRegion = "eu-west-1"
 
 func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRequestTimeout)
+	ctx, cancel := context.WithTimeout(client.Ctx, DefaultRequestTimeout)
 	defer cancel()
 
 	r, err := http.NewRequestWithContext(ctx, method, rawURL, body)
@@ -53,14 +55,14 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 		return nil, err
 	}
 
-	timestamp := time.Now().Format(t.ISO8601)
+	timestamp := time.Now().Format(t.CompactISO8601)
 
 	r.Header.Set("X-Amz-Content-SHA256", payloadHash)
 	r.Header.Set("X-Amz-Date", timestamp)
 
 	sigV4Req := &auth.SigV4Request{
 		Method:               method,
-		CanonicalURI:         auth.BuildCanonicalURI("/" + parsedURL.Path),
+		CanonicalURI:         auth.BuildCanonicalURI(parsedURL.Path),
 		CanonicalQueryString: auth.BuildCanonicalQueryString(parsedURL.RawQuery),
 		CanonicalHeaders:     auth.BuildCanonicalHeaders(r, authorization),
 		Authorization:        authorization,
@@ -69,6 +71,8 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 	}
 
 	stringToSign := sigV4Req.BuildStringToSign()
+	slog.Debug("string to sign", "string_to_sign", security.TruncLastLine(stringToSign))
+
 	authorization.Signature, err = auth.ComputeSignature(sigV4Req.Authorization.Credential, stringToSign)
 	if err != nil {
 		return nil, err
