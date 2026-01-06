@@ -4,7 +4,7 @@ import "encoding/xml"
 
 type Bucket struct {
 	Name         string
-	CreationDate string
+	CreationDate Timestamp
 }
 
 type ListAllMyBucketsResult struct {

@@ -23,3 +23,18 @@ func (t Timestamp) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	formatted := time.Time(t).Format(ISO8601)
 	return enc.EncodeElement(formatted, start)
 }
+
+func (t *Timestamp) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
+	var v string
+	if err := dec.DecodeElement(&v, &start); err != nil {
+		return err
+	}
+
+	parsed, err := time.Parse(ISO8601, v)
+	if err != nil {
+		return err
+	}
+
+	*t = Timestamp(parsed)
+	return nil
+}
