@@ -1,6 +1,10 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+
 	"github.com/spf13/cobra"
 )
 
@@ -10,5 +14,9 @@ func init() {
 
 func main() {
 	rootCmd := NewRootCmd()
-	rootCmd.Execute()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	rootCmd.ExecuteContext(ctx)
 }

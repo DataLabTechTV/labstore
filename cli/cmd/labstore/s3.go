@@ -38,6 +38,7 @@ func NewS3Cmd() *cobra.Command {
 			}
 
 			client := s3.NewS3Client(
+				cmd.Context(),
 				config.S3.Server.Host,
 				config.S3.Server.Port,
 				profile.AccessKey,
@@ -113,13 +114,17 @@ func NewObjectsListCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
-			var path *string
-			if len(args) > 2 {
-				path = helper.StringPtr(args[1])
+
+			bucket := args[0]
+
+			var key *string
+			if len(args) >= 2 {
+				key = helper.StringPtr(args[1])
 			} else {
-				path = nil
+				key = nil
 			}
-			handler.ListObjects(args[0], path)
+
+			handler.ListObjects(bucket, key)
 		},
 	}
 
