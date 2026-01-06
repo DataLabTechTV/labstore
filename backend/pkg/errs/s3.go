@@ -79,7 +79,7 @@ func S3AccessDenied() *S3Error {
 	return &S3Error{
 		Code:       "AccessDenied",
 		Message:    "AccessDenied",
-		StatusCode: 403,
+		StatusCode: http.StatusForbidden,
 	}
 }
 
