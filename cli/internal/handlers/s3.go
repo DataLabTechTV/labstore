@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
 	"github.com/IllumiKnowLabs/labstore/client/s3"
@@ -17,19 +19,25 @@ func NewS3Handler(client *s3.S3Client) *S3Handler {
 }
 
 func (h *S3Handler) ListBuckets() {
+	tui.PrintTitle("ListBuckets")
+
 	buckets, err := h.Client.ListBuckets()
 	if err != nil {
 		tui.PrintError(err)
 		return
 	}
 
-	tui.PrintBuckets(buckets)
+	for _, bucket := range buckets {
+		tui.PrintBucket(bucket)
+	}
 }
 
 func (h *S3Handler) ListObjects(bucket string, key *string) {
 	if key == nil {
 		key = helper.StringPtr("/")
 	}
+
+	tui.PrintTitle(fmt.Sprintf("ListObjectsV2: %s", bucket))
 
 	res := h.Client.ListObjects(bucket, *key, true)
 	for r := range res {
