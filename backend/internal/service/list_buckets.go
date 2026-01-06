@@ -41,7 +41,7 @@ func ListBuckets(accessKey string) (*t.ListAllMyBucketsResult, error) {
 
 			bucket := t.Bucket{
 				Name:         entry.Name(),
-				CreationDate: birthDate.Format(time.RFC3339),
+				CreationDate: t.Timestamp(birthDate),
 			}
 			res.Buckets.Bucket = append(res.Buckets.Bucket, bucket)
 		}
