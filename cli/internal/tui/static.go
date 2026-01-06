@@ -3,17 +3,33 @@ package tui
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 var (
+	TitleStyle = lipgloss.NewStyle().
+			Width(30).
+			Align(lipgloss.Center).
+			Margin(1, 0).
+			Bold(true).
+			Foreground(ActivePalette.Accent).
+			Background(ActivePalette.SurfaceAlt)
+
 	DateStyle = lipgloss.NewStyle().
 			Width(25).
 			Align(lipgloss.Left).
 			Foreground(ActivePalette.TextMuted)
+
+	SizeStyle = lipgloss.NewStyle().
+			Width(20).
+			Align(lipgloss.Left).
+			Foreground(ActivePalette.Accent)
 
 	PathStyle = lipgloss.NewStyle().
 			Width(60).
@@ -59,21 +75,37 @@ func PrintError(err error) {
 	fmt.Println(errView)
 }
 
-func PrintBuckets(buckets []t.Bucket) {
-	for _, bucket := range buckets {
-		date := fmt.Sprintf("[%s]", bucket.CreationDate)
-		bucketView := lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			DateStyle.Render(date),
-			PathStyle.Render(bucket.Name+"/"),
-		)
+func PrintTitle(title string) {
+	titleView := TitleStyle.Render(title)
+	fmt.Println(titleView)
+}
 
-		fmt.Println(bucketView)
-	}
+func PrintBucket(bucket t.Bucket) {
+	bucketView := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		DateStyle.Render(DateFormat(bucket.CreationDate)),
+		PathStyle.Render(bucket.Name+"/"),
+	)
+
+	fmt.Println(bucketView)
 }
 
 func PrintObject(bucket string, object t.Object) {
-	path := fmt.Sprintf("%s/%s", bucket, object.Key)
-	objectView := PathStyle.Render(path)
+	objectView := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		DateStyle.Render(DateFormat(object.LastModified)),
+		SizeStyle.Render(SizeFormat(object.Size)),
+		PathStyle.Render(object.Key),
+	)
+
 	fmt.Println(objectView)
+}
+
+func SizeFormat(size int64) string {
+	p := message.NewPrinter(language.English)
+	return p.Sprintf("%d B", size)
+}
+
+func DateFormat(date t.Timestamp) string {
+	return fmt.Sprintf("[%s]", time.Time(date).Format(t.ISO8601))
 }
