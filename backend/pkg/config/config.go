@@ -44,7 +44,8 @@ const (
 )
 
 var (
-	DefaultAdminSecretKey string = DefaultAdminAuthAccessKey
+	DefaultAdminSecretKey        string = DefaultAdminAuthAccessKey
+	DisplayDefaultAdminSecretKey bool   = true
 )
 
 type AppConfig struct {
@@ -317,7 +318,7 @@ func parseConfig() {
 	Storage.MasterKeyPath = filepath.Join(Storage.KeysDir, DefaultMasterKeyFilename)
 	slog.Debug("master key path set", "path", Storage.MasterKeyPath)
 
-	if Admin.Auth.SecretKey == DefaultAdminSecretKey {
+	if DisplayDefaultAdminSecretKey && Admin.Auth.SecretKey == DefaultAdminSecretKey {
 		slog.Warn("no secret ket set for admin, randomly generating")
 		fmt.Printf(
 			"🔑 Temporary secret key for %s: %s\n",
