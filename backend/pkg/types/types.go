@@ -6,6 +6,7 @@ import (
 )
 
 const ISO8601 = "2006-01-02T15:04:05Z"
+const CompactISO8601 = "20060102T150405Z"
 
 type ResponseMetadata struct {
 	RequestId string
