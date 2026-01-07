@@ -80,9 +80,7 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 
 	r.Header.Set("Authorization", authorization.String())
 
-	httpClient := http.Client{}
-
-	resp, err := httpClient.Do(r)
+	resp, err := http.DefaultClient.Do(r)
 	if err != nil {
 		return nil, err
 	}
