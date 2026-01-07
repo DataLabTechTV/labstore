@@ -42,15 +42,16 @@ func PutObject(bucket string, key string, reader io.Reader) error {
 		return err
 	}
 
-	f, err := os.Create(objPath)
+	file, err := os.Create(objPath)
 	if err != nil {
 		return err
 	}
-	defer helper.CloseWithErr(f, &err)
+	defer helper.CloseWithErr(file, &err)
 
-	writer := bufio.NewWriterSize(f, config.S3.IO.BufferSize)
+	writer := bufio.NewWriterSize(file, config.S3.IO.BufferSize)
+	buf := make([]byte, config.S3.IO.BufferSize)
 
-	_, err = io.CopyBuffer(writer, reader, make([]byte, config.S3.IO.BufferSize))
+	_, err = io.CopyBuffer(writer, reader, buf)
 	if err != nil {
 		return err
 	}
