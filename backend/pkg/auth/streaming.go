@@ -15,13 +15,10 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 )
 
-type SigV4ChunkedDecoder struct {
-	Ctx *SigV4Context
-	Src io.ReadCloser
-
-	reader *bufio.Reader
-	header *SigV4ChunkHeader
-	data   []byte
+type SigV4Chunk struct {
+	Ctx    *SigV4Context
+	Header *SigV4ChunkHeader
+	Data   []byte
 }
 
 type SigV4ChunkHeader struct {
@@ -29,55 +26,87 @@ type SigV4ChunkHeader struct {
 	Signature string
 }
 
-func NewSigV4ChunkedDecoder(ctx *SigV4Context, src io.ReadCloser) *SigV4ChunkedDecoder {
-	return &SigV4ChunkedDecoder{
-		Ctx:    ctx,
+type SigV4ChunkDecoder struct {
+	Src io.ReadCloser
+
+	reader *bufio.Reader
+	chunk  *SigV4Chunk
+}
+
+func NewSigV4ChunkedDecoder(ctx *SigV4Context, src io.ReadCloser) *SigV4ChunkDecoder {
+	return &SigV4ChunkDecoder{
 		Src:    src,
 		reader: bufio.NewReader(src),
+		chunk:  &SigV4Chunk{Ctx: ctx},
 	}
 }
 
-func (r *SigV4ChunkedDecoder) Read(buf []byte) (int, error) {
-	if len(r.data) > 0 {
-		n := copy(buf, r.data)
-		r.data = r.data[n:]
+func (chunk *SigV4Chunk) BuildChunkStringToSign() string {
+	var stringToSign strings.Builder
+
+	stringToSign.WriteString("AWS4-HMAC-SHA256-PAYLOAD")
+	stringToSign.WriteString("\n")
+
+	stringToSign.WriteString(chunk.Ctx.Timestamp)
+	stringToSign.WriteString("\n")
+
+	stringToSign.WriteString(chunk.Ctx.Credential.Scope)
+	stringToSign.WriteString("\n")
+
+	stringToSign.WriteString(chunk.Ctx.Signature)
+	stringToSign.WriteString("\n")
+
+	emptyHash := sha256.Sum256([]byte(""))
+	stringToSign.WriteString(hex.EncodeToString(emptyHash[:]))
+	stringToSign.WriteString("\n")
+
+	chunkHash := sha256.Sum256(chunk.Data)
+	stringToSign.WriteString(hex.EncodeToString(chunkHash[:]))
+
+	return stringToSign.String()
+}
+
+func (dec *SigV4ChunkDecoder) Read(buf []byte) (int, error) {
+	if len(dec.chunk.Data) > 0 {
+		n := copy(buf, dec.chunk.Data)
+		dec.chunk.Data = dec.chunk.Data[n:]
 		return n, nil
 	}
 
-	if err := r.readChunkHeader(); err != nil {
+	if err := dec.readChunkHeader(); err != nil {
 		return 0, err
 	}
 
-	if r.header.Size == 0 {
+	if dec.chunk.Header.Size == 0 {
 		return 0, io.EOF
 	}
 
-	if err := r.readChunkData(); err != nil {
+	if err := dec.readChunkData(); err != nil {
 		return 0, err
 	}
 
-	if err := r.readTrailingCRLF(); err != nil {
+	if err := dec.readTrailingCRLF(); err != nil {
 		return 0, err
 	}
 
-	if err := r.verifyChunkSigV4(); err != nil {
+	if err := dec.verifyChunkSigV4(); err != nil {
 		return 0, err
 	}
 
-	r.Ctx.Signature = r.header.Signature
+	dec.chunk.Ctx.Signature = dec.chunk.Header.Signature
 
-	n := copy(buf, r.data)
-	r.data = r.data[n:]
+	n := copy(buf, dec.chunk.Data)
+	dec.chunk.Data = dec.chunk.Data[n:]
 
 	return n, nil
 }
 
-func (r *SigV4ChunkedDecoder) Close() error {
-	return r.Src.Close()
+func (dec *SigV4ChunkDecoder) Close() error {
+	return dec.Src.Close()
 }
 
-func (r *SigV4ChunkedDecoder) readChunkHeader() error {
-	line, err := r.reader.ReadString('\n')
+func (dec *SigV4ChunkDecoder) readChunkHeader() error {
+	line, err := dec.reader.ReadString('\n')
 	if err != nil && err != io.EOF {
 		return err
 	}
@@ -97,32 +126,36 @@ func (r *SigV4ChunkedDecoder) readChunkHeader() error {
 		return errors.New("could not find 'chunk-signature=' prefix")
 	}
 
-	r.header = &SigV4ChunkHeader{
+	dec.chunk.Header = &SigV4ChunkHeader{
 		Size:      int(size),
 		Signature: sig,
 	}
 
-	slog.Debug("chunk header", "size", r.header.Size, "signature", security.Trunc(r.header.Signature))
+	slog.Debug(
+		"chunk header",
+		"size", dec.chunk.Header.Size,
+		"signature", security.Trunc(dec.chunk.Header.Signature),
+	)
 
 	return nil
 }
 
-func (r *SigV4ChunkedDecoder) readChunkData() error {
-	r.data = make([]byte, r.header.Size)
+func (dec *SigV4ChunkDecoder) readChunkData() error {
+	dec.chunk.Data = make([]byte, dec.chunk.Header.Size)
 
-	if _, err := io.ReadFull(r.reader, r.data); err != nil {
+	if _, err := io.ReadFull(dec.reader, dec.chunk.Data); err != nil {
 		return err
 	}
 
-	slog.Debug("chunk data", "length", len(r.data))
+	slog.Debug("chunk data", "length", len(dec.chunk.Data))
 
 	return nil
 }
 
-func (r *SigV4ChunkedDecoder) readTrailingCRLF() error {
+func (dec *SigV4ChunkDecoder) readTrailingCRLF() error {
 	crlf := make([]byte, 2)
 
-	if _, err := io.ReadFull(r.reader, crlf); err != nil || !bytes.Equal(crlf, []byte{'\r', '\n'}) {
+	if _, err := io.ReadFull(dec.reader, crlf); err != nil || !bytes.Equal(crlf, []byte{'\r', '\n'}) {
 		return errors.New("invalid chunk termination")
 	}
 
@@ -131,17 +164,17 @@ func (r *SigV4ChunkedDecoder) readTrailingCRLF() error {
 	return nil
 }
 
-func (r *SigV4ChunkedDecoder) verifyChunkSigV4() error {
-	stringToSign := r.buildChunkStringToSign()
+func (dec *SigV4ChunkDecoder) verifyChunkSigV4() error {
+	stringToSign := dec.chunk.BuildChunkStringToSign()
 	slog.Debug("string to sign", "string_to_sign", security.TruncLastLines(stringToSign, 3))
 
-	recomputedSignature, err := ComputeSignature(r.Ctx.Credential, stringToSign)
+	recomputedSignature, err := ComputeSignature(dec.chunk.Ctx.Credential, stringToSign)
 
 	if err != nil {
 		return err
 	}
 
-	byteSignature, err := hex.DecodeString(r.header.Signature)
+	byteSignature, err := hex.DecodeString(dec.chunk.Header.Signature)
 	if err != nil {
 		return errors.New("could not decode original signature")
 	}
@@ -153,7 +186,7 @@ func (r *SigV4ChunkedDecoder) verifyChunkSigV4() error {
 
 	slog.Debug(
 		"comparing chunk signatures",
-		"original", security.Trunc(r.header.Signature),
+		"original", security.Trunc(dec.chunk.Header.Signature),
 		"recomputed", security.Trunc(recomputedSignature),
 	)
 
@@ -162,29 +195,4 @@ func (r *SigV4ChunkedDecoder) verifyChunkSigV4() error {
 	}
 
 	return errors.New("chunk signatures differ")
-}
-
-func (r *SigV4ChunkedDecoder) buildChunkStringToSign() string {
-	var stringToSign strings.Builder
-
-	stringToSign.WriteString("AWS4-HMAC-SHA256-PAYLOAD")
-	stringToSign.WriteString("\n")
-
-	stringToSign.WriteString(r.Ctx.Timestamp)
-	stringToSign.WriteString("\n")
-
-	stringToSign.WriteString(r.Ctx.Credential.Scope)
-	stringToSign.WriteString("\n")
-
-	stringToSign.WriteString(r.Ctx.Signature)
-	stringToSign.WriteString("\n")
-
-	emptyHash := sha256.Sum256([]byte(""))
-	stringToSign.WriteString(hex.EncodeToString(emptyHash[:]))
-	stringToSign.WriteString("\n")
-
-	chunkHash := sha256.Sum256(r.data)
-	stringToSign.WriteString(hex.EncodeToString(chunkHash[:]))
-
-	return stringToSign.String()
 }
