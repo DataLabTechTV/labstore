@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -19,6 +20,7 @@ type S3Client struct {
 	AccessKey string
 	SecretKey string
 	TLS       bool
+	ChunkSize int
 
 	baseURL *url.URL
 }
@@ -28,7 +30,15 @@ type Result[T any] struct {
 	Err   error
 }
 
-func NewS3Client(ctx context.Context, host string, port uint16, accessKey, secretKey string, tls bool) *S3Client {
+func NewS3Client(
+	ctx context.Context,
+	host string,
+	port uint16,
+	accessKey string,
+	secretKey string,
+	tls bool,
+	chunkSize int,
+) *S3Client {
 	client := &S3Client{
 		Ctx:       ctx,
 		Host:      host,
@@ -36,6 +46,7 @@ func NewS3Client(ctx context.Context, host string, port uint16, accessKey, secre
 		AccessKey: accessKey,
 		SecretKey: secretKey,
 		TLS:       tls,
+		ChunkSize: chunkSize,
 	}
 
 	var scheme string
@@ -183,4 +194,29 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Resul
 	}()
 
 	return out
+}
+
+func (client *S3Client) PutObject(bucket, key string, reader io.ReadCloser) error {
+	reqURL, err := client.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.DoSigV4Request("PUT", reqURL.String(), NewSigV4ChunkedEncoder(reader, client.ChunkSize))
+	if err != nil {
+		return err
+	}
+	defer helper.CloseWithErr(resp.Body, &err)
+
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	var s3Err errs.S3Error
+	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+		return err
+	}
+
+	return &s3Err
+
 }
