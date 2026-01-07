@@ -50,9 +50,15 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 	}
 
 	var payloadHash string
-	payloadHash, r.Body, err = computePayloadHash(r.Body)
-	if err != nil {
-		return nil, err
+
+	switch r.Body.(type) {
+	case *SigV4ChunkedEncoder:
+		payloadHash = auth.StreamingPayload
+	default:
+		payloadHash, r.Body, err = computePayloadHash(r.Body)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	timestamp := time.Now().Format(t.CompactISO8601)
@@ -79,6 +85,15 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 	}
 
 	r.Header.Set("Authorization", authorization.String())
+
+	switch src := r.Body.(type) {
+	case *SigV4ChunkedEncoder:
+		src.Ctx.Signature = authorization.Signature
+		src.Ctx.Credential = credential
+		src.Ctx.Timestamp = timestamp
+		src.Ctx.IsStreaming = true
+		r.Body = src
+	}
 
 	resp, err := http.DefaultClient.Do(r)
 	if err != nil {
