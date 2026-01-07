@@ -42,14 +42,14 @@ type SigV4Credential struct {
 	Scope     string
 }
 
-type SigV4Result struct {
-	Credential  *SigV4Credential
+type SigV4Context struct {
 	Signature   string
+	Credential  *SigV4Credential
 	Timestamp   string
 	IsStreaming bool
 }
 
-func VerifySigV4(r *http.Request) (*SigV4Result, error) {
+func VerifySigV4(r *http.Request) (*SigV4Context, error) {
 	req, err := newSigV4Request(r)
 	if err != nil {
 		return nil, fmt.Errorf("sigv4: %w", err)
@@ -301,7 +301,7 @@ func (req *SigV4Request) validatePayloadHash(r *http.Request) error {
 }
 
 // Recompute and validate SigV4 signature
-func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
+func (req *SigV4Request) validateSignature() (*SigV4Context, error) {
 	stringToSign := req.BuildStringToSign()
 	slog.Debug("string to sign", "string_to_sign", security.TruncLastLine(stringToSign))
 
@@ -329,7 +329,7 @@ func (req *SigV4Request) validateSignature() (*SigV4Result, error) {
 	if hmac.Equal(byteSignature, byteRecomputedSignature) {
 		isStreaming := req.PayloadHash == StreamingPayload
 
-		res := &SigV4Result{
+		res := &SigV4Context{
 			Credential:  req.Authorization.Credential,
 			Signature:   req.Authorization.Signature,
 			Timestamp:   req.Timestamp,
