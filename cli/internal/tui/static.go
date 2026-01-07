@@ -14,12 +14,21 @@ import (
 
 var (
 	TitleStyle = lipgloss.NewStyle().
-			Width(30).
+			Width(79).
 			Align(lipgloss.Center).
 			Margin(1, 0).
 			Bold(true).
 			Foreground(ActivePalette.Accent).
 			Background(ActivePalette.SurfaceAlt)
+
+	SuccessStyle = lipgloss.NewStyle().
+			Width(25).
+			Align(lipgloss.Left).
+			Bold(true).
+			Foreground(ActivePalette.Success)
+
+	SuccessMsgStyle = lipgloss.NewStyle().
+			Foreground(ActivePalette.TextPrimary)
 
 	DateStyle = lipgloss.NewStyle().
 			Width(25).
@@ -78,6 +87,15 @@ func PrintError(err error) {
 func PrintTitle(title string) {
 	titleView := TitleStyle.Render(title)
 	fmt.Println(titleView)
+}
+
+func PrintSuccess(msg string) {
+	successView := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		SuccessStyle.Render("✅ Success"),
+		SuccessMsgStyle.Render(msg),
+	)
+	fmt.Println(successView)
 }
 
 func PrintBucket(bucket t.Bucket) {
