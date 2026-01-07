@@ -44,6 +44,7 @@ func NewS3Cmd() *cobra.Command {
 				profile.AccessKey,
 				profile.SecretKey,
 				false,
+				config.S3.IO.BufferSize,
 			)
 
 			handler := handlers.NewS3Handler(client)
@@ -103,6 +104,7 @@ func NewObjectsCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewObjectsListCmd())
+	cmd.AddCommand(NewObjectsPutCmd())
 
 	return cmd
 }
@@ -125,6 +127,25 @@ func NewObjectsListCmd() *cobra.Command {
 			}
 
 			handler.ListObjects(bucket, key)
+		},
+	}
+
+	return cmd
+}
+
+func NewObjectsPutCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "put BUCKET PATH LOCAL_PATH",
+		Short: "Put S3 object",
+		Args:  cobra.MinimumNArgs(3),
+		Run: func(cmd *cobra.Command, args []string) {
+			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
+
+			bucket := args[0]
+			key := args[1]
+			localPath := args[2]
+
+			handler.PutObject(bucket, key, localPath)
 		},
 	}
 
