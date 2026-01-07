@@ -30,14 +30,14 @@ type SigV4ChunkHeader struct {
 }
 
 func NewSigV4ChunkedDecoder(ctx *SigV4Context, src io.ReadCloser) *SigV4ChunkedDecoder {
-	return &SigV4ChunkedDecoder{Ctx: ctx, Src: src}
+	return &SigV4ChunkedDecoder{
+		Ctx:    ctx,
+		Src:    src,
+		reader: bufio.NewReader(src),
+	}
 }
 
 func (r *SigV4ChunkedDecoder) Read(buf []byte) (int, error) {
-	if r.reader == nil {
-		r.reader = bufio.NewReader(r.Src)
-	}
-
 	if len(r.data) > 0 {
 		n := copy(buf, r.data)
 		r.data = r.data[n:]
