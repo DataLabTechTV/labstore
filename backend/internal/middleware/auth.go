@@ -26,18 +26,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Debug("auth middleware")
 
-		res, err := auth.VerifySigV4(r)
+		sigV4Ctx, err := auth.VerifySigV4(r)
 		if err != nil {
 			slog.Error("sigv4", "err", err)
 			errs.Handle(w, errs.S3SignatureDoesNotMatch())
 			return
 		}
 
-		if res.IsStreaming {
-			r.Body = auth.NewSigV4ChunkedDecoder(r.Body, res)
+		if sigV4Ctx.IsStreaming {
+			r.Body = auth.NewSigV4ChunkedDecoder(sigV4Ctx, r.Body)
 		}
 
-		ctx := context.WithValue(r.Context(), accessKeyCtx, res.Credential.AccessKey)
+		ctx := context.WithValue(r.Context(), accessKeyCtx, sigV4Ctx.Credential.AccessKey)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
