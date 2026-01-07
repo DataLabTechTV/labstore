@@ -52,7 +52,7 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 	var payloadHash string
 
 	switch r.Body.(type) {
-	case *SigV4ChunkedEncoder:
+	case *SigV4ChunkEncoder:
 		payloadHash = auth.StreamingPayload
 	default:
 		payloadHash, r.Body, err = computePayloadHash(r.Body)
@@ -87,12 +87,13 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 	r.Header.Set("Authorization", authorization.String())
 
 	switch src := r.Body.(type) {
-	case *SigV4ChunkedEncoder:
-		src.Ctx.Signature = authorization.Signature
-		src.Ctx.Credential = credential
-		src.Ctx.Timestamp = timestamp
-		src.Ctx.IsStreaming = true
+	case *SigV4ChunkEncoder:
+		src.chunk.Ctx.Signature = sigV4Req.Authorization.Signature
+		src.chunk.Ctx.Credential = sigV4Req.Authorization.Credential
+		src.chunk.Ctx.Timestamp = sigV4Req.Timestamp
+		src.chunk.Ctx.IsStreaming = true
 		r.Body = src
+		r.Header.Set("Transfer-Encoding", "chunked")
 	}
 
 	resp, err := http.DefaultClient.Do(r)
