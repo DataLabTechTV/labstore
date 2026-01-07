@@ -9,7 +9,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -17,39 +16,39 @@ import (
 )
 
 type sigV4ChunkedDecoder struct {
-	ctx  *sigV4ChunkContext
-	body io.ReadCloser
+	ctx *SigV4ChunkContext
+	src io.ReadCloser
 
 	reader *bufio.Reader
-	header *sigV4ChunkHeader
+	header *SigV4ChunkHeader
 	data   []byte
 }
 
-type sigV4ChunkContext struct {
-	prevSig    string
-	credential *SigV4Credential
-	timestamp  string
+type SigV4ChunkContext struct {
+	PrevSig    string
+	Credential *SigV4Credential
+	Timestamp  string
 }
 
-type sigV4ChunkHeader struct {
-	size      int
-	signature string
+type SigV4ChunkHeader struct {
+	Size      int
+	Signature string
 }
 
-func NewSigV4ChunkedDecoder(r *http.Request, res *SigV4Result) *sigV4ChunkedDecoder {
+func NewSigV4ChunkedDecoder(src io.ReadCloser, res *SigV4Result) *sigV4ChunkedDecoder {
 	return &sigV4ChunkedDecoder{
-		ctx: &sigV4ChunkContext{
-			prevSig:    res.Signature,
-			credential: res.Credential,
-			timestamp:  res.Timestamp,
+		ctx: &SigV4ChunkContext{
+			PrevSig:    res.Signature,
+			Credential: res.Credential,
+			Timestamp:  res.Timestamp,
 		},
-		body: r.Body,
+		src: src,
 	}
 }
 
 func (r *sigV4ChunkedDecoder) Read(buf []byte) (int, error) {
 	if r.reader == nil {
-		r.reader = bufio.NewReader(r.body)
+		r.reader = bufio.NewReader(r.src)
 	}
 
 	if len(r.data) > 0 {
@@ -62,7 +61,7 @@ func (r *sigV4ChunkedDecoder) Read(buf []byte) (int, error) {
 		return 0, err
 	}
 
-	if r.header.size == 0 {
+	if r.header.Size == 0 {
 		return 0, io.EOF
 	}
 
@@ -78,7 +77,7 @@ func (r *sigV4ChunkedDecoder) Read(buf []byte) (int, error) {
 		return 0, err
 	}
 
-	r.ctx.prevSig = r.header.signature
+	r.ctx.PrevSig = r.header.Signature
 
 	n := copy(buf, r.data)
 	r.data = r.data[n:]
@@ -87,7 +86,7 @@ func (r *sigV4ChunkedDecoder) Read(buf []byte) (int, error) {
 }
 
 func (r *sigV4ChunkedDecoder) Close() error {
-	return r.body.Close()
+	return r.src.Close()
 }
 
 func (r *sigV4ChunkedDecoder) readChunkHeader() error {
@@ -111,18 +110,18 @@ func (r *sigV4ChunkedDecoder) readChunkHeader() error {
 		return errors.New("could not find 'chunk-signature=' prefix")
 	}
 
-	r.header = &sigV4ChunkHeader{
-		size:      int(size),
-		signature: sig,
+	r.header = &SigV4ChunkHeader{
+		Size:      int(size),
+		Signature: sig,
 	}
 
-	slog.Debug("chunk header", "size", r.header.size, "signature", security.Trunc(r.header.signature))
+	slog.Debug("chunk header", "size", r.header.Size, "signature", security.Trunc(r.header.Signature))
 
 	return nil
 }
 
 func (r *sigV4ChunkedDecoder) readChunkData() error {
-	r.data = make([]byte, r.header.size)
+	r.data = make([]byte, r.header.Size)
 
 	if _, err := io.ReadFull(r.reader, r.data); err != nil {
 		return err
@@ -149,13 +148,13 @@ func (r *sigV4ChunkedDecoder) verifyChunkSigV4() error {
 	stringToSign := r.buildChunkStringToSign()
 	slog.Debug("string to sign", "string_to_sign", security.TruncLastLines(stringToSign, 3))
 
-	recomputedSignature, err := ComputeSignature(r.ctx.credential, stringToSign)
+	recomputedSignature, err := ComputeSignature(r.ctx.Credential, stringToSign)
 
 	if err != nil {
 		return err
 	}
 
-	byteSignature, err := hex.DecodeString(r.header.signature)
+	byteSignature, err := hex.DecodeString(r.header.Signature)
 	if err != nil {
 		return errors.New("could not decode original signature")
 	}
@@ -167,7 +166,7 @@ func (r *sigV4ChunkedDecoder) verifyChunkSigV4() error {
 
 	slog.Debug(
 		"comparing chunk signatures",
-		"original", security.Trunc(r.header.signature),
+		"original", security.Trunc(r.header.Signature),
 		"recomputed", security.Trunc(recomputedSignature),
 	)
 
@@ -184,13 +183,13 @@ func (r *sigV4ChunkedDecoder) buildChunkStringToSign() string {
 	stringToSign.WriteString("AWS4-HMAC-SHA256-PAYLOAD")
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.ctx.timestamp)
+	stringToSign.WriteString(r.ctx.Timestamp)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.ctx.credential.Scope)
+	stringToSign.WriteString(r.ctx.Credential.Scope)
 	stringToSign.WriteString("\n")
 
-	stringToSign.WriteString(r.ctx.prevSig)
+	stringToSign.WriteString(r.ctx.PrevSig)
 	stringToSign.WriteString("\n")
 
 	emptyHash := sha256.Sum256([]byte(""))
