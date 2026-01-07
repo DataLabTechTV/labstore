@@ -114,6 +114,9 @@ func (dec *SigV4ChunkDecoder) readChunkHeader() error {
 	line = strings.TrimSuffix(line, "\r\n")
 
 	headerParts := strings.SplitN(line, ";", 2)
+	if len(headerParts) != 2 {
+		return errors.New("invalid chunk header")
+	}
 	sizeHex, chunkSig := headerParts[0], headerParts[1]
 
 	size, err := strconv.ParseInt(sizeHex, 16, 64)
