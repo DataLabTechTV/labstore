@@ -234,9 +234,8 @@ func list(res *t.BaseListBucketResult, req *BaseListObjectsRequest) error {
 		}
 
 		if info.IsDir() {
-			// !FIXME: MaxKeys should affect CommonPrefixes as well
 			key += req.Delimiter
-			res.CommonPrefixes = append(res.CommonPrefixes, t.CommonPrefixes{Prefix: key})
+			res.CommonPrefixes = append(res.CommonPrefixes, t.CommonPrefix{Prefix: key})
 			continue
 		}
 
