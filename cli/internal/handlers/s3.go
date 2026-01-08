@@ -47,7 +47,12 @@ func (h *S3Handler) ListObjects(bucket string, key *string) {
 			return
 		}
 
-		tui.PrintObject(bucket, r.Value)
+		switch {
+		case r.IsObject():
+			tui.PrintObject(*r.Object)
+		case r.IsCommonPrefix():
+			tui.PrintCommonPrefix(*r.CommonPrefix)
+		}
 	}
 }
 
