@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"math"
+	"log/slog"
 	"strconv"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
@@ -33,14 +33,36 @@ func NewSigV4ChunkEncoder(src io.ReadCloser, size int, chunkSize int) *SigV4Chun
 }
 
 func (enc *SigV4ChunkEncoder) ContentLength() int {
-	nChunks := int(math.Ceil(float64(enc.Size) / float64(enc.ChunkSize)))
+	const crLfSize = 2
+	const signatureSize = 64
+	const fixedChunkHeaderSize = len(";chunk-signature=") + signatureSize
 
+	nFirstChunks := enc.Size / enc.ChunkSize
+
+	chunkHeaderSize := len(strconv.FormatInt(int64(enc.ChunkSize), 16)) + fixedChunkHeaderSize + 2*crLfSize
 	lastChunkSize := enc.Size % enc.ChunkSize
+
+	var lastChunkHeaderSize int
 	if lastChunkSize == 0 {
-		lastChunkSize = enc.ChunkSize
+		lastChunkHeaderSize = 0
+	} else {
+		lastChunkHeaderSize = len(strconv.FormatInt(int64(lastChunkSize), 16)) + fixedChunkHeaderSize + 2*crLfSize
 	}
 
-	totalSize := enc.Size + (nChunks-1)*enc.ChunkSize + lastChunkSize
+	emptyChunkHeaderSize := 1 + fixedChunkHeaderSize + 2*crLfSize
+
+	totalSize := nFirstChunks*chunkHeaderSize +
+		lastChunkHeaderSize +
+		emptyChunkHeaderSize +
+		enc.Size
+
+	slog.Debug(
+		"sigv4 chunk encoder",
+		"enc.Size", enc.Size,
+		"enc.chunkSize", enc.ChunkSize,
+		"lastChunkSize", lastChunkSize,
+		"totalSize", totalSize,
+	)
 
 	return totalSize
 }
