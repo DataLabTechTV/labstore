@@ -3,6 +3,7 @@ module github.com/IllumiKnowLabs/labstore/backend
 go 1.25.4
 
 require (
+	github.com/djherbis/times v1.6.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
@@ -15,7 +16,6 @@ require (
 )
 
 require (
-	github.com/djherbis/times v1.6.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
