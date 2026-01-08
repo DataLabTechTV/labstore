@@ -46,9 +46,9 @@ func (enc *SigV4ChunkEncoder) ContentLength() int {
 }
 
 func (r *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
-	if len(r.chunk.Data) > 0 {
-		n := copy(buf, r.chunk.Data)
-		r.chunk.Data = r.chunk.Data[n:]
+	if len(r.chunkBuf) > 0 {
+		n := copy(buf, r.chunkBuf)
+		r.chunkBuf = r.chunkBuf[n:]
 		return n, nil
 	}
 
@@ -79,8 +79,8 @@ func (r *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	r.chunkBuf = chunkBuf.Bytes()
 	r.chunk.Ctx.Signature = r.chunk.Header.Signature
 
-	n = copy(buf, r.chunk.Data)
-	r.chunk.Data = r.chunk.Data[n:]
+	n = copy(buf, r.chunkBuf)
+	r.chunkBuf = r.chunkBuf[n:]
 
 	return n, nil
 }
