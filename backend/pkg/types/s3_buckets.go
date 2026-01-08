@@ -21,7 +21,7 @@ type BaseListBucketResult struct {
 	Prefix         string
 	MaxKeys        int
 	Contents       []Object
-	CommonPrefixes []CommonPrefixes
+	CommonPrefixes []CommonPrefix
 	IsTruncated    bool
 	UntilKey       string `xml:"-"`
 }
@@ -40,6 +40,6 @@ type ListBucketResultV2 struct {
 	StartAfter            string
 }
 
-type CommonPrefixes struct {
+type CommonPrefix struct {
 	Prefix string
 }
