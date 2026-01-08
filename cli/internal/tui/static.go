@@ -38,9 +38,14 @@ var (
 	SizeStyle = lipgloss.NewStyle().
 			Width(20).
 			Align(lipgloss.Left).
+			Foreground(ActivePalette.AccentMuted)
+
+	DirStyle = lipgloss.NewStyle().
+			Width(60).
+			Align(lipgloss.Left).
 			Foreground(ActivePalette.Accent)
 
-	PathStyle = lipgloss.NewStyle().
+	FileStyle = lipgloss.NewStyle().
 			Width(60).
 			Align(lipgloss.Left).
 			Foreground(ActivePalette.TextPrimary)
@@ -102,18 +107,29 @@ func PrintBucket(bucket t.Bucket) {
 	bucketView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		DateStyle.Render(DateFormat(bucket.CreationDate)),
-		PathStyle.Render(bucket.Name+"/"),
+		DirStyle.Render(fmt.Sprintf("%s/", bucket.Name)),
 	)
 
 	fmt.Println(bucketView)
 }
 
-func PrintObject(bucket string, object t.Object) {
+func PrintCommonPrefix(commonPrefix t.CommonPrefix) {
+	objectView := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		DateStyle.Render(DateFormat(t.Timestamp(time.Now()))),
+		SizeStyle.Render(SizeFormat(0)),
+		DirStyle.Render(commonPrefix.Prefix),
+	)
+
+	fmt.Println(objectView)
+}
+
+func PrintObject(object t.Object) {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		DateStyle.Render(DateFormat(object.LastModified)),
 		SizeStyle.Render(SizeFormat(object.Size)),
-		PathStyle.Render(object.Key),
+		FileStyle.Render(object.Key),
 	)
 
 	fmt.Println(objectView)
