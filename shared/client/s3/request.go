@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -93,7 +94,9 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 		src.chunk.Ctx.Timestamp = sigV4Req.Timestamp
 		src.chunk.Ctx.IsStreaming = true
 		r.Body = src
-		r.Header.Set("Transfer-Encoding", "chunked")
+		r.Header.Set("Content-Type", "application/octet")
+		r.Header.Set("Content-Length", fmt.Sprint(src.ContentLength()))
+		r.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprint(src.Size))
 	}
 
 	resp, err := http.DefaultClient.Do(r)

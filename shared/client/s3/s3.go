@@ -3,10 +3,10 @@ package s3
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
@@ -196,13 +196,19 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Resul
 	return out
 }
 
-func (client *S3Client) PutObject(bucket, key string, reader io.ReadCloser) error {
+func (client *S3Client) PutObject(bucket, key string, file *os.File) error {
 	reqURL, err := client.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.DoSigV4Request("PUT", reqURL.String(), NewSigV4ChunkedEncoder(reader, client.ChunkSize))
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	enc := NewSigV4ChunkEncoder(file, int(info.Size()), client.ChunkSize)
+	resp, err := client.DoSigV4Request("PUT", reqURL.String(), enc)
 	if err != nil {
 		return err
 	}
