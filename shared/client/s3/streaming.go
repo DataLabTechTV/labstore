@@ -10,21 +10,27 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
 )
 
+type ProgressCallback func(current, total int)
+
 type SigV4ChunkEncoder struct {
 	Src       io.ReadCloser
 	Size      int
 	ChunkSize int
+	Callback  ProgressCallback
 
 	reader   *bufio.Reader
 	chunk    *auth.SigV4Chunk
 	chunkBuf []byte
+
+	read int
 }
 
-func NewSigV4ChunkEncoder(src io.ReadCloser, size int, chunkSize int) *SigV4ChunkEncoder {
+func NewSigV4ChunkEncoder(src io.ReadCloser, size int, chunkSize int, callback ProgressCallback) *SigV4ChunkEncoder {
 	return &SigV4ChunkEncoder{
 		Src:       src,
 		Size:      size,
 		ChunkSize: chunkSize,
+		Callback:  callback,
 		reader:    bufio.NewReaderSize(src, chunkSize),
 		chunk: &auth.SigV4Chunk{
 			Ctx: &auth.SigV4Context{},
@@ -71,6 +77,12 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	if len(enc.chunkBuf) > 0 {
 		n := copy(buf, enc.chunkBuf)
 		enc.chunkBuf = enc.chunkBuf[n:]
+
+		enc.read += n
+		if enc.Callback != nil {
+			enc.Callback(enc.read, enc.Size)
+		}
+
 		return n, nil
 	}
 
@@ -103,6 +115,11 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 
 	n = copy(buf, enc.chunkBuf)
 	enc.chunkBuf = enc.chunkBuf[n:]
+
+	enc.read += n
+	if enc.Callback != nil {
+		enc.Callback(enc.read, enc.Size)
+	}
 
 	return n, nil
 }
