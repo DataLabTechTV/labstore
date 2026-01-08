@@ -45,46 +45,46 @@ func (enc *SigV4ChunkEncoder) ContentLength() int {
 	return totalSize
 }
 
-func (r *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
-	if len(r.chunkBuf) > 0 {
-		n := copy(buf, r.chunkBuf)
-		r.chunkBuf = r.chunkBuf[n:]
+func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
+	if len(enc.chunkBuf) > 0 {
+		n := copy(buf, enc.chunkBuf)
+		enc.chunkBuf = enc.chunkBuf[n:]
 		return n, nil
 	}
 
-	r.chunk.Data = make([]byte, r.ChunkSize)
-	n, err := r.reader.Read(r.chunk.Data)
+	enc.chunk.Data = make([]byte, enc.ChunkSize)
+	n, err := enc.reader.Read(enc.chunk.Data)
 	if err != nil && err != io.EOF {
 		return 0, err
 	}
 
-	chunkSignature, err := auth.ComputeSignature(r.chunk.Ctx.Credential, r.chunk.BuildChunkStringToSign())
+	chunkSignature, err := auth.ComputeSignature(enc.chunk.Ctx.Credential, enc.chunk.BuildChunkStringToSign())
 	if err != nil {
 		return 0, err
 	}
 
-	r.chunk.Header = &auth.SigV4ChunkHeader{
+	enc.chunk.Header = &auth.SigV4ChunkHeader{
 		Size:      n,
 		Signature: chunkSignature,
 	}
 
 	var chunkBuf bytes.Buffer
-	chunkBuf.WriteString(strconv.FormatInt(int64(r.chunk.Header.Size), 16))
+	chunkBuf.WriteString(strconv.FormatInt(int64(enc.chunk.Header.Size), 16))
 	chunkBuf.WriteString(";chunk-signature=")
-	chunkBuf.WriteString(r.chunk.Header.Signature)
+	chunkBuf.WriteString(enc.chunk.Header.Signature)
 	chunkBuf.WriteString("\r\n")
-	chunkBuf.Write(r.chunk.Data)
+	chunkBuf.Write(enc.chunk.Data)
 	chunkBuf.WriteString("\r\n")
 
-	r.chunkBuf = chunkBuf.Bytes()
-	r.chunk.Ctx.Signature = r.chunk.Header.Signature
+	enc.chunkBuf = chunkBuf.Bytes()
+	enc.chunk.Ctx.Signature = enc.chunk.Header.Signature
 
-	n = copy(buf, r.chunkBuf)
-	r.chunkBuf = r.chunkBuf[n:]
+	n = copy(buf, enc.chunkBuf)
+	enc.chunkBuf = enc.chunkBuf[n:]
 
 	return n, nil
 }
 
-func (r *SigV4ChunkEncoder) Close() error {
-	return r.Src.Close()
+func (enc *SigV4ChunkEncoder) Close() error {
+	return enc.Src.Close()
 }
