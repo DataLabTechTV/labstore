@@ -213,7 +213,7 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListR
 	return out
 }
 
-func (client *S3Client) PutObject(bucket, key string, file *os.File) error {
+func (client *S3Client) PutObject(bucket, key string, file *os.File, callback ProgressCallback) error {
 	reqURL, err := client.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return err
@@ -224,7 +224,7 @@ func (client *S3Client) PutObject(bucket, key string, file *os.File) error {
 		return err
 	}
 
-	enc := NewSigV4ChunkEncoder(file, int(info.Size()), client.ChunkSize)
+	enc := NewSigV4ChunkEncoder(file, int(info.Size()), client.ChunkSize, callback)
 	resp, err := client.DoSigV4Request("PUT", reqURL.String(), enc)
 	if err != nil {
 		return err
