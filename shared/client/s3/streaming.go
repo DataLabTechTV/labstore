@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"math"
 	"strconv"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
@@ -11,6 +12,7 @@ import (
 
 type SigV4ChunkEncoder struct {
 	Src       io.ReadCloser
+	Size      int
 	ChunkSize int
 
 	reader   *bufio.Reader
@@ -18,15 +20,29 @@ type SigV4ChunkEncoder struct {
 	chunkBuf []byte
 }
 
-func NewSigV4ChunkedEncoder(src io.ReadCloser, chunkSize int) *SigV4ChunkEncoder {
+func NewSigV4ChunkEncoder(src io.ReadCloser, size int, chunkSize int) *SigV4ChunkEncoder {
 	return &SigV4ChunkEncoder{
 		Src:       src,
+		Size:      size,
 		ChunkSize: chunkSize,
 		reader:    bufio.NewReaderSize(src, chunkSize),
 		chunk: &auth.SigV4Chunk{
 			Ctx: &auth.SigV4Context{},
 		},
 	}
+}
+
+func (enc *SigV4ChunkEncoder) ContentLength() int {
+	nChunks := int(math.Ceil(float64(enc.Size) / float64(enc.ChunkSize)))
+
+	lastChunkSize := enc.Size % enc.ChunkSize
+	if lastChunkSize == 0 {
+		lastChunkSize = enc.ChunkSize
+	}
+
+	totalSize := enc.Size + (nChunks-1)*enc.ChunkSize + lastChunkSize
+
+	return totalSize
 }
 
 func (r *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
@@ -53,7 +69,7 @@ func (r *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	}
 
 	var chunkBuf bytes.Buffer
-	chunkBuf.Write([]byte(strconv.FormatInt(int64(r.chunk.Header.Size), 16)))
+	chunkBuf.WriteString(strconv.FormatInt(int64(r.chunk.Header.Size), 16))
 	chunkBuf.WriteString(";chunk-signature=")
 	chunkBuf.WriteString(r.chunk.Header.Signature)
 	chunkBuf.WriteString("\r\n")
