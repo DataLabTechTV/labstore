@@ -87,16 +87,15 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 
 	r.Header.Set("Authorization", authorization.String())
 
-	switch src := r.Body.(type) {
+	switch enc := r.Body.(type) {
 	case *SigV4ChunkEncoder:
-		src.chunk.Ctx.Signature = sigV4Req.Authorization.Signature
-		src.chunk.Ctx.Credential = sigV4Req.Authorization.Credential
-		src.chunk.Ctx.Timestamp = sigV4Req.Timestamp
-		src.chunk.Ctx.IsStreaming = true
-		r.Body = src
+		enc.chunk.Ctx.Signature = sigV4Req.Authorization.Signature
+		enc.chunk.Ctx.Credential = sigV4Req.Authorization.Credential
+		enc.chunk.Ctx.Timestamp = sigV4Req.Timestamp
+		enc.chunk.Ctx.IsStreaming = true
 		r.Header.Set("Content-Type", "application/octet")
-		r.Header.Set("Content-Length", fmt.Sprint(src.ContentLength()))
-		r.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprint(src.Size))
+		r.Header.Set("Content-Length", fmt.Sprint(enc.ContentLength()))
+		r.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprint(enc.Size))
 	}
 
 	resp, err := http.DefaultClient.Do(r)
