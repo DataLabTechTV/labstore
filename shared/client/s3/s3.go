@@ -25,9 +25,18 @@ type S3Client struct {
 	baseURL *url.URL
 }
 
-type Result[T any] struct {
-	Value T
-	Err   error
+type ListResult struct {
+	Object       *t.Object
+	CommonPrefix *t.CommonPrefix
+	Err          error
+}
+
+func (lr *ListResult) IsObject() bool {
+	return lr.Object != nil && lr.CommonPrefix == nil
+}
+
+func (lr *ListResult) IsCommonPrefix() bool {
+	return lr.CommonPrefix != nil && lr.Object == nil
 }
 
 func NewS3Client(
@@ -102,13 +111,13 @@ func (client *S3Client) ListBuckets() ([]t.Bucket, error) {
 	return nil, &s3Err
 }
 
-func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Result[t.Object] {
-	out := make(chan Result[t.Object])
+func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListResult {
+	out := make(chan ListResult)
 
 	go func() {
 		reqURL, err := client.baseURL.Parse(bucket)
 		if err != nil {
-			out <- Result[t.Object]{Err: err}
+			out <- ListResult{Err: err}
 			close(out)
 			return
 		}
@@ -132,7 +141,7 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Resul
 			slog.Debug("list objects", "reqURL", reqURL)
 			resp, err := client.DoSigV4Request("GET", reqURL.String(), nil)
 			if err != nil {
-				out <- Result[t.Object]{Err: err}
+				out <- ListResult{Err: err}
 				close(out)
 				return
 			}
@@ -141,10 +150,10 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Resul
 			if resp.StatusCode != http.StatusOK {
 				var s3Error errs.S3Error
 				if err := helper.ReadXML(resp.Body, &s3Error); err != nil {
-					out <- Result[t.Object]{Err: err}
+					out <- ListResult{Err: err}
 					return
 				}
-				out <- Result[t.Object]{Err: &s3Error}
+				out <- ListResult{Err: &s3Error}
 				close(out)
 				return
 			}
@@ -152,13 +161,17 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Resul
 			if useV2 {
 				var r t.ListBucketResultV2
 				if err := helper.ReadXML(resp.Body, &r); err != nil {
-					out <- Result[t.Object]{Err: err}
+					out <- ListResult{Err: err}
 					close(out)
 					return
 				}
 
+				for _, commonPrefix := range r.CommonPrefixes {
+					out <- ListResult{CommonPrefix: &commonPrefix}
+				}
+
 				for _, object := range r.Contents {
-					out <- Result[t.Object]{Value: object}
+					out <- ListResult{Object: &object}
 				}
 
 				if r.NextContinuationToken == "" {
@@ -172,13 +185,17 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan Resul
 			} else {
 				var r t.ListBucketResult
 				if err := helper.ReadXML(resp.Body, &r); err != nil {
-					out <- Result[t.Object]{Err: err}
+					out <- ListResult{Err: err}
 					close(out)
 					return
 				}
 
+				for _, commonPrefix := range r.CommonPrefixes {
+					out <- ListResult{CommonPrefix: &commonPrefix}
+				}
+
 				for _, object := range r.Contents {
-					out <- Result[t.Object]{Value: object}
+					out <- ListResult{Object: &object}
 				}
 
 				if !r.IsTruncated {
