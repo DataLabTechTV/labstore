@@ -70,7 +70,8 @@ func (h *S3Handler) PutObject(bucket, key, localPath string) {
 		return
 	}
 
-	err = h.Client.PutObject(bucket, key, file, tui.NewProgressBar())
+	progressCallback, err := tui.NewProgressBar()
+	err = h.Client.PutObject(bucket, key, file, progressCallback)
 	if err != nil {
 		tui.PrintError(err)
 		return
