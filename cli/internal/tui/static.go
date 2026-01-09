@@ -12,50 +12,67 @@ import (
 	"golang.org/x/text/message"
 )
 
+const (
+	MaxWidth = 80
+)
+
 var (
 	TitleStyle = lipgloss.NewStyle().
-			Width(79).
+			Width(MaxWidth).
 			Align(lipgloss.Center).
 			Margin(1, 0).
 			Bold(true).
 			Foreground(ActivePalette.Accent).
-			Background(ActivePalette.SurfaceAlt)
+			Background(ActivePalette.SurfaceAlt).
+			Render
+
+	HelpStyle = lipgloss.NewStyle().
+			Foreground(ActivePalette.TextMuted).
+			Render
 
 	SuccessStyle = lipgloss.NewStyle().
 			Width(25).
 			Align(lipgloss.Left).
 			Bold(true).
-			Foreground(ActivePalette.Success)
+			Foreground(ActivePalette.Success).
+			Render
 
 	SuccessMsgStyle = lipgloss.NewStyle().
-			Foreground(ActivePalette.TextPrimary)
+			Foreground(ActivePalette.TextPrimary).
+			Render
 
 	DateStyle = lipgloss.NewStyle().
 			Width(25).
 			Align(lipgloss.Left).
-			Foreground(ActivePalette.TextMuted)
+			Foreground(ActivePalette.TextMuted).
+			Render
 
 	SizeStyle = lipgloss.NewStyle().
 			Width(20).
 			Align(lipgloss.Left).
-			Foreground(ActivePalette.AccentMuted)
+			Foreground(ActivePalette.AccentMuted).
+			Render
 
 	DirStyle = lipgloss.NewStyle().
 			Width(60).
 			Align(lipgloss.Left).
-			Foreground(ActivePalette.Accent)
+			Foreground(ActivePalette.Accent).
+			Render
 
 	FileStyle = lipgloss.NewStyle().
 			Width(60).
 			Align(lipgloss.Left).
-			Foreground(ActivePalette.TextPrimary)
+			Foreground(ActivePalette.TextPrimary).
+			Render
 
 	ErrCodeStyle = lipgloss.NewStyle().
 			Width(25).
-			Foreground(ActivePalette.Error)
+			Foreground(ActivePalette.Error).
+			Render
 
 	ErrMsgStyle = lipgloss.NewStyle().
-			Foreground(ActivePalette.Accent)
+			Foreground(ActivePalette.Accent).
+			Render
 )
 
 func PrintError(err error) {
@@ -69,20 +86,20 @@ func PrintError(err error) {
 	case errors.As(err, &s3Error):
 		errView = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			ErrCodeStyle.Render(s3Error.Code),
-			ErrMsgStyle.Render(s3Error.Message),
+			ErrCodeStyle(s3Error.Code),
+			ErrMsgStyle(s3Error.Message),
 		)
 	case errors.As(err, &iamError):
 		errView = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			ErrCodeStyle.Render(iamError.Code),
-			ErrMsgStyle.Render(iamError.Message),
+			ErrCodeStyle(iamError.Code),
+			ErrMsgStyle(iamError.Message),
 		)
 	default:
 		errView = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			ErrCodeStyle.Render("Error"),
-			ErrMsgStyle.Render(err.Error()),
+			ErrCodeStyle("Error"),
+			ErrMsgStyle(err.Error()),
 		)
 	}
 
@@ -90,15 +107,15 @@ func PrintError(err error) {
 }
 
 func PrintTitle(title string) {
-	titleView := TitleStyle.Render(title)
+	titleView := TitleStyle(title)
 	fmt.Println(titleView)
 }
 
 func PrintSuccess(msg string) {
 	successView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		SuccessStyle.Render("✅ Success"),
-		SuccessMsgStyle.Render(msg),
+		SuccessStyle("✅ Success"),
+		SuccessMsgStyle(msg),
 	)
 	fmt.Println(successView)
 }
@@ -106,8 +123,8 @@ func PrintSuccess(msg string) {
 func PrintBucket(bucket t.Bucket) {
 	bucketView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle.Render(DateFormat(bucket.CreationDate)),
-		DirStyle.Render(fmt.Sprintf("%s/", bucket.Name)),
+		DateStyle(DateFormat(bucket.CreationDate)),
+		DirStyle(fmt.Sprintf("%s/", bucket.Name)),
 	)
 
 	fmt.Println(bucketView)
@@ -116,9 +133,9 @@ func PrintBucket(bucket t.Bucket) {
 func PrintCommonPrefix(commonPrefix t.CommonPrefix) {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle.Render(DateFormat(t.Timestamp(time.Now()))),
-		SizeStyle.Render(SizeFormat(0)),
-		DirStyle.Render(commonPrefix.Prefix),
+		DateStyle(DateFormat(t.Timestamp(time.Now()))),
+		SizeStyle(SizeFormat(0)),
+		DirStyle(commonPrefix.Prefix),
 	)
 
 	fmt.Println(objectView)
@@ -127,9 +144,9 @@ func PrintCommonPrefix(commonPrefix t.CommonPrefix) {
 func PrintObject(object t.Object) {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle.Render(DateFormat(object.LastModified)),
-		SizeStyle.Render(SizeFormat(object.Size)),
-		FileStyle.Render(object.Key),
+		DateStyle(DateFormat(object.LastModified)),
+		SizeStyle(SizeFormat(object.Size)),
+		FileStyle(object.Key),
 	)
 
 	fmt.Println(objectView)
