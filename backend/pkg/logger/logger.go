@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"io"
 	"log/slog"
 	"os"
 	"time"
@@ -10,26 +11,47 @@ import (
 	"github.com/lmittmann/tint"
 )
 
-const defaultLogLevel = slog.LevelInfo
+const DefaultLogLevel = slog.LevelInfo
 
-var defaultLogOutput = os.Stderr
-var defaultTimeFormat = time.StampMilli
+var (
+	DefaultLogOutput  = os.Stderr
+	DefaultTimeFormat = time.StampMilli
+)
 
-var Level slog.LevelVar
-var AppLogger *slog.Logger
+var (
+	Level     slog.LevelVar
+	AppLogger *slog.Logger
+)
 
 type Option func(*slog.Logger)
 
+func Temporary(output io.Writer, opts ...Option) func() {
+	previous := slog.Default()
+
+	revert := func() {
+		AppLogger = previous
+		slog.SetDefault(AppLogger)
+	}
+
+	InitWithOutput(output, opts...)
+
+	return revert
+}
+
 func Init(opts ...Option) {
-	Level.Set(defaultLogLevel)
+	InitWithOutput(DefaultLogOutput, opts...)
+}
+
+func InitWithOutput(output io.Writer, opts ...Option) {
+	Level.Set(DefaultLogLevel)
 
 	AppLogger = slog.New(
 		tint.NewHandler(
-			defaultLogOutput,
+			output,
 			&tint.Options{
 				Level:      &Level,
-				TimeFormat: defaultTimeFormat,
-				NoColor:    !isatty.IsTerminal(defaultLogOutput.Fd()),
+				TimeFormat: DefaultTimeFormat,
+				NoColor:    !isatty.IsTerminal(os.Stdout.Fd()),
 			},
 		),
 	)
@@ -46,7 +68,7 @@ func WithDebugFlag(debug bool) Option {
 		return WithLevel(slog.LevelDebug)
 	}
 
-	return WithLevel(defaultLogLevel)
+	return WithLevel(DefaultLogLevel)
 }
 
 func WithLevel(level slog.Level) Option {
