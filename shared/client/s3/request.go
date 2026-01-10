@@ -1,8 +1,8 @@
 package s3
 
 import (
+	"bufio"
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
@@ -22,10 +23,7 @@ const DefaultRequestTimeout = 1 * time.Minute
 const DefaultRegion = "eu-west-1"
 
 func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(client.Ctx, DefaultRequestTimeout)
-	defer cancel()
-
-	r, err := http.NewRequestWithContext(ctx, method, rawURL, body)
+	r, err := http.NewRequestWithContext(client.Ctx, method, rawURL, body)
 	if err != nil {
 		return nil, err
 	}
@@ -96,6 +94,7 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 		r.Header.Set("Content-Type", "application/octet")
 		r.Header.Set("Content-Length", fmt.Sprint(enc.ContentLength()))
 		r.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprint(enc.Size))
+		r.Body = io.NopCloser(bufio.NewReaderSize(r.Body, config.S3.IO.BufferSize))
 	}
 
 	resp, err := http.DefaultClient.Do(r)
