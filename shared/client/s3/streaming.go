@@ -15,18 +15,20 @@ type ProgressCallback func(current, total int)
 type SigV4ChunkEncoder struct {
 	Src       io.ReadCloser
 	Size      int
+	TotalSize int
 	ChunkSize int
 	Callback  ProgressCallback
 
 	reader   *bufio.Reader
 	chunk    *auth.SigV4Chunk
 	chunkBuf []byte
+	done     bool
 
 	read int
 }
 
 func NewSigV4ChunkEncoder(src io.ReadCloser, size int, chunkSize int, callback ProgressCallback) *SigV4ChunkEncoder {
-	return &SigV4ChunkEncoder{
+	enc := &SigV4ChunkEncoder{
 		Src:       src,
 		Size:      size,
 		ChunkSize: chunkSize,
@@ -36,6 +38,10 @@ func NewSigV4ChunkEncoder(src io.ReadCloser, size int, chunkSize int, callback P
 			Ctx: &auth.SigV4Context{},
 		},
 	}
+
+	enc.TotalSize = enc.ContentLength()
+
+	return enc
 }
 
 func (enc *SigV4ChunkEncoder) ContentLength() int {
@@ -46,6 +52,7 @@ func (enc *SigV4ChunkEncoder) ContentLength() int {
 	nFirstChunks := enc.Size / enc.ChunkSize
 
 	chunkHeaderSize := len(strconv.FormatInt(int64(enc.ChunkSize), 16)) + fixedChunkHeaderSize + 2*crLfSize
+
 	lastChunkSize := enc.Size % enc.ChunkSize
 
 	var lastChunkHeaderSize int
@@ -79,17 +86,32 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 		enc.chunkBuf = enc.chunkBuf[n:]
 
 		enc.read += n
+		slog.Debug(
+			"sigv4 chunk encoder",
+			"enc.read", enc.read,
+			"enc.TotalSize", enc.TotalSize,
+			"pct", float64(enc.read)/float64(enc.TotalSize)*100,
+		)
+
 		if enc.Callback != nil {
-			enc.Callback(enc.read, enc.Size)
+			enc.Callback(enc.read, enc.TotalSize)
 		}
 
 		return n, nil
+	}
+
+	if enc.done {
+		return 0, io.EOF
 	}
 
 	enc.chunk.Data = make([]byte, enc.ChunkSize)
 	n, err := enc.reader.Read(enc.chunk.Data)
 	if err != nil && err != io.EOF {
 		return 0, err
+	}
+
+	if err == io.EOF {
+		enc.done = true
 	}
 
 	chunkSignature, err := auth.ComputeSignature(enc.chunk.Ctx.Credential, enc.chunk.BuildChunkStringToSign())
@@ -107,7 +129,7 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	chunkBuf.WriteString(";chunk-signature=")
 	chunkBuf.WriteString(enc.chunk.Header.Signature)
 	chunkBuf.WriteString("\r\n")
-	chunkBuf.Write(enc.chunk.Data)
+	chunkBuf.Write(enc.chunk.Data[:n])
 	chunkBuf.WriteString("\r\n")
 
 	enc.chunkBuf = chunkBuf.Bytes()
@@ -117,8 +139,15 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	enc.chunkBuf = enc.chunkBuf[n:]
 
 	enc.read += n
+	slog.Debug(
+		"sigv4 chunk encoder",
+		"enc.read", enc.read,
+		"enc.TotalSize", enc.TotalSize,
+		"pct", float64(enc.read)/float64(enc.TotalSize)*100,
+	)
+
 	if enc.Callback != nil {
-		enc.Callback(enc.read, enc.Size)
+		enc.Callback(enc.read, enc.TotalSize)
 	}
 
 	return n, nil
