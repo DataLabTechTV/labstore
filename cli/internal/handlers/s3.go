@@ -72,12 +72,13 @@ func (h *S3Handler) PutObject(bucket, key, localPath string) {
 
 	progressBar, err := tui.NewProgressBarModel()
 	go progressBar.Run()
+	defer progressBar.Close()
+
 	err = h.Client.PutObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
 		tui.PrintError(err)
 		return
 	}
 
-	<-progressBar.Done
 	tui.PrintSuccess(fmt.Sprintf("%s uploaded", localPath))
 }
