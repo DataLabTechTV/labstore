@@ -4,16 +4,19 @@ repos:
     hooks:
       - id: golangci-lint
         name: golangci-lint (backend)
+        files: ^backend/
         entry: bash -c "cd backend && golangci-lint run"
         language: system
         types: [go]
       - id: golangci-lint
         name: golangci-lint (cli)
+        files: ^cli/
         entry: bash -c "cd cli && golangci-lint run"
         language: system
         types: [go]
       - id: golangci-lint
         name: golangci-lint (client)
+        files: ^shared/client/
         entry: bash -c "cd shared/client && golangci-lint run"
         language: system
         types: [go]
