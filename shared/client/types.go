@@ -1,4 +1,4 @@
-package types
+package client
 
 type Progress struct {
 	Current int

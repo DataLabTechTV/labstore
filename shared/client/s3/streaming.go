@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
-	"github.com/IllumiKnowLabs/labstore/client/types"
+	"github.com/IllumiKnowLabs/labstore/client"
 )
 
 type SigV4ChunkEncoder struct {
@@ -17,7 +17,7 @@ type SigV4ChunkEncoder struct {
 	TotalSize int
 	ChunkSize int
 
-	progress chan<- types.Progress
+	progress chan<- client.Progress
 	reader   *bufio.Reader
 	chunk    *auth.SigV4Chunk
 	chunkBuf []byte
@@ -29,7 +29,7 @@ func NewSigV4ChunkEncoder(
 	src io.ReadCloser,
 	dataSize int,
 	chunkSize int,
-	progress chan<- types.Progress,
+	progress chan<- client.Progress,
 ) *SigV4ChunkEncoder {
 	enc := &SigV4ChunkEncoder{
 		Src:       src,
@@ -63,7 +63,7 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 		)
 
 		if enc.progress != nil {
-			enc.progress <- types.Progress{Current: enc.read, Total: enc.TotalSize}
+			enc.progress <- client.Progress{Current: enc.read, Total: enc.TotalSize}
 		}
 
 		return n, nil
@@ -116,7 +116,7 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	)
 
 	if enc.progress != nil {
-		enc.progress <- types.Progress{Current: enc.read, Total: enc.TotalSize}
+		enc.progress <- client.Progress{Current: enc.read, Total: enc.TotalSize}
 	}
 
 	return n, nil

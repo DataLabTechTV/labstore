@@ -11,7 +11,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
-	"github.com/IllumiKnowLabs/labstore/client/types"
+	"github.com/IllumiKnowLabs/labstore/client"
 )
 
 type S3Client struct {
@@ -214,7 +214,7 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListR
 	return out
 }
 
-func (client *S3Client) PutObject(bucket, key string, file *os.File, progress chan<- types.Progress) error {
+func (client *S3Client) PutObject(bucket, key string, file *os.File, progress chan<- client.Progress) error {
 	reqURL, err := client.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return err
