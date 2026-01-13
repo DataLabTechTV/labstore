@@ -111,10 +111,10 @@ func Handle(w http.ResponseWriter, err error) {
 	var iamErr *IAMError
 
 	if errors.As(err, &s3Err) {
-		slog.Error("s3 error", "err", s3Err)
+		slog.Error("s3 error", "status", s3Err.StatusCode, "err", s3Err)
 		helper.WriteXMLResponse(w, s3Err.StatusCode, s3Err)
 	} else if errors.As(err, &iamErr) {
-		slog.Error("iam error", "err", iamErr)
+		slog.Error("iam error", "status", iamErr.StatusCode, "err", iamErr)
 		helper.WriteXMLResponse(w, iamErr.StatusCode, IAMErrorResponse{
 			Error:     iamErr,
 			RequestId: iamErr.RequestId,
