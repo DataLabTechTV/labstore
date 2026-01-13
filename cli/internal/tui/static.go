@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -120,7 +120,7 @@ func PrintSuccess(msg string) {
 	fmt.Println(successView)
 }
 
-func PrintBucket(bucket t.Bucket) {
+func PrintBucket(bucket types.Bucket) {
 	bucketView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		DateStyle(DateFormat(bucket.CreationDate)),
@@ -130,10 +130,10 @@ func PrintBucket(bucket t.Bucket) {
 	fmt.Println(bucketView)
 }
 
-func PrintCommonPrefix(commonPrefix t.CommonPrefix) {
+func PrintCommonPrefix(commonPrefix types.CommonPrefix) {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle(DateFormat(t.Timestamp(time.Now()))),
+		DateStyle(DateFormat(types.Timestamp(time.Now()))),
 		SizeStyle(SizeFormat(0)),
 		DirStyle(commonPrefix.Prefix),
 	)
@@ -141,7 +141,7 @@ func PrintCommonPrefix(commonPrefix t.CommonPrefix) {
 	fmt.Println(objectView)
 }
 
-func PrintObject(object t.Object) {
+func PrintObject(object types.Object) {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		DateStyle(DateFormat(object.LastModified)),
@@ -157,6 +157,6 @@ func SizeFormat(size int64) string {
 	return p.Sprintf("%d B", size)
 }
 
-func DateFormat(date t.Timestamp) string {
-	return fmt.Sprintf("[%s]", time.Time(date).Format(t.ISO8601))
+func DateFormat(date types.Timestamp) string {
+	return fmt.Sprintf("[%s]", time.Time(date).Format(types.ISO8601))
 }
