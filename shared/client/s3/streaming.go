@@ -8,76 +8,45 @@ import (
 	"strconv"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
+	"github.com/IllumiKnowLabs/labstore/client/types"
 )
-
-type ProgressCallback func(current, total int)
 
 type SigV4ChunkEncoder struct {
 	Src       io.ReadCloser
-	Size      int
+	DataSize  int
 	TotalSize int
 	ChunkSize int
-	Callback  ProgressCallback
 
+	progress chan<- types.Progress
 	reader   *bufio.Reader
 	chunk    *auth.SigV4Chunk
 	chunkBuf []byte
+	read     int
 	done     bool
-
-	read int
 }
 
-func NewSigV4ChunkEncoder(src io.ReadCloser, size int, chunkSize int, callback ProgressCallback) *SigV4ChunkEncoder {
+func NewSigV4ChunkEncoder(
+	src io.ReadCloser,
+	dataSize int,
+	chunkSize int,
+	progress chan<- types.Progress,
+) *SigV4ChunkEncoder {
 	enc := &SigV4ChunkEncoder{
 		Src:       src,
-		Size:      size,
+		DataSize:  dataSize,
 		ChunkSize: chunkSize,
-		Callback:  callback,
-		reader:    bufio.NewReaderSize(src, chunkSize),
+
+		progress: progress,
+		reader:   bufio.NewReaderSize(src, chunkSize),
+
 		chunk: &auth.SigV4Chunk{
 			Ctx: &auth.SigV4Context{},
 		},
 	}
 
-	enc.TotalSize = enc.ContentLength()
+	enc.TotalSize = enc.calculateTotalSize()
 
 	return enc
-}
-
-func (enc *SigV4ChunkEncoder) ContentLength() int {
-	const crLfSize = 2
-	const signatureSize = 64
-	const fixedChunkHeaderSize = len(";chunk-signature=") + signatureSize
-
-	nFirstChunks := enc.Size / enc.ChunkSize
-
-	chunkHeaderSize := len(strconv.FormatInt(int64(enc.ChunkSize), 16)) + fixedChunkHeaderSize + 2*crLfSize
-
-	lastChunkSize := enc.Size % enc.ChunkSize
-
-	var lastChunkHeaderSize int
-	if lastChunkSize == 0 {
-		lastChunkHeaderSize = 0
-	} else {
-		lastChunkHeaderSize = len(strconv.FormatInt(int64(lastChunkSize), 16)) + fixedChunkHeaderSize + 2*crLfSize
-	}
-
-	emptyChunkHeaderSize := 1 + fixedChunkHeaderSize + 2*crLfSize
-
-	totalSize := nFirstChunks*chunkHeaderSize +
-		lastChunkHeaderSize +
-		emptyChunkHeaderSize +
-		enc.Size
-
-	slog.Debug(
-		"sigv4 chunk encoder",
-		"enc.Size", enc.Size,
-		"enc.chunkSize", enc.ChunkSize,
-		"lastChunkSize", lastChunkSize,
-		"totalSize", totalSize,
-	)
-
-	return totalSize
 }
 
 func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
@@ -93,8 +62,8 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 			"pct", float64(enc.read)/float64(enc.TotalSize)*100,
 		)
 
-		if enc.Callback != nil {
-			enc.Callback(enc.read, enc.TotalSize)
+		if enc.progress != nil {
+			enc.progress <- types.Progress{Current: enc.read, Total: enc.TotalSize}
 		}
 
 		return n, nil
@@ -146,8 +115,8 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 		"pct", float64(enc.read)/float64(enc.TotalSize)*100,
 	)
 
-	if enc.Callback != nil {
-		enc.Callback(enc.read, enc.TotalSize)
+	if enc.progress != nil {
+		enc.progress <- types.Progress{Current: enc.read, Total: enc.TotalSize}
 	}
 
 	return n, nil
@@ -155,4 +124,40 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 
 func (enc *SigV4ChunkEncoder) Close() error {
 	return enc.Src.Close()
+}
+
+func (enc *SigV4ChunkEncoder) calculateTotalSize() int {
+	const crLfSize = 2
+	const signatureSize = 64
+	const fixedChunkHeaderSize = len(";chunk-signature=") + signatureSize
+
+	nFirstChunks := enc.DataSize / enc.ChunkSize
+
+	chunkHeaderSize := len(strconv.FormatInt(int64(enc.ChunkSize), 16)) + fixedChunkHeaderSize + 2*crLfSize
+
+	lastChunkSize := enc.DataSize % enc.ChunkSize
+
+	var lastChunkHeaderSize int
+	if lastChunkSize == 0 {
+		lastChunkHeaderSize = 0
+	} else {
+		lastChunkHeaderSize = len(strconv.FormatInt(int64(lastChunkSize), 16)) + fixedChunkHeaderSize + 2*crLfSize
+	}
+
+	emptyChunkHeaderSize := 1 + fixedChunkHeaderSize + 2*crLfSize
+
+	totalSize := nFirstChunks*chunkHeaderSize +
+		lastChunkHeaderSize +
+		emptyChunkHeaderSize +
+		enc.DataSize
+
+	slog.Debug(
+		"sigv4 chunk encoder",
+		"enc.Size", enc.DataSize,
+		"enc.chunkSize", enc.ChunkSize,
+		"lastChunkSize", lastChunkSize,
+		"totalSize", totalSize,
+	)
+
+	return totalSize
 }
