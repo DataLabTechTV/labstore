@@ -6,7 +6,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 const (
@@ -32,10 +32,10 @@ type User struct {
 	PolicyIDs []string
 }
 
-func (user *User) Result() *t.UserResult {
+func (user *User) Result() *types.UserResult {
 	userPath := "/"
 
-	return &t.UserResult{
+	return &types.UserResult{
 		Path:     userPath,
 		UserName: user.Name,
 		UserId:   user.UserID,

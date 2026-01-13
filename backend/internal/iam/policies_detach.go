@@ -10,7 +10,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 func (store *Store) DetachUserPolicy(ctx context.Context, userName, policyArn string) error {
@@ -158,8 +158,8 @@ func DetachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &t.DetachUserPolicyResponse{
-		ResponseMetadata: &t.ResponseMetadata{
+	response := &types.DetachUserPolicyResponse{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}
@@ -202,8 +202,8 @@ func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &t.DetachUserPolicyResponse{
-		ResponseMetadata: &t.ResponseMetadata{
+	response := &types.DetachUserPolicyResponse{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

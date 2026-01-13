@@ -6,7 +6,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +24,7 @@ func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members := make([]*t.AttachedPoliciesMember, len(user.PolicyIDs))
+	members := make([]*types.AttachedPoliciesMember, len(user.PolicyIDs))
 	for i, policyID := range user.PolicyIDs {
 		policy, err := store.GetPolicyByID(ctx, policyID)
 		if err != nil {
@@ -32,20 +32,20 @@ func ListAttachedUserPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		members[i] = &t.AttachedPoliciesMember{
+		members[i] = &types.AttachedPoliciesMember{
 			PolicyName: policy.Name,
 			PolicyArn:  policy.Arn,
 		}
 	}
 
-	response := &t.ListAttachedUserPoliciesResponse{
-		ListAttachedUserPoliciesResult: &t.ListAttachedUserPoliciesResult{
-			AttachedPolicies: &t.AttachedPolicies{
+	response := &types.ListAttachedUserPoliciesResponse{
+		ListAttachedUserPoliciesResult: &types.ListAttachedUserPoliciesResult{
+			AttachedPolicies: &types.AttachedPolicies{
 				Member: members,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}
@@ -68,7 +68,7 @@ func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members := make([]*t.AttachedPoliciesMember, len(group.PolicyIDs))
+	members := make([]*types.AttachedPoliciesMember, len(group.PolicyIDs))
 	for i, policyID := range group.PolicyIDs {
 		policy, err := store.GetPolicyByID(ctx, policyID)
 		if err != nil {
@@ -76,20 +76,20 @@ func ListAttachedGroupPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		members[i] = &t.AttachedPoliciesMember{
+		members[i] = &types.AttachedPoliciesMember{
 			PolicyName: policy.Name,
 			PolicyArn:  policy.Arn,
 		}
 	}
 
-	response := &t.ListAttachedGroupPoliciesResponse{
-		ListAttachedGroupPoliciesResult: &t.ListAttachedGroupPoliciesResult{
-			AttachedPolicies: &t.AttachedPolicies{
+	response := &types.ListAttachedGroupPoliciesResponse{
+		ListAttachedGroupPoliciesResult: &types.ListAttachedGroupPoliciesResult{
+			AttachedPolicies: &types.AttachedPolicies{
 				Member: members,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

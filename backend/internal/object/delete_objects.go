@@ -11,11 +11,11 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
-func DeleteObjects(bucket string, r *t.DeleteObjectsRequest) *t.DeleteResult {
-	res := &t.DeleteResult{}
+func DeleteObjects(bucket string, r *types.DeleteObjectsRequest) *types.DeleteResult {
+	res := &types.DeleteResult{}
 	bucketPath := core.BucketSystemPath(bucket)
 
 	for _, obj := range r.Object {
@@ -31,7 +31,7 @@ func DeleteObjects(bucket string, r *t.DeleteObjectsRequest) *t.DeleteResult {
 			continue
 		}
 
-		deleted := t.DeletedObject{
+		deleted := types.DeletedObject{
 			DeleteMarker: false,
 			Key:          obj.Key,
 		}
@@ -52,7 +52,7 @@ func DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	bucket := r.PathValue("bucket")
 
-	var req t.DeleteObjectsRequest
+	var req types.DeleteObjectsRequest
 	err := helper.ReadXML(r.Body, &req)
 	if err != nil {
 		slog.Error("delete objects", "err", err)

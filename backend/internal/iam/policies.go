@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 const (
@@ -48,10 +48,10 @@ type Statement struct {
 	Resource Resources
 }
 
-func (policy *Policy) Result() *t.PolicyResult {
+func (policy *Policy) Result() *types.PolicyResult {
 	policyPath := "/"
 
-	return &t.PolicyResult{
+	return &types.PolicyResult{
 		PolicyName:       policy.Name,
 		DefaultVersionId: defaultPolicyVersion,
 		PolicyId:         policy.PolicyID,

@@ -11,18 +11,18 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 
 	"github.com/djherbis/times"
 )
 
-func ListBuckets(accessKey string) (*t.ListAllMyBucketsResult, error) {
+func ListBuckets(accessKey string) (*types.ListAllMyBucketsResult, error) {
 	entries, err := os.ReadDir(config.Storage.ObjectsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	res := t.ListAllMyBucketsResult{}
+	res := types.ListAllMyBucketsResult{}
 	res.Owner.ID = accessKey
 	res.Owner.DisplayName = accessKey
 
@@ -39,9 +39,9 @@ func ListBuckets(accessKey string) (*t.ListAllMyBucketsResult, error) {
 				birthDate = stat.BirthTime()
 			}
 
-			bucket := t.Bucket{
+			bucket := types.Bucket{
 				Name:         entry.Name(),
-				CreationDate: t.Timestamp(birthDate),
+				CreationDate: types.Timestamp(birthDate),
 			}
 			res.Buckets.Bucket = append(res.Buckets.Bucket, bucket)
 		}

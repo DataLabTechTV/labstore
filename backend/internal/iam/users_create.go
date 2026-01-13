@@ -9,7 +9,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
@@ -81,10 +81,10 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &t.CreateUserResponse{
-		CreateUserResult: &t.CreateUserResult{
+	response := &types.CreateUserResponse{
+		CreateUserResult: &types.CreateUserResult{
 			User: user.Result(),
-			ResponseMetadata: &t.ResponseMetadata{
+			ResponseMetadata: &types.ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},
 		},

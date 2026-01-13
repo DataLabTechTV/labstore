@@ -6,7 +6,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,24 +24,24 @@ func ListAccessKeysHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members := []*t.AccessKeyMetadataMember{}
+	members := []*types.AccessKeyMetadataMember{}
 	if user.AccessKeyID.Valid {
-		members = append(members, &t.AccessKeyMetadataMember{
+		members = append(members, &types.AccessKeyMetadataMember{
 			UserName:    user.Name,
 			AccessKeyId: user.AccessKeyID.String,
-			Status:      t.AccessKeyActive,
+			Status:      types.AccessKeyActive,
 		})
 	}
 
-	response := &t.ListAccessKeysResponse{
-		ListAccessKeysResult: &t.ListAccessKeysResult{
+	response := &types.ListAccessKeysResponse{
+		ListAccessKeysResult: &types.ListAccessKeysResult{
 			UserName: user.Name,
-			AccessKeyMetadata: &t.AccessKeyMetadata{
+			AccessKeyMetadata: &types.AccessKeyMetadata{
 				Member: members,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}
