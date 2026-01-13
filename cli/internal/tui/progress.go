@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
-	"github.com/IllumiKnowLabs/labstore/client/types"
+	"github.com/IllumiKnowLabs/labstore/client"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -26,7 +26,7 @@ type ProgressBarModel struct {
 	Bar            progress.Model
 	MaxConsoleSize int
 
-	Progress chan types.Progress
+	Progress chan client.Progress
 	Message  chan string
 	Done     chan struct{}
 
@@ -45,7 +45,7 @@ func NewProgressBarModel() (*ProgressBarModel, error) {
 		Bar:            progress.New(progress.WithDefaultGradient()),
 		MaxConsoleSize: defaultMaxConsoleSize,
 
-		Progress: make(chan types.Progress, 10),
+		Progress: make(chan client.Progress, 10),
 		Message:  make(chan string, 10),
 		Done:     make(chan struct{}),
 
