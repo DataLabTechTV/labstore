@@ -79,7 +79,22 @@ func NewBucketsCmd() *cobra.Command {
 		Short: "Handle S3 bucket operations",
 	}
 
+	cmd.AddCommand(NewBucketsCreateCmd())
 	cmd.AddCommand(NewBucketsListCmd())
+
+	return cmd
+}
+
+func NewBucketsCreateCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "create BUCKET",
+		Short: "Create an S3 bucket",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
+			handler.CreateBucket(args[0])
+		},
+	}
 
 	return cmd
 }
@@ -89,7 +104,7 @@ func NewBucketsListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List S3 buckets",
 		Run: func(cmd *cobra.Command, args []string) {
-			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
+			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
 			handler.ListBuckets()
 		},
 	}
@@ -119,7 +134,7 @@ func NewObjectsListCmd() *cobra.Command {
 		Short: "List S3 objects",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
+			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
 
 			bucket := args[0]
 
@@ -143,7 +158,7 @@ func NewObjectsPutCmd() *cobra.Command {
 		Short: "Put S3 object",
 		Args:  cobra.MinimumNArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
-			handler := cmd.Context().Value("handler").(*handlers.S3Handler)
+			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
 
 			bucket := args[0]
 			key := args[1]

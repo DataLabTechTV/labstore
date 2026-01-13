@@ -7,6 +7,18 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
 )
 
+func (h *S3Handler) CreateBucket(bucket string) {
+	tui.PrintTitle(fmt.Sprintf("CreateBucket: %s", bucket))
+
+	err := h.Client.CreateBucket(bucket)
+	if err != nil {
+		tui.PrintError(err)
+		return
+	}
+
+	tui.PrintSuccess("Bucket created")
+}
+
 func (h *S3Handler) ListObjects(bucket string, key *string) {
 	if key == nil {
 		key = helper.StringPtr("/")
