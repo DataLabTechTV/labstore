@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/display"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
 )
 
@@ -37,4 +38,22 @@ func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) {
 	}
 
 	tui.PrintStatus(code, fmt.Sprintf("%s uploaded", localPath))
+}
+
+func (h *S3Handler) HeadObject(bucket, key string) {
+	tui.PrintTitle(fmt.Sprintf("HeadObject: %s/%s", bucket, key))
+
+	out, err := h.Client.HeadObject(bucket, key)
+	if err != nil {
+		tui.PrintError(err)
+		return
+	}
+
+	meta := map[string]display.Meta{
+		"Content Type":   {Type: display.MetaTypeString, Value: out.ContentType},
+		"Content Length": {Type: display.MetaTypeSize, Value: out.ContentLength},
+		"Last Modified":  {Type: display.MetaTypeDate, Value: out.LastModified},
+	}
+
+	tui.PrintMetadata(out.StatusCode, meta)
 }
