@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
@@ -10,13 +11,34 @@ import (
 func (h *S3Handler) CreateBucket(bucket string) {
 	tui.PrintTitle(fmt.Sprintf("CreateBucket: %s", bucket))
 
-	err := h.Client.CreateBucket(bucket)
+	code, err := h.Client.CreateBucket(bucket)
 	if err != nil {
-		tui.PrintError(err)
+		tui.PrintStatusOrError(code, err)
 		return
 	}
 
-	tui.PrintSuccess("Bucket created")
+	tui.PrintStatus(code, "Bucket created")
+}
+
+func (h *S3Handler) HeadBucket(bucket string) {
+	tui.PrintTitle(fmt.Sprintf("HeadBucket: %s", bucket))
+
+	code, err := h.Client.HeadBucket(bucket)
+	if err != nil {
+		tui.PrintStatusOrError(code, err)
+		return
+	}
+
+	switch code {
+	case http.StatusForbidden:
+		tui.PrintStatus(code, "Bucket access denied")
+	case http.StatusNotFound:
+		tui.PrintStatus(code, "Bucket does not exist")
+	case http.StatusOK:
+		tui.PrintStatus(code, "Bucket access allowed")
+	default:
+		tui.PrintStatus(code, "Unknown status")
+	}
 }
 
 func (h *S3Handler) ListObjects(bucket string, key *string) {
