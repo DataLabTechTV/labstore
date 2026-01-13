@@ -7,6 +7,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/display"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -194,6 +195,10 @@ func PrintObject(object types.Object) {
 	)
 
 	fmt.Println(objectView)
+}
+
+func PrintMetadata(code int, meta map[string]display.Meta) {
+
 }
 
 func SizeFormat(size int64) string {
