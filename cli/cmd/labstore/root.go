@@ -13,7 +13,7 @@ import (
 
 func NewRootCmd() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   fmt.Sprintf("%s", strings.ToLower(constants.Name)),
+		Use:   strings.ToLower(constants.Name),
 		Short: fmt.Sprintf("%s, by %s", constants.Name, constants.Author),
 		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
 

@@ -46,6 +46,10 @@ func (h *S3Handler) PutObject(bucket, key, localPath string) {
 	}
 
 	progressBar, err := tui.NewProgressBarModel()
+	if err != nil {
+		tui.PrintError(err)
+		return
+	}
 	go progressBar.Run()
 	defer progressBar.Close()
 

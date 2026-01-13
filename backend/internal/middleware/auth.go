@@ -9,9 +9,9 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 )
 
-type ContextKey string
+type contextKey string
 
-const accessKeyCtx ContextKey = "accessKey"
+const accessKeyCtx contextKey = "accessKey"
 
 func GetRequestAccessKey(r *http.Request) string {
 	if accessKey := r.Context().Value(accessKeyCtx); accessKey != nil {

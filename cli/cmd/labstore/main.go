@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/spf13/cobra"
 )
 
@@ -18,5 +19,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	rootCmd.ExecuteContext(ctx)
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		helper.CheckFatal(rootCmd.Help())
+	}
 }
