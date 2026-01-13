@@ -63,3 +63,15 @@ func (h *S3Handler) ListObjects(bucket string, key *string) {
 		}
 	}
 }
+
+func (h *S3Handler) DeleteBucket(bucket string) {
+	tui.PrintTitle(fmt.Sprintf("DeleteBucket: %s", bucket))
+
+	code, err := h.Client.DeleteBucket(bucket)
+	if err != nil {
+		tui.PrintStatusOrError(code, err)
+		return
+	}
+
+	tui.PrintStatus(code, "Bucket deleted")
+}

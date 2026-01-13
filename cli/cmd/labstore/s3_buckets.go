@@ -80,7 +80,7 @@ func NewBucketsDeleteCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-			handler.HeadBucket(args[0])
+			handler.DeleteBucket(args[0])
 		},
 	}
 
