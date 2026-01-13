@@ -30,11 +30,11 @@ func (h *S3Handler) PutObject(bucket, key, localPath string) {
 	go progressBar.Run()
 	defer progressBar.Close()
 
-	err = h.Client.PutObject(bucket, key, file, progressBar.Progress)
+	code, err := h.Client.PutObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
-		tui.PrintError(err)
+		tui.PrintStatusOrError(code, err)
 		return
 	}
 
-	tui.PrintSuccess(fmt.Sprintf("%s uploaded", localPath))
+	tui.PrintStatus(code, fmt.Sprintf("%s uploaded", localPath))
 }

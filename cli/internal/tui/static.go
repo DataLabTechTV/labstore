@@ -17,6 +17,42 @@ const (
 )
 
 var (
+	codeStyle = lipgloss.NewStyle().
+			MarginRight(2).
+			Bold(true)
+
+	InfoCodeStyle = codeStyle.
+			Foreground(ActivePalette.TextPrimary).
+			Render
+
+	InfoMsgStyle = lipgloss.NewStyle().
+			Foreground(ActivePalette.TextPrimary).
+			Render
+
+	SuccessCodeStyle = codeStyle.
+				Foreground(ActivePalette.Success).
+				Render
+
+	SuccessMsgStyle = lipgloss.NewStyle().
+			Foreground(ActivePalette.TextPrimary).
+			Render
+
+	WarnCodeStyle = codeStyle.
+			Foreground(ActivePalette.Warning).
+			Render
+
+	WarnMsgStyle = lipgloss.NewStyle().
+			Foreground(ActivePalette.TextPrimary).
+			Render
+
+	ErrCodeStyle = codeStyle.
+			Foreground(ActivePalette.Error).
+			Render
+
+	ErrMsgStyle = lipgloss.NewStyle().
+			Foreground(ActivePalette.Accent).
+			Render
+
 	TitleStyle = lipgloss.NewStyle().
 			Width(MaxWidth).
 			Align(lipgloss.Center).
@@ -30,50 +66,59 @@ var (
 			Foreground(ActivePalette.TextMuted).
 			Render
 
-	SuccessStyle = lipgloss.NewStyle().
-			Width(25).
-			Align(lipgloss.Left).
-			Bold(true).
-			Foreground(ActivePalette.Success).
-			Render
-
-	SuccessMsgStyle = lipgloss.NewStyle().
-			Foreground(ActivePalette.TextPrimary).
-			Render
-
 	DateStyle = lipgloss.NewStyle().
 			Width(25).
-			Align(lipgloss.Left).
 			Foreground(ActivePalette.TextMuted).
 			Render
 
 	SizeStyle = lipgloss.NewStyle().
 			Width(20).
-			Align(lipgloss.Left).
 			Foreground(ActivePalette.AccentMuted).
 			Render
 
 	DirStyle = lipgloss.NewStyle().
 			Width(60).
-			Align(lipgloss.Left).
 			Foreground(ActivePalette.Accent).
 			Render
 
 	FileStyle = lipgloss.NewStyle().
 			Width(60).
-			Align(lipgloss.Left).
 			Foreground(ActivePalette.TextPrimary).
 			Render
-
-	ErrCodeStyle = lipgloss.NewStyle().
-			Width(25).
-			Foreground(ActivePalette.Error).
-			Render
-
-	ErrMsgStyle = lipgloss.NewStyle().
-			Foreground(ActivePalette.Accent).
-			Render
 )
+
+func PrintStatus(code int, msg string) {
+	var view string
+
+	switch {
+	case code >= 200 && code < 300:
+		view = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			SuccessCodeStyle(fmt.Sprintf("[%d OK]", code)),
+			SuccessMsgStyle(msg),
+		)
+	case code >= 300 && code < 400:
+		view = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			WarnCodeStyle(fmt.Sprintf("[%d Redirect]", code)),
+			WarnMsgStyle(msg),
+		)
+	case code >= 400 && code < 600:
+		view = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			ErrCodeStyle(fmt.Sprintf("[%d Error]", code)),
+			ErrMsgStyle(msg),
+		)
+	default:
+		view = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			InfoCodeStyle(fmt.Sprintf("[%d Info]", code)),
+			InfoMsgStyle(msg),
+		)
+	}
+
+	fmt.Println(view)
+}
 
 func PrintError(err error) {
 	var (
@@ -86,13 +131,13 @@ func PrintError(err error) {
 	case errors.As(err, &s3Error):
 		errView = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			ErrCodeStyle(s3Error.Code),
+			ErrCodeStyle(fmt.Sprintf("[%d S3 Error] %s", s3Error.StatusCode, s3Error.Code)),
 			ErrMsgStyle(s3Error.Message),
 		)
 	case errors.As(err, &iamError):
 		errView = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			ErrCodeStyle(iamError.Code),
+			ErrCodeStyle(fmt.Sprintf("[%d IAM Error] %s", iamError.StatusCode, iamError.Code)),
 			ErrMsgStyle(iamError.Message),
 		)
 	default:
@@ -106,18 +151,17 @@ func PrintError(err error) {
 	fmt.Println(errView)
 }
 
+func PrintStatusOrError(code int, err error) {
+	if code == 0 {
+		PrintError(err)
+	} else {
+		PrintStatus(code, err.Error())
+	}
+}
+
 func PrintTitle(title string) {
 	titleView := TitleStyle(title)
 	fmt.Println(titleView)
-}
-
-func PrintSuccess(msg string) {
-	successView := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		SuccessStyle("✅ Success"),
-		SuccessMsgStyle(msg),
-	)
-	fmt.Println(successView)
 }
 
 func PrintBucket(bucket types.Bucket) {

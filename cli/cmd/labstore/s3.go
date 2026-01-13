@@ -80,6 +80,7 @@ func NewBucketsCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewBucketsCreateCmd())
+	cmd.AddCommand(NewBucketsHeadCmd())
 	cmd.AddCommand(NewBucketsListCmd())
 
 	return cmd
@@ -93,6 +94,20 @@ func NewBucketsCreateCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
 			handler.CreateBucket(args[0])
+		},
+	}
+
+	return cmd
+}
+
+func NewBucketsHeadCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "head BUCKET",
+		Short: "Status for an S3 bucket",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
+			handler.HeadBucket(args[0])
 		},
 	}
 
