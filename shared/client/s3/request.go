@@ -92,8 +92,8 @@ func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser
 		enc.chunk.Ctx.Timestamp = sigV4Req.Timestamp
 		enc.chunk.Ctx.IsStreaming = true
 		r.Header.Set("Content-Type", "application/octet")
-		r.Header.Set("Content-Length", fmt.Sprint(enc.ContentLength()))
-		r.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprint(enc.Size))
+		r.Header.Set("Content-Length", fmt.Sprint(enc.TotalSize))
+		r.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprint(enc.DataSize))
 		r.Body = io.NopCloser(bufio.NewReaderSize(r.Body, config.S3.IO.BufferSize))
 	}
 
