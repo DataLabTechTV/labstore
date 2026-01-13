@@ -159,3 +159,29 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListR
 
 	return out
 }
+
+func (client *S3Client) DeleteBucket(bucket string) (int, error) {
+	reqURL, err := client.baseURL.Parse(bucket)
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err := client.DoSigV4Request("DELETE", reqURL.String(), nil)
+	if err != nil {
+		return 0, err
+	}
+	defer helper.CloseWithErr(resp.Body, &err)
+
+	if resp.StatusCode == http.StatusNoContent {
+		return resp.StatusCode, nil
+	}
+
+	var s3Err errs.S3Error
+	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+		return 0, err
+	}
+	s3Err.StatusCode = resp.StatusCode
+
+	return 0, &s3Err
+
+}
