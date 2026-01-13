@@ -3,122 +3,132 @@ package tui
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
-	"github.com/IllumiKnowLabs/labstore/client/s3"
+	"github.com/IllumiKnowLabs/labstore/client/types"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type ProgressMsg struct {
-	current, total int
+type progressMsg struct {
+	current int
+	total   int
 }
 
-type ConsoleMsg string
+type consoleMsg string
 
-type ProgressUI struct {
-	Width   int
-	Height  int
-	Bar     progress.Model
+type ProgressBarModel struct {
+	Bar progress.Model
+
 	Console []string
+
+	Progress chan types.Progress
+	Message  chan string
+
+	program *tea.Program
+	width   int
+	height  int
+
+	Done chan struct{}
 }
 
 type ConsoleWriter struct {
-	channel chan<- ConsoleMsg
+	channel chan<- string
 }
 
-func NewProgressBar() (s3.ProgressCallback, error) {
-	program := tea.NewProgram(
-		&ProgressUI{
-			Bar:     progress.New(progress.WithDefaultGradient()),
-			Console: make([]string, 0),
-		},
-	)
+func NewProgressBarModel() (*ProgressBarModel, error) {
+	m := &ProgressBarModel{
+		Bar:     progress.New(progress.WithDefaultGradient()),
+		Console: make([]string, 0),
 
-	progressCh := make(chan ProgressMsg, 10)
-	consoleCh := make(chan ConsoleMsg, 10)
+		Progress: make(chan types.Progress, 10),
+		Message:  make(chan string, 10),
 
-	callback := func(current, total int) {
-		progressCh <- ProgressMsg{current: current, total: total}
+		Done: make(chan struct{}),
 	}
 
-	output := ConsoleWriter{channel: consoleCh}
+	m.program = tea.NewProgram(m)
+
+	return m, nil
+}
+
+func (m *ProgressBarModel) Run() {
+	output := ConsoleWriter{channel: m.Message}
 	revert := logger.Temporary(output, logger.WithLevel(slog.LevelDebug))
+	defer revert()
+	defer close(m.Done)
 
 	go func() {
-		defer revert()
-
-		if _, err := program.Run(); err != nil {
-			slog.Error("progress bar", "err", err)
-			return
-		}
-
-		slog.Debug("end progress bar")
-	}()
-
-	go func() {
-		for msg := range progressCh {
-			program.Send(msg)
+		for msg := range m.Progress {
+			m.program.Send(progressMsg{
+				current: msg.Current,
+				total:   msg.Total,
+			})
 		}
 	}()
 
 	go func() {
-		for msg := range consoleCh {
-			program.Send(msg)
+		for msg := range m.Message {
+			m.program.Send(consoleMsg(msg))
 		}
 	}()
 
-	return callback, nil
+	if _, err := m.program.Run(); err != nil {
+		slog.Error("progress bar", "err", err)
+		return
+	}
+
+	slog.Debug("progress bar done")
 }
 
-func (ui ProgressUI) Init() tea.Cmd {
-	return nil
+func (m ProgressBarModel) Init() tea.Cmd {
+	return m.Bar.Init()
 }
 
-func (ui ProgressUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ProgressBarModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyCtrlC {
 			fmt.Println("SIGINT caught, upload canceled...")
-			os.Exit(1)
+			return m, tea.Quit
 		}
-		return ui, nil
+		return m, nil
 
 	case tea.WindowSizeMsg:
-		ui.Width, ui.Height = msg.Width, msg.Height
-		ui.Bar.Width = min(msg.Width, MaxWidth)
-		return ui, nil
+		m.width, m.height = msg.Width, msg.Height
+		m.Bar.Width = min(msg.Width, MaxWidth)
+		return m, nil
 
-	case ProgressMsg:
-		if ui.Bar.Percent() >= 1.0 {
-			return ui, tea.Quit
+	case progressMsg:
+		pct := float64(msg.current) / float64(msg.total)
+		cmd := m.Bar.SetPercent(pct)
+
+		if m.Bar.Percent() >= 1.0 {
+			return m, tea.Sequence(cmd, tea.Quit)
 		}
 
-		pct := float64(msg.current) / float64(msg.total)
-		cmd := ui.Bar.SetPercent(pct)
-		return ui, cmd
+		return m, cmd
 
-	case ConsoleMsg:
-		ui.Console = append(ui.Console, string(msg))
-		return ui, nil
+	case consoleMsg:
+		m.Console = append(m.Console, string(msg))
+		return m, nil
 
 	case progress.FrameMsg:
-		progressModel, cmd := ui.Bar.Update(msg)
-		ui.Bar = progressModel.(progress.Model)
-		return ui, cmd
+		progressModel, cmd := m.Bar.Update(msg)
+		m.Bar = progressModel.(progress.Model)
+		return m, cmd
 
 	default:
-		return ui, nil
+		return m, nil
 	}
 }
 
-func (ui ProgressUI) View() string {
+func (m ProgressBarModel) View() string {
 	wrappedLogs := lipgloss.NewStyle().
-		Width(ui.Width).
-		Render(strings.Join(ui.Console, "\n"))
+		Width(m.width).
+		Render(strings.Join(m.Console, "\n"))
 
 	barStyle := lipgloss.NewStyle().
 		Margin(1, 0, 2, 0).
@@ -127,12 +137,12 @@ func (ui ProgressUI) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		wrappedLogs,
-		barStyle(ui.Bar.View()),
+		barStyle(m.Bar.View()),
 	)
 }
 
 func (w ConsoleWriter) Write(buf []byte) (n int, err error) {
 	msg := strings.TrimRight(string(buf), "\n")
-	w.channel <- ConsoleMsg(msg)
+	w.channel <- msg
 	return len(buf), nil
 }
