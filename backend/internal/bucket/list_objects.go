@@ -19,7 +19,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 const DefaultDelimiter = "/"
@@ -146,11 +146,11 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	helper.WriteXMLResponse(w, http.StatusOK, res)
 }
 
-func ListObjects(r *ListObjectsRequest) (*t.ListBucketResult, error) {
+func ListObjects(r *ListObjectsRequest) (*types.ListBucketResult, error) {
 	slog.Debug("list objects", "request", r)
 
-	res := &t.ListBucketResult{
-		BaseListBucketResult: t.BaseListBucketResult{
+	res := &types.ListBucketResult{
+		BaseListBucketResult: types.BaseListBucketResult{
 			Name:        r.Bucket,
 			MaxKeys:     r.MaxKeys,
 			IsTruncated: false,
@@ -169,11 +169,11 @@ func ListObjects(r *ListObjectsRequest) (*t.ListBucketResult, error) {
 	return res, nil
 }
 
-func ListObjectsV2(r *ListObjectsRequestV2) (*t.ListBucketResultV2, error) {
+func ListObjectsV2(r *ListObjectsRequestV2) (*types.ListBucketResultV2, error) {
 	slog.Debug("list objects v2", "request", r)
 
-	res := &t.ListBucketResultV2{
-		BaseListBucketResult: t.BaseListBucketResult{
+	res := &types.ListBucketResultV2{
+		BaseListBucketResult: types.BaseListBucketResult{
 			Name:        r.Bucket,
 			MaxKeys:     r.MaxKeys,
 			IsTruncated: false,
@@ -195,7 +195,7 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*t.ListBucketResultV2, error) {
 }
 
 // Lists objects as Contents, and directories as CommonPrefixes, for a given fs path
-func list(res *t.BaseListBucketResult, req *BaseListObjectsRequest) error {
+func list(res *types.BaseListBucketResult, req *BaseListObjectsRequest) error {
 	bucketPath := core.BucketSystemPath(req.Bucket)
 
 	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
@@ -235,11 +235,11 @@ func list(res *t.BaseListBucketResult, req *BaseListObjectsRequest) error {
 
 		if info.IsDir() {
 			key += req.Delimiter
-			res.CommonPrefixes = append(res.CommonPrefixes, t.CommonPrefix{Prefix: key})
+			res.CommonPrefixes = append(res.CommonPrefixes, types.CommonPrefix{Prefix: key})
 			continue
 		}
 
-		lastModified := t.Timestamp(info.ModTime())
+		lastModified := types.Timestamp(info.ModTime())
 
 		file, err := os.Open(path)
 		if err != nil {
@@ -254,8 +254,8 @@ func list(res *t.BaseListBucketResult, req *BaseListObjectsRequest) error {
 
 		size := info.Size()
 
-		obj := t.Object{
-			BaseObject: t.BaseObject{
+		obj := types.Object{
+			BaseObject: types.BaseObject{
 				Key:          key,
 				LastModified: lastModified,
 				ETag:         eTag,

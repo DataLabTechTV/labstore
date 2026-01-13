@@ -9,7 +9,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 func (store *Store) DeleteGroup(ctx context.Context, name string) error {
@@ -55,8 +55,8 @@ func DeleteGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &t.DeleteGroupResponse{
-		ResponseMetadata: &t.ResponseMetadata{
+	response := &types.DeleteGroupResponse{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

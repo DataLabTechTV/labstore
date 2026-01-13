@@ -9,7 +9,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 func (store *Store) GetUserByName(ctx context.Context, name string) (*User, error) {
@@ -125,11 +125,11 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &t.GetUserResponse{
-		GetUserResult: &t.GetUserResult{
+	response := &types.GetUserResponse{
+		GetUserResult: &types.GetUserResult{
 			User: user.Result(),
 		},
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

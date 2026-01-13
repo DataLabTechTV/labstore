@@ -12,7 +12,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 // Creates an access key and returns the secret key in plain text
@@ -83,15 +83,15 @@ func CreateAccessKeyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &t.CreateAccessKeyResponse{
-		CreateAccessKeyResult: &t.CreateAccessKeyResult{
-			AccessKey: &t.AccessKeyResult{
+	response := &types.CreateAccessKeyResponse{
+		CreateAccessKeyResult: &types.CreateAccessKeyResult{
+			AccessKey: &types.AccessKeyResult{
 				UserName:        user.Name,
 				AccessKeyId:     user.AccessKeyID.String,
-				Status:          t.AccessKeyActive,
+				Status:          types.AccessKeyActive,
 				SecretAccessKey: secretKey,
 			},
-			ResponseMetadata: &t.ResponseMetadata{
+			ResponseMetadata: &types.ResponseMetadata{
 				RequestId: core.NewRequestID(),
 			},
 		},

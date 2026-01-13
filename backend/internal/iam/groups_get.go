@@ -9,7 +9,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 func (store *Store) GetGroupByName(ctx context.Context, name string) (*Group, error) {
@@ -131,20 +131,20 @@ func GetGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userResults := make([]*t.UserResult, len(users))
+	userResults := make([]*types.UserResult, len(users))
 	for i, user := range users {
 		userResults[i] = user.Result()
 	}
 
-	response := &t.GetGroupResponse{
-		GetGroupResult: &t.GetGroupResult{
+	response := &types.GetGroupResponse{
+		GetGroupResult: &types.GetGroupResult{
 			Group: group.Result(),
-			Users: &t.UserMembers{
+			Users: &types.UserMembers{
 				Member: userResults,
 			},
 			IsTruncated: false,
 		},
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

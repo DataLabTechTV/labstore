@@ -11,10 +11,10 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
-func GetObject(bucket, key string) (*t.GetObjectResult, error) {
+func GetObject(bucket, key string) (*types.GetObjectResult, error) {
 	bucketPath := core.BucketSystemPath(bucket)
 
 	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
@@ -45,7 +45,7 @@ func GetObject(bucket, key string) (*t.GetObjectResult, error) {
 		return nil, err
 	}
 
-	res := &t.GetObjectResult{
+	res := &types.GetObjectResult{
 		Content:      file,
 		ObjectSize:   int(info.Size()),
 		DateModified: info.ModTime(),

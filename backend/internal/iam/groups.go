@@ -3,7 +3,7 @@ package iam
 import (
 	"time"
 
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 const (
@@ -25,10 +25,10 @@ type Group struct {
 	PolicyIDs []string
 }
 
-func (group *Group) Result() *t.GroupResult {
+func (group *Group) Result() *types.GroupResult {
 	groupPath := "/"
 
-	return &t.GroupResult{
+	return &types.GroupResult{
 		Path:      groupPath,
 		GroupName: group.Name,
 		GroupId:   group.GroupID,

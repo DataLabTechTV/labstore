@@ -10,14 +10,14 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
 type AddUserToGroupResponse struct {
 	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ AddUserToGroupResponse"`
-	ResponseMetadata *t.ResponseMetadata
+	ResponseMetadata *types.ResponseMetadata
 }
 
 func (store *Store) AddUserToGroup(ctx context.Context, userName, groupName string) error {
@@ -88,7 +88,7 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := &AddUserToGroupResponse{
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

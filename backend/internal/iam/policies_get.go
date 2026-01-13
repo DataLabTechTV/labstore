@@ -11,7 +11,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 func (store *Store) GetPolicyByArn(ctx context.Context, arn string) (*Policy, error) {
@@ -132,11 +132,11 @@ func GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &t.GetPolicyResponse{
-		GetPolicyResult: &t.GetPolicyResult{
+	response := &types.GetPolicyResponse{
+		GetPolicyResult: &types.GetPolicyResult{
 			Policy: policy.Result(),
 		},
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}

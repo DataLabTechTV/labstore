@@ -11,12 +11,12 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	t "github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
 type RemoveUserFromGroupResponse struct {
 	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ RemoveUserFromGroupResponse"`
-	ResponseMetadata *t.ResponseMetadata
+	ResponseMetadata *types.ResponseMetadata
 }
 
 func (store *Store) RemoveUserFromGroup(ctx context.Context, userName, groupName string) error {
@@ -104,7 +104,7 @@ func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := &RemoveUserFromGroupResponse{
-		ResponseMetadata: &t.ResponseMetadata{
+		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
 	}
