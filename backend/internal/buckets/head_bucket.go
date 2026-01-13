@@ -1,4 +1,4 @@
-package bucket
+package buckets
 
 import (
 	"net/http"
