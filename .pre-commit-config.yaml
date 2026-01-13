@@ -7,3 +7,13 @@ repos:
         entry: bash -c "cd backend && golangci-lint run"
         language: system
         types: [go]
+      - id: golangci-lint
+        name: golangci-lint (cli)
+        entry: bash -c "cd cli && golangci-lint run"
+        language: system
+        types: [go]
+      - id: golangci-lint
+        name: golangci-lint (client)
+        entry: bash -c "cd shared/client && golangci-lint run"
+        language: system
+        types: [go]

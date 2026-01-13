@@ -37,7 +37,7 @@ func Init() {
 			DefaultProfile: helper.StringPtr("default"),
 			Profiles:       map[string]*Profile{},
 		}
-		credentials.Save()
+		helper.CheckFatal(credentials.Save())
 	}
 }
 
