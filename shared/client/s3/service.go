@@ -33,6 +33,7 @@ func (client *S3Client) ListBuckets() ([]types.Bucket, error) {
 	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
 		return nil, err
 	}
+	s3Err.StatusCode = resp.StatusCode
 
 	return nil, &s3Err
 }
