@@ -25,6 +25,7 @@ type consoleMsg string
 type ProgressBarModel struct {
 	Bar            progress.Model
 	MaxConsoleSize int
+	Debug          bool
 
 	Progress chan client.Progress
 	Message  chan string
@@ -40,10 +41,11 @@ type ConsoleWriter struct {
 	channel chan<- string
 }
 
-func NewProgressBarModel() (*ProgressBarModel, error) {
+func NewProgressBarModel(debug bool) (*ProgressBarModel, error) {
 	m := &ProgressBarModel{
 		Bar:            progress.New(progress.WithDefaultGradient()),
 		MaxConsoleSize: defaultMaxConsoleSize,
+		Debug:          debug,
 
 		Progress: make(chan client.Progress, 10),
 		Message:  make(chan string, 10),
@@ -103,18 +105,25 @@ func (m *ProgressBarModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *ProgressBarModel) View() string {
-	wrappedLogs := lipgloss.NewStyle().
-		Width(m.width).
-		Render(strings.Join(m.console, "\n"))
+	rows := []string{}
+
+	if len(m.console) > 0 {
+		wrappedLogs := lipgloss.NewStyle().
+			Width(m.width).
+			MarginBottom(1).
+			Render(strings.Join(m.console, "\n"))
+		rows = append(rows, wrappedLogs)
+	}
 
 	barStyle := lipgloss.NewStyle().
-		Margin(1, 0, 2, 0).
+		MarginBottom(2).
 		Render
+
+	rows = append(rows, barStyle(m.Bar.View()))
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		wrappedLogs,
-		barStyle(m.Bar.View()),
+		rows...,
 	)
 }
 
@@ -125,7 +134,7 @@ func (m *ProgressBarModel) Run() {
 	wg.Add(2)
 
 	output := ConsoleWriter{channel: m.Message}
-	revert := logger.Temporary(output, logger.WithLevel(slog.LevelDebug))
+	revert := logger.Temporary(output, logger.WithDebugFlag(m.Debug))
 
 	go func() {
 		defer wg.Done()

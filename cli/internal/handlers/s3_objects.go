@@ -8,7 +8,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
 )
 
-func (h *S3Handler) PutObject(bucket, key, localPath string) {
+func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) {
 	if !helper.FileExists(localPath) {
 		tui.PrintError(fmt.Errorf("file not found: %s", localPath))
 		return
@@ -22,7 +22,7 @@ func (h *S3Handler) PutObject(bucket, key, localPath string) {
 		return
 	}
 
-	progressBar, err := tui.NewProgressBarModel()
+	progressBar, err := tui.NewProgressBarModel(debug)
 	if err != nil {
 		tui.PrintError(err)
 		return
