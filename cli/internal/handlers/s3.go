@@ -70,14 +70,14 @@ func (h *S3Handler) PutObject(bucket, key, localPath string) {
 		return
 	}
 
-	// !FIXME: re-enable the progress bar ensuring the console printing covers the complete debug log
-	// progressCallback, err := tui.NewProgressBar()
-	// err = h.Client.PutObject(bucket, key, file, progressCallback)
-	err = h.Client.PutObject(bucket, key, file, func(a, b int) {})
+	progressBar, err := tui.NewProgressBarModel()
+	go progressBar.Run()
+	err = h.Client.PutObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
 		tui.PrintError(err)
 		return
 	}
 
+	<-progressBar.Done
 	tui.PrintSuccess(fmt.Sprintf("%s uploaded", localPath))
 }
