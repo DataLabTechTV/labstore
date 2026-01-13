@@ -12,7 +12,7 @@ CLI_CMD := $(BIN_DIR)/labstore
 
 CLIENT_DIR := shared/client
 
-.PHONY: all backend cli web build run profile test clean
+.PHONY: all backend cli web build run profile test clean-debug clean-bin clean-web clean
 
 all: build
 
@@ -63,6 +63,13 @@ profile: backend
 test: $(BACKEND_TEST_SRCS)
 	cd $(BACKEND_DIR) && go test ./... | grep -v '\[no test files\]'
 
-clean:
-	rm -rf $(BIN_DIR)
+clean-debug:
+	find . -type f -name '__debug_bin*' -delete
+
+clean-bin:
+	rm -rf $(BIN_DIR)/
+
+clean-web:
 	rm -rf $(WEB_DIR)/node_modules $(WEB_DIR)/.svelte-kit $(WEB_BUILD_DIR)
+
+clean: clean-debug clean-bin clean-web
