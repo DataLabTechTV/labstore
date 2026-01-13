@@ -9,6 +9,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 )
 
@@ -17,6 +18,10 @@ func DeleteBucket(bucket string) error {
 
 	if !security.IsSubdir(config.Storage.ObjectsPath, path) {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: bucket}
+	}
+
+	if !helper.FileExists(path) {
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypeBucket, Resource: bucket}
 	}
 
 	err := os.RemoveAll(path)
