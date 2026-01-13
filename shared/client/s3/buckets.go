@@ -23,6 +23,30 @@ func (lr *ListResult) IsCommonPrefix() bool {
 	return lr.CommonPrefix != nil && lr.Object == nil
 }
 
+func (client *S3Client) CreateBucket(bucket string) error {
+	reqURL, err := client.baseURL.Parse(bucket)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.DoSigV4Request("PUT", reqURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	defer helper.CloseWithErr(resp.Body, &err)
+
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	var s3Err errs.S3Error
+	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+		return err
+	}
+
+	return &s3Err
+}
+
 func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListResult {
 	out := make(chan ListResult)
 
