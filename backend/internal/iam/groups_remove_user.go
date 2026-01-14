@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -13,11 +12,6 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
-
-type RemoveUserFromGroupResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ RemoveUserFromGroupResponse"`
-	ResponseMetadata *types.ResponseMetadata
-}
 
 func (store *Store) RemoveUserFromGroup(ctx context.Context, userName, groupName string) error {
 	group, err := store.GetGroupByName(ctx, groupName)
@@ -103,7 +97,7 @@ func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &RemoveUserFromGroupResponse{
+	response := &types.RemoveUserFromGroupResponse{
 		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
