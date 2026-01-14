@@ -1,7 +1,6 @@
 package format
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
@@ -14,6 +13,6 @@ func Size(size int64) string {
 	return p.Sprintf("%d B", size)
 }
 
-func Date(date types.Timestamp) string {
-	return fmt.Sprintf("[%s]", time.Time(date).Format(types.ISO8601))
+func Date(date time.Time) string {
+	return date.Format(types.ISO8601)
 }

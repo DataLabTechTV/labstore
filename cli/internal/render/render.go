@@ -3,6 +3,7 @@ package render
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
@@ -158,10 +159,14 @@ func Title(title string) string {
 	return titleView
 }
 
+func Date(date time.Time) string {
+	return fmt.Sprintf("[%s]", format.Date(date))
+}
+
 func Bucket(bucket types.Bucket) string {
 	bucketView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle(format.Date(bucket.CreationDate)),
+		DateStyle(Date(time.Time(bucket.CreationDate))),
 		DirStyle(fmt.Sprintf("%s/", bucket.Name)),
 	)
 
@@ -171,7 +176,7 @@ func Bucket(bucket types.Bucket) string {
 func CommonPrefix(commonPrefix types.CommonPrefix) string {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle(format.Date(types.Timestamp(time.Now()))),
+		DateStyle(Date(time.Now())),
 		SizeStyle(format.Size(0)),
 		DirStyle(commonPrefix.Prefix),
 	)
@@ -182,7 +187,7 @@ func CommonPrefix(commonPrefix types.CommonPrefix) string {
 func Object(object types.Object) string {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle(format.Date(object.LastModified)),
+		DateStyle(Date(time.Time(object.LastModified))),
 		SizeStyle(format.Size(object.Size)),
 		FileStyle(object.Key),
 	)
@@ -190,6 +195,42 @@ func Object(object types.Object) string {
 	return objectView
 }
 
-func Metadata(code int, meta map[string]Meta) string {
-	return ""
+func Metadata(code int, metadata map[string]Meta) string {
+	metaLabelStyle := lipgloss.NewStyle().
+		Width(20).
+		Bold(true).
+		Align(lipgloss.Right).
+		PaddingRight(1).
+		MarginRight(2).
+		Background(ActivePalette.Surface).
+		Foreground(ActivePalette.TextPrimary).
+		Render
+
+	MetaValueStyle := lipgloss.NewStyle().
+		Foreground(ActivePalette.AccentMuted).
+		Render
+
+	rows := []string{}
+
+	labels := make([]string, 0, len(metadata))
+	for label := range metadata {
+		labels = append(labels, label)
+	}
+	slices.Sort(labels)
+
+	for _, label := range labels {
+		metaRow := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			metaLabelStyle(label),
+			MetaValueStyle(metadata[label].Render()),
+		)
+		rows = append(rows, metaRow)
+	}
+
+	metaView := lipgloss.JoinVertical(
+		lipgloss.Left,
+		rows...,
+	)
+
+	return metaView + "\n"
 }
