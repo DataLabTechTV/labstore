@@ -11,6 +11,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"github.com/IllumiKnowLabs/labstore/client"
 )
 
@@ -146,4 +147,95 @@ func (c *S3Client) GetObject(bucket, key string, writer io.Writer, progress chan
 	s3Err.StatusCode = resp.StatusCode
 
 	return 0, &s3Err
+}
+
+func (c *S3Client) DeleteObject(bucket, key string) (int, error) {
+	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err := c.DoSigV4Request("DELETE", reqURL.String(), nil)
+	if err != nil {
+		return 0, err
+	}
+	defer helper.CloseWithErr(resp.Body, &err)
+
+	if resp.StatusCode == http.StatusNoContent {
+		return resp.StatusCode, nil
+	}
+
+	var s3Err errs.S3Error
+	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+		return 0, err
+	}
+	s3Err.StatusCode = resp.StatusCode
+
+	return 0, &s3Err
+}
+
+func (c *S3Client) DeleteObjects(bucket string, keys ...string) (*types.DeleteResult, int, error) {
+	if len(keys) == 1 {
+		// Request DELETE /:bucket/:key
+		code, err := c.DeleteObject(bucket, keys[0])
+		if err != nil {
+			return nil, code, err
+		}
+		res := &types.DeleteResult{
+			Deleted: []types.DeletedObject{
+				{
+					DeleteMarker: false,
+					Key:          keys[0],
+				},
+			},
+		}
+		return res, code, nil
+	}
+
+	reqURL, err := c.baseURL.Parse(bucket)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	q := reqURL.Query()
+	q.Set("delete", "")
+	reqURL.RawQuery = q.Encode()
+
+	var objects []types.ObjectIdentifier
+	for _, key := range keys {
+		object := types.ObjectIdentifier{
+			BaseObject: types.BaseObject{
+				Key: key,
+			},
+		}
+		objects = append(objects, object)
+	}
+
+	req := &types.DeleteObjectsRequest{
+		Object: objects,
+		Quiet:  true,
+	}
+
+	xmlReader := io.NopCloser(client.XMLReader(req))
+	resp, err := c.DoSigV4Request("POST", reqURL.String(), xmlReader)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer helper.CloseWithErr(resp.Body, &err)
+
+	if resp.StatusCode == http.StatusOK {
+		var res types.DeleteResult
+		if err := helper.ReadXML(resp.Body, &res); err != nil {
+			return nil, 0, err
+		}
+		return &res, resp.StatusCode, nil
+	}
+
+	var s3Err errs.S3Error
+	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+		return nil, 0, err
+	}
+	s3Err.StatusCode = resp.StatusCode
+
+	return nil, 0, &s3Err
 }
