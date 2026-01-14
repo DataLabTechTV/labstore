@@ -1,17 +1,21 @@
 package handlers
 
-import "github.com/IllumiKnowLabs/labstore/cli/internal/render"
+import (
+	"fmt"
+
+	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
+)
 
 func (h *S3Handler) ListBuckets() {
-	render.Title("ListBuckets")
+	fmt.Println(render.Title("ListBuckets"))
 
 	buckets, err := h.Client.ListBuckets()
 	if err != nil {
-		render.Error(err)
+		fmt.Println(render.Error(err))
 		return
 	}
 
 	for _, bucket := range buckets {
-		render.Bucket(bucket)
+		fmt.Println(render.Bucket(bucket))
 	}
 }

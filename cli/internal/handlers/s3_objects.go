@@ -11,21 +11,21 @@ import (
 
 func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) {
 	if !helper.FileExists(localPath) {
-		render.Error(fmt.Errorf("file not found: %s", localPath))
+		fmt.Println(render.Error(fmt.Errorf("file not found: %s", localPath)))
 		return
 	}
 
-	render.Title(fmt.Sprintf("PutObject: %s/%s", bucket, key))
+	fmt.Println(render.Title(fmt.Sprintf("PutObject: %s/%s", bucket, key)))
 
 	file, err := os.Open(localPath)
 	if err != nil {
-		render.Error(err)
+		fmt.Println(render.Error(err))
 		return
 	}
 
 	progressBar, err := tui.NewProgressBarModel(debug)
 	if err != nil {
-		render.Error(err)
+		fmt.Println(render.Error(err))
 		return
 	}
 	go progressBar.Run()
@@ -33,19 +33,19 @@ func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) {
 
 	code, err := h.Client.PutObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
-		render.HttpStatusOrError(code, err)
+		fmt.Println(render.HttpStatusOrError(code, err))
 		return
 	}
 
-	render.HttpStatus(code, fmt.Sprintf("%s uploaded", localPath))
+	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%s uploaded", localPath)))
 }
 
 func (h *S3Handler) HeadObject(bucket, key string) {
-	render.Title(fmt.Sprintf("HeadObject: %s/%s", bucket, key))
+	fmt.Println(render.Title(fmt.Sprintf("HeadObject: %s/%s", bucket, key)))
 
 	out, err := h.Client.HeadObject(bucket, key)
 	if err != nil {
-		render.Error(err)
+		fmt.Println(render.Error(err))
 		return
 	}
 
@@ -55,5 +55,5 @@ func (h *S3Handler) HeadObject(bucket, key string) {
 		"Last Modified":  {Type: render.MetaTypeDate, Value: out.LastModified},
 	}
 
-	render.Metadata(out.StatusCode, meta)
+	fmt.Println(render.Metadata(out.StatusCode, meta))
 }
