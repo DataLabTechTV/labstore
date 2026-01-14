@@ -1,46 +1,108 @@
 package render
 
 import (
-	"fmt"
+	"slices"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/cli/internal/format"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
-type MetaType int
+type Number interface {
+	~float32 | ~float64 |
+		~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32
+}
 
-const (
-	MetaTypeSize MetaType = iota
-	MetaTypeDate
-	MetaTypeString
-)
+type Metadata map[string]Meta
 
 type Meta struct {
-	Type  MetaType
-	Value any
+	Value  any
+	Format func() string
 }
 
-func NewMetaString(str string) Meta {
-	return Meta{Type: MetaTypeString, Value: str}
-}
-
-func NewMetaDate(date time.Time) Meta {
-	return Meta{Type: MetaTypeDate, Value: date}
-}
-
-func NewMetaSize(size int64) Meta {
-	return Meta{Type: MetaTypeSize, Value: size}
-}
-
-func (m Meta) Render() string {
-	switch m.Type {
-	case MetaTypeString:
-		return m.Value.(string)
-	case MetaTypeDate:
-		return format.Date(m.Value.(time.Time))
-	case MetaTypeSize:
-		return format.Size(m.Value.(int64))
-	default:
-		return fmt.Sprint(m.Value)
+func NewString(value string) Meta {
+	return Meta{
+		Value: value,
+		Format: func() string {
+			return value
+		},
 	}
+}
+
+func NewDate(value time.Time) Meta {
+	return Meta{
+		Value: value,
+		Format: func() string {
+			return time.Time(value).Format(types.ISO8601)
+		},
+	}
+}
+
+func NewSize(value int64) Meta {
+	return Meta{
+		Value: value,
+		Format: func() string {
+			p := message.NewPrinter(language.English)
+			return p.Sprintf("%d B", value)
+		},
+	}
+}
+
+func NewNumber[T Number](value T) Meta {
+	return Meta{
+		Value: value,
+		Format: func() string {
+			p := message.NewPrinter(language.English)
+
+			switch val := any(value).(type) {
+			case float32, float64:
+				return p.Sprintf("%.6f", val)
+			default:
+				return p.Sprintf("%d", val)
+			}
+		},
+	}
+}
+
+func (metadata Metadata) Render() string {
+	metaLabelStyle := lipgloss.NewStyle().
+		Width(20).
+		Bold(true).
+		Align(lipgloss.Right).
+		PaddingRight(1).
+		MarginRight(2).
+		Background(ActivePalette.Surface).
+		Foreground(ActivePalette.TextPrimary).
+		Render
+
+	MetaValueStyle := lipgloss.NewStyle().
+		Foreground(ActivePalette.AccentMuted).
+		Render
+
+	rows := []string{}
+
+	labels := make([]string, 0, len(metadata))
+	for label := range metadata {
+		labels = append(labels, label)
+	}
+	slices.Sort(labels)
+
+	for _, label := range labels {
+		metaRow := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			metaLabelStyle(label),
+			MetaValueStyle(metadata[label].Format()),
+		)
+		rows = append(rows, metaRow)
+	}
+
+	metaView := lipgloss.JoinVertical(
+		lipgloss.Left,
+		rows...,
+	)
+
+	return metaView + "\n"
 }

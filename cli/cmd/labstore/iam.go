@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
+
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/handlers"
 	"github.com/IllumiKnowLabs/labstore/client/iam"
 	"github.com/spf13/cobra"
 )
@@ -10,8 +13,17 @@ func NewIAMCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "iam",
 		Short: "IAM client, designed for learning",
-		Run: func(cmd *cobra.Command, args []string) {
-			iam.Init()
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			client := iam.NewIAMClient(
+				cmd.Context(),
+				config.S3.Server.Host,
+				config.S3.Server.Port,
+			)
+
+			handler := handlers.NewIAMHandler(client)
+
+			ctx := context.WithValue(cmd.Context(), handlerKeyCtx, handler)
+			cmd.SetContext(ctx)
 		},
 	}
 
@@ -20,6 +32,10 @@ func NewIAMCmd() *cobra.Command {
 
 	cmd.Flags().String("iam-server-host", config.DefaultIAMServerHost, "Listening host for IAM server")
 	cmd.Flags().String("iam-server-port", config.DefaultIAMServerHost, "Listening port for IAM server")
+
+	cmd.AddCommand(NewUsersCmd())
+	cmd.AddCommand(NewGroupsCmd())
+	cmd.AddCommand(NewPoliciesCmd())
 
 	return cmd
 }

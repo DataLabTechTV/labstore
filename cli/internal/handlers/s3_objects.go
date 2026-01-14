@@ -50,13 +50,13 @@ func (h *S3Handler) HeadObject(bucket, key string) {
 		return
 	}
 
-	metadata := map[string]render.Meta{
-		"Content Type":   render.NewMetaString(out.ContentType),
-		"Content Length": render.NewMetaSize(out.ContentLength),
-		"Last Modified":  render.NewMetaDate(out.LastModified),
+	metadata := render.Metadata{
+		"Content Type":   render.NewString(out.ContentType),
+		"Content Length": render.NewSize(out.ContentLength),
+		"Last Modified":  render.NewDate(out.LastModified),
 	}
 
-	fmt.Println(render.Metadata(out.StatusCode, metadata))
+	fmt.Println(metadata.Render())
 }
 
 func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) {

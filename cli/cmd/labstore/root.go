@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type contextKey string
+
+const handlerKeyCtx contextKey = "handler"
+
 func NewRootCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   strings.ToLower(constants.Name),
