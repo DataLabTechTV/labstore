@@ -2,11 +2,13 @@ package s3
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/client"
@@ -19,8 +21,8 @@ type HeadObjectResponse struct {
 	StatusCode    int
 }
 
-func (client *S3Client) PutObject(bucket, key string, file *os.File, progress chan<- client.Progress) (int, error) {
-	reqURL, err := client.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
+func (c *S3Client) PutObject(bucket, key string, file *os.File, progress chan<- client.Progress) (int, error) {
+	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return 0, err
 	}
@@ -30,8 +32,8 @@ func (client *S3Client) PutObject(bucket, key string, file *os.File, progress ch
 		return 0, err
 	}
 
-	enc := NewSigV4ChunkEncoder(file, int(info.Size()), client.ChunkSize, progress)
-	resp, err := client.DoSigV4Request("PUT", reqURL.String(), enc)
+	enc := NewSigV4ChunkEncoder(file, int(info.Size()), c.ChunkSize, progress)
+	resp, err := c.DoSigV4Request("PUT", reqURL.String(), enc)
 	if err != nil {
 		return 0, err
 	}
@@ -48,16 +50,15 @@ func (client *S3Client) PutObject(bucket, key string, file *os.File, progress ch
 	s3Err.StatusCode = resp.StatusCode
 
 	return 0, &s3Err
-
 }
 
-func (client *S3Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
-	reqURL, err := client.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
+func (c *S3Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
+	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := client.DoSigV4Request("HEAD", reqURL.String(), nil)
+	resp, err := c.DoSigV4Request("HEAD", reqURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -90,4 +91,59 @@ func (client *S3Client) HeadObject(bucket, key string) (*HeadObjectResponse, err
 	s3Err.StatusCode = resp.StatusCode
 
 	return nil, &s3Err
+}
+
+func (c *S3Client) GetObject(bucket, key string, writer io.Writer, progress chan<- client.Progress) (int, error) {
+	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err := c.DoSigV4Request("GET", reqURL.String(), nil)
+	if err != nil {
+		return 0, err
+	}
+	defer helper.CloseWithErr(resp.Body, &err)
+
+	if resp.StatusCode == http.StatusOK {
+		size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
+		if err != nil {
+			return 0, err
+		}
+
+		buf := make([]byte, config.S3.IO.BufferSize)
+		read := 0
+		for {
+			n, err := resp.Body.Read(buf)
+
+			if n > 0 {
+				if _, writeErr := writer.Write(buf[:n]); writeErr != nil {
+					return 0, writeErr
+				}
+
+				read += n
+
+				if progress != nil {
+					progress <- client.Progress{Current: read, Total: size}
+				}
+			}
+
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return 0, err
+			}
+		}
+
+		return resp.StatusCode, nil
+	}
+
+	var s3Err errs.S3Error
+	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+		return 0, err
+	}
+	s3Err.StatusCode = resp.StatusCode
+
+	return 0, &s3Err
 }

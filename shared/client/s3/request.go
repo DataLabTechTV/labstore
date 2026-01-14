@@ -22,15 +22,15 @@ import (
 const DefaultRequestTimeout = 1 * time.Minute
 const DefaultRegion = "eu-west-1"
 
-func (client *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser) (*http.Response, error) {
-	r, err := http.NewRequestWithContext(client.Ctx, method, rawURL, body)
+func (c *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser) (*http.Response, error) {
+	r, err := http.NewRequestWithContext(c.Ctx, method, rawURL, body)
 	if err != nil {
 		return nil, err
 	}
 
 	credential := &auth.SigV4Credential{
-		AccessKey: client.AccessKey,
-		SecretKey: client.SecretKey,
+		AccessKey: c.AccessKey,
+		SecretKey: c.SecretKey,
 		Scope:     buildScope(),
 	}
 
