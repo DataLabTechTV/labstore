@@ -52,9 +52,9 @@ func NewS3Client(
 	return client
 }
 
-func (client *S3Client) IsDone() bool {
+func (c *S3Client) IsDone() bool {
 	select {
-	case <-client.Ctx.Done():
+	case <-c.Ctx.Done():
 		return true
 	default:
 		return false

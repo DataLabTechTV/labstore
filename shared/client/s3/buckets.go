@@ -23,13 +23,13 @@ func (lr *ListResult) IsCommonPrefix() bool {
 	return lr.CommonPrefix != nil && lr.Object == nil
 }
 
-func (client *S3Client) CreateBucket(bucket string) (int, error) {
-	reqURL, err := client.baseURL.Parse(bucket)
+func (c *S3Client) CreateBucket(bucket string) (int, error) {
+	reqURL, err := c.baseURL.Parse(bucket)
 	if err != nil {
 		return 0, err
 	}
 
-	resp, err := client.DoSigV4Request("PUT", reqURL.String(), nil)
+	resp, err := c.DoSigV4Request("PUT", reqURL.String(), nil)
 	if err != nil {
 		return 0, err
 	}
@@ -48,13 +48,13 @@ func (client *S3Client) CreateBucket(bucket string) (int, error) {
 	return 0, &s3Err
 }
 
-func (client *S3Client) HeadBucket(bucket string) (int, error) {
-	reqURL, err := client.baseURL.Parse(bucket)
+func (c *S3Client) HeadBucket(bucket string) (int, error) {
+	reqURL, err := c.baseURL.Parse(bucket)
 	if err != nil {
 		return 0, err
 	}
 
-	resp, err := client.DoSigV4Request("HEAD", reqURL.String(), nil)
+	resp, err := c.DoSigV4Request("HEAD", reqURL.String(), nil)
 	if err != nil {
 		return 0, err
 	}
@@ -63,13 +63,13 @@ func (client *S3Client) HeadBucket(bucket string) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListResult {
+func (c *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListResult {
 	out := make(chan ListResult)
 
 	go func() {
 		defer close(out)
 
-		reqURL, err := client.baseURL.Parse(bucket)
+		reqURL, err := c.baseURL.Parse(bucket)
 		if err != nil {
 			out <- ListResult{Err: err}
 			return
@@ -86,12 +86,12 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListR
 		reqURL.RawQuery = q.Encode()
 
 		for {
-			if client.IsDone() {
+			if c.IsDone() {
 				return
 			}
 
 			slog.Debug("list objects", "reqURL", reqURL)
-			resp, err := client.DoSigV4Request("GET", reqURL.String(), nil)
+			resp, err := c.DoSigV4Request("GET", reqURL.String(), nil)
 			if err != nil {
 				out <- ListResult{Err: err}
 				return
@@ -160,13 +160,13 @@ func (client *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListR
 	return out
 }
 
-func (client *S3Client) DeleteBucket(bucket string) (int, error) {
-	reqURL, err := client.baseURL.Parse(bucket)
+func (c *S3Client) DeleteBucket(bucket string) (int, error) {
+	reqURL, err := c.baseURL.Parse(bucket)
 	if err != nil {
 		return 0, err
 	}
 
-	resp, err := client.DoSigV4Request("DELETE", reqURL.String(), nil)
+	resp, err := c.DoSigV4Request("DELETE", reqURL.String(), nil)
 	if err != nil {
 		return 0, err
 	}

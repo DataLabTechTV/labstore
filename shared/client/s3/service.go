@@ -8,13 +8,13 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
-func (client *S3Client) ListBuckets() ([]types.Bucket, error) {
-	reqURL, err := client.baseURL.Parse("/")
+func (c *S3Client) ListBuckets() ([]types.Bucket, error) {
+	reqURL, err := c.baseURL.Parse("/")
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := client.DoSigV4Request("GET", reqURL.String(), nil)
+	resp, err := c.DoSigV4Request("GET", reqURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
