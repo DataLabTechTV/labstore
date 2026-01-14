@@ -20,7 +20,7 @@ const handlerKeyCtx contextKey = "handler"
 func NewS3Cmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "s3",
-		Short: "S3 client",
+		Short: "S3 client, designed for learning",
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			credentials.Init()

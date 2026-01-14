@@ -15,6 +15,7 @@ func NewObjectsCmd() *cobra.Command {
 	cmd.AddCommand(NewObjectsPutCmd())
 	cmd.AddCommand(NewObjectsHeadCmd())
 	cmd.AddCommand(NewObjectsGetCmd())
+	cmd.AddCommand(NewObjectsDeleteCmd())
 
 	return cmd
 }
@@ -69,6 +70,21 @@ func NewObjectsGetCmd() *cobra.Command {
 			debug := helper.Must(cmd.Flags().GetBool("debug"))
 
 			handler.GetObject(bucket, key, localPath, debug)
+		},
+	}
+
+	return cmd
+}
+
+func NewObjectsDeleteCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "delete BUCKET KEYS...",
+		Short: "Delete one or multiple S3 objects",
+		Long:  "Delete one or multiple S3 objects, either using DeleteObject (DELETE) or DeleteObjects (POST ?delete)",
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
+			handler.DeleteObjects(args[0], args[1:]...)
 		},
 	}
 
