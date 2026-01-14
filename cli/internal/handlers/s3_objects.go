@@ -86,3 +86,30 @@ func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) {
 
 	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%s downloaded", localPath)))
 }
+
+func (h *S3Handler) DeleteObjects(bucket string, keys ...string) {
+	if len(keys) == 1 {
+		fmt.Println(render.Title(fmt.Sprintf("DeleteObject: %s/%s", bucket, keys[0])))
+	} else {
+		fmt.Println(render.Title(fmt.Sprintf("DeleteObjects: %s (%d objects)", bucket, len(keys))))
+	}
+
+	res, code, err := h.Client.DeleteObjects(bucket, keys...)
+	if err != nil {
+		fmt.Println(render.HttpStatusOrError(code, err))
+		return
+	}
+
+	okCount := 0
+	for _, deleted := range res.Deleted {
+		fmt.Println(render.HttpStatus(code, deleted.Key))
+		okCount++
+	}
+
+	for _, s3Error := range res.Error {
+		s3Error.StatusCode = code
+		fmt.Println(render.Error(&s3Error))
+	}
+
+	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%d out of %d object(s) deleted", okCount, len(keys))))
+}

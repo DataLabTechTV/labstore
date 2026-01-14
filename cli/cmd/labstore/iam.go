@@ -9,7 +9,7 @@ import (
 func NewIAMCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "iam",
-		Short: "IAM client",
+		Short: "IAM client, designed for learning",
 		Run: func(cmd *cobra.Command, args []string) {
 			iam.Init()
 		},
