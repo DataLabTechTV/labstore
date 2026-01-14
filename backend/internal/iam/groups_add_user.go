@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -14,11 +13,6 @@ import (
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
-
-type AddUserToGroupResponse struct {
-	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ AddUserToGroupResponse"`
-	ResponseMetadata *types.ResponseMetadata
-}
 
 func (store *Store) AddUserToGroup(ctx context.Context, userName, groupName string) error {
 	user, err := store.GetUserByName(ctx, userName)
@@ -87,7 +81,7 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &AddUserToGroupResponse{
+	response := &types.AddUserToGroupResponse{
 		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},

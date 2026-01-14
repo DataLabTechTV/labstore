@@ -1,6 +1,8 @@
 package types
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
 type GroupResult struct {
 	Path      string
@@ -16,6 +18,11 @@ type CreateGroupResponse struct {
 
 type CreateGroupResult struct {
 	Group            *GroupResult
+	ResponseMetadata *ResponseMetadata
+}
+
+type AddUserToGroupResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ AddUserToGroupResponse"`
 	ResponseMetadata *ResponseMetadata
 }
 
@@ -37,5 +44,10 @@ type UserMembers struct {
 
 type DeleteGroupResponse struct {
 	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ DeleteGroupResponse"`
+	ResponseMetadata *ResponseMetadata
+}
+
+type RemoveUserFromGroupResponse struct {
+	XMLName          xml.Name `xml:"https://iam.amazonaws.com/doc/2010-05-08/ RemoveUserFromGroupResponse"`
 	ResponseMetadata *ResponseMetadata
 }

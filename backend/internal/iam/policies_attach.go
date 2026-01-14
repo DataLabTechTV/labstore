@@ -92,15 +92,15 @@ func (store *Store) AttachPolicy(ctx context.Context, arnType ArnType, policyArn
 }
 
 func AttachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	policyArn := r.Form.Get("PolicyArn")
-	if policyArn == "" {
-		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
-		return
-	}
-
 	userName := r.Form.Get("UserName")
 	if userName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
+		return
+	}
+
+	policyArn := r.Form.Get("PolicyArn")
+	if policyArn == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
 		return
 	}
 
@@ -127,15 +127,15 @@ func AttachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AttachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	policyArn := r.Form.Get("PolicyArn")
-	if policyArn == "" {
-		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
-		return
-	}
-
 	groupName := r.Form.Get("GroupName")
 	if groupName == "" {
 		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
+		return
+	}
+
+	policyArn := r.Form.Get("PolicyArn")
+	if policyArn == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
 		return
 	}
 
