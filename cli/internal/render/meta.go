@@ -1,4 +1,4 @@
-package display
+package render
 
 type MetaType int
 

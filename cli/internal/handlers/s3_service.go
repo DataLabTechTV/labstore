@@ -1,17 +1,17 @@
 package handlers
 
-import "github.com/IllumiKnowLabs/labstore/cli/internal/tui"
+import "github.com/IllumiKnowLabs/labstore/cli/internal/render"
 
 func (h *S3Handler) ListBuckets() {
-	tui.PrintTitle("ListBuckets")
+	render.Title("ListBuckets")
 
 	buckets, err := h.Client.ListBuckets()
 	if err != nil {
-		tui.PrintError(err)
+		render.Error(err)
 		return
 	}
 
 	for _, bucket := range buckets {
-		tui.PrintBucket(bucket)
+		render.Bucket(bucket)
 	}
 }

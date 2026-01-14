@@ -1,4 +1,4 @@
-package tui
+package render
 
 import (
 	"errors"
@@ -7,14 +7,8 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
-	"github.com/IllumiKnowLabs/labstore/cli/internal/display"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/format"
 	"github.com/charmbracelet/lipgloss"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
-)
-
-const (
-	MaxWidth = 80
 )
 
 var (
@@ -55,7 +49,7 @@ var (
 			Render
 
 	TitleStyle = lipgloss.NewStyle().
-			Width(MaxWidth).
+			Width(80).
 			Align(lipgloss.Center).
 			Margin(1, 0).
 			Bold(true).
@@ -88,7 +82,7 @@ var (
 			Render
 )
 
-func PrintStatus(code int, msg string) {
+func HttpStatus(code int, msg string) {
 	var view string
 
 	switch {
@@ -121,7 +115,7 @@ func PrintStatus(code int, msg string) {
 	fmt.Println(view)
 }
 
-func PrintError(err error) {
+func Error(err error) {
 	var (
 		s3Error  *errs.S3Error
 		iamError *errs.IAMError
@@ -152,60 +146,51 @@ func PrintError(err error) {
 	fmt.Println(errView)
 }
 
-func PrintStatusOrError(code int, err error) {
+func HttpStatusOrError(code int, err error) {
 	if code == 0 {
-		PrintError(err)
+		Error(err)
 	} else {
-		PrintStatus(code, err.Error())
+		HttpStatus(code, err.Error())
 	}
 }
 
-func PrintTitle(title string) {
+func Title(title string) {
 	titleView := TitleStyle(title)
 	fmt.Println(titleView)
 }
 
-func PrintBucket(bucket types.Bucket) {
+func Bucket(bucket types.Bucket) {
 	bucketView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle(DateFormat(bucket.CreationDate)),
+		DateStyle(format.Date(bucket.CreationDate)),
 		DirStyle(fmt.Sprintf("%s/", bucket.Name)),
 	)
 
 	fmt.Println(bucketView)
 }
 
-func PrintCommonPrefix(commonPrefix types.CommonPrefix) {
+func CommonPrefix(commonPrefix types.CommonPrefix) {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle(DateFormat(types.Timestamp(time.Now()))),
-		SizeStyle(SizeFormat(0)),
+		DateStyle(format.Date(types.Timestamp(time.Now()))),
+		SizeStyle(format.Size(0)),
 		DirStyle(commonPrefix.Prefix),
 	)
 
 	fmt.Println(objectView)
 }
 
-func PrintObject(object types.Object) {
+func Object(object types.Object) {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		DateStyle(DateFormat(object.LastModified)),
-		SizeStyle(SizeFormat(object.Size)),
+		DateStyle(format.Date(object.LastModified)),
+		SizeStyle(format.Size(object.Size)),
 		FileStyle(object.Key),
 	)
 
 	fmt.Println(objectView)
 }
 
-func PrintMetadata(code int, meta map[string]display.Meta) {
+func Metadata(code int, meta map[string]Meta) {
 
-}
-
-func SizeFormat(size int64) string {
-	p := message.NewPrinter(language.English)
-	return p.Sprintf("%d B", size)
-}
-
-func DateFormat(date types.Timestamp) string {
-	return fmt.Sprintf("[%s]", time.Time(date).Format(types.ISO8601))
 }
