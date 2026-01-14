@@ -23,7 +23,7 @@ func (lr *ListResult) IsCommonPrefix() bool {
 	return lr.CommonPrefix != nil && lr.Object == nil
 }
 
-func (c *S3Client) CreateBucket(bucket string) (int, error) {
+func (c *Client) CreateBucket(bucket string) (int, error) {
 	reqURL, err := c.baseURL.Parse(bucket)
 	if err != nil {
 		return 0, err
@@ -48,7 +48,7 @@ func (c *S3Client) CreateBucket(bucket string) (int, error) {
 	return 0, &s3Err
 }
 
-func (c *S3Client) HeadBucket(bucket string) (int, error) {
+func (c *Client) HeadBucket(bucket string) (int, error) {
 	reqURL, err := c.baseURL.Parse(bucket)
 	if err != nil {
 		return 0, err
@@ -63,7 +63,7 @@ func (c *S3Client) HeadBucket(bucket string) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func (c *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListResult {
+func (c *Client) ListObjects(bucket, key string, useV2 bool) <-chan ListResult {
 	out := make(chan ListResult)
 
 	go func() {
@@ -160,7 +160,7 @@ func (c *S3Client) ListObjects(bucket, key string, useV2 bool) <-chan ListResult
 	return out
 }
 
-func (c *S3Client) DeleteBucket(bucket string) (int, error) {
+func (c *Client) DeleteBucket(bucket string) (int, error) {
 	reqURL, err := c.baseURL.Parse(bucket)
 	if err != nil {
 		return 0, err
