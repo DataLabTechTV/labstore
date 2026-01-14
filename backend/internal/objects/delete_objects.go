@@ -25,6 +25,11 @@ func DeleteObjects(bucket string, r *types.DeleteObjectsRequest) *types.DeleteRe
 			res.Error = append(res.Error, *errs.S3AccessDenied())
 		}
 
+		if !helper.FileExists(objPath) {
+			res.Error = append(res.Error, *errs.S3NoSuchKey(obj.Key))
+			continue
+		}
+
 		err := os.RemoveAll(objPath)
 		if err != nil {
 			res.Error = append(res.Error, *errs.S3NoSuchKey(obj.Key))
