@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-type S3Client struct {
+type Client struct {
 	Ctx       context.Context
 	Host      string
 	Port      uint16
@@ -26,8 +26,8 @@ func NewS3Client(
 	secretKey string,
 	tls bool,
 	chunkSize int,
-) *S3Client {
-	client := &S3Client{
+) *Client {
+	client := &Client{
 		Ctx:       ctx,
 		Host:      host,
 		Port:      port,
@@ -52,7 +52,7 @@ func NewS3Client(
 	return client
 }
 
-func (c *S3Client) IsDone() bool {
+func (c *Client) IsDone() bool {
 	select {
 	case <-c.Ctx.Done():
 		return true

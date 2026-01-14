@@ -22,7 +22,7 @@ import (
 const DefaultRequestTimeout = 1 * time.Minute
 const DefaultRegion = "eu-west-1"
 
-func (c *S3Client) DoSigV4Request(method, rawURL string, body io.ReadCloser) (*http.Response, error) {
+func (c *Client) DoSigV4Request(method, rawURL string, body io.ReadCloser) (*http.Response, error) {
 	r, err := http.NewRequestWithContext(c.Ctx, method, rawURL, body)
 	if err != nil {
 		return nil, err

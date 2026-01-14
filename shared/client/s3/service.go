@@ -8,7 +8,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 )
 
-func (c *S3Client) ListBuckets() ([]types.Bucket, error) {
+func (c *Client) ListBuckets() ([]types.Bucket, error) {
 	reqURL, err := c.baseURL.Parse("/")
 	if err != nil {
 		return nil, err

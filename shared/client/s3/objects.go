@@ -22,7 +22,7 @@ type HeadObjectResponse struct {
 	StatusCode    int
 }
 
-func (c *S3Client) PutObject(bucket, key string, file *os.File, progress chan<- client.Progress) (int, error) {
+func (c *Client) PutObject(bucket, key string, file *os.File, progress chan<- client.Progress) (int, error) {
 	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return 0, err
@@ -53,7 +53,7 @@ func (c *S3Client) PutObject(bucket, key string, file *os.File, progress chan<- 
 	return 0, &s3Err
 }
 
-func (c *S3Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
+func (c *Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
 	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (c *S3Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
 	return nil, &s3Err
 }
 
-func (c *S3Client) GetObject(bucket, key string, writer io.Writer, progress chan<- client.Progress) (int, error) {
+func (c *Client) GetObject(bucket, key string, writer io.Writer, progress chan<- client.Progress) (int, error) {
 	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return 0, err
@@ -149,7 +149,7 @@ func (c *S3Client) GetObject(bucket, key string, writer io.Writer, progress chan
 	return 0, &s3Err
 }
 
-func (c *S3Client) DeleteObject(bucket, key string) (int, error) {
+func (c *Client) DeleteObject(bucket, key string) (int, error) {
 	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return 0, err
@@ -174,7 +174,7 @@ func (c *S3Client) DeleteObject(bucket, key string) (int, error) {
 	return 0, &s3Err
 }
 
-func (c *S3Client) DeleteObjects(bucket string, keys ...string) (*types.DeleteResult, int, error) {
+func (c *Client) DeleteObjects(bucket string, keys ...string) (*types.DeleteResult, int, error) {
 	if len(keys) == 1 {
 		// Request DELETE /:bucket/:key
 		code, err := c.DeleteObject(bucket, keys[0])
