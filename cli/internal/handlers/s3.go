@@ -5,10 +5,10 @@ import (
 )
 
 type S3Handler struct {
-	Client *s3.S3Client
+	Client *s3.Client
 }
 
-func NewS3Handler(client *s3.S3Client) *S3Handler {
+func NewS3Handler(client *s3.Client) *S3Handler {
 	return &S3Handler{
 		Client: client,
 	}

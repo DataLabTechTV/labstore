@@ -13,10 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type contextKey string
-
-const handlerKeyCtx contextKey = "handler"
-
 func NewS3Cmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "s3",
