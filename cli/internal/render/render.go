@@ -82,7 +82,7 @@ var (
 			Render
 )
 
-func HttpStatus(code int, msg string) {
+func HttpStatus(code int, msg string) string {
 	var view string
 
 	switch {
@@ -112,10 +112,10 @@ func HttpStatus(code int, msg string) {
 		)
 	}
 
-	fmt.Println(view)
+	return view
 }
 
-func Error(err error) {
+func Error(err error) string {
 	var (
 		s3Error  *errs.S3Error
 		iamError *errs.IAMError
@@ -143,33 +143,32 @@ func Error(err error) {
 		)
 	}
 
-	fmt.Println(errView)
+	return errView
 }
 
-func HttpStatusOrError(code int, err error) {
+func HttpStatusOrError(code int, err error) string {
 	if code == 0 {
-		Error(err)
-	} else {
-		HttpStatus(code, err.Error())
+		return Error(err)
 	}
+	return HttpStatus(code, err.Error())
 }
 
-func Title(title string) {
+func Title(title string) string {
 	titleView := TitleStyle(title)
-	fmt.Println(titleView)
+	return titleView
 }
 
-func Bucket(bucket types.Bucket) {
+func Bucket(bucket types.Bucket) string {
 	bucketView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		DateStyle(format.Date(bucket.CreationDate)),
 		DirStyle(fmt.Sprintf("%s/", bucket.Name)),
 	)
 
-	fmt.Println(bucketView)
+	return bucketView
 }
 
-func CommonPrefix(commonPrefix types.CommonPrefix) {
+func CommonPrefix(commonPrefix types.CommonPrefix) string {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		DateStyle(format.Date(types.Timestamp(time.Now()))),
@@ -177,10 +176,10 @@ func CommonPrefix(commonPrefix types.CommonPrefix) {
 		DirStyle(commonPrefix.Prefix),
 	)
 
-	fmt.Println(objectView)
+	return objectView
 }
 
-func Object(object types.Object) {
+func Object(object types.Object) string {
 	objectView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		DateStyle(format.Date(object.LastModified)),
@@ -188,9 +187,9 @@ func Object(object types.Object) {
 		FileStyle(object.Key),
 	)
 
-	fmt.Println(objectView)
+	return objectView
 }
 
-func Metadata(code int, meta map[string]Meta) {
-
+func Metadata(code int, meta map[string]Meta) string {
+	return ""
 }
