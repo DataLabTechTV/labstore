@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
@@ -56,4 +57,32 @@ func (h *S3Handler) HeadObject(bucket, key string) {
 	}
 
 	fmt.Println(render.Metadata(out.StatusCode, metadata))
+}
+
+func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) {
+	fmt.Println(render.Title(fmt.Sprintf("GetObject: %s/%s", bucket, key)))
+
+	file, err := os.Create(localPath)
+	if err != nil {
+		fmt.Println(render.Error(err))
+		return
+	}
+	defer helper.CloseWithErr(file, &err)
+
+	progressBar, err := tui.NewProgressBarModel(debug)
+	if err != nil {
+		fmt.Println(render.Error(err))
+		return
+	}
+	go progressBar.Run()
+	defer progressBar.Close()
+
+	code, err := h.Client.GetObject(bucket, key, file, progressBar.Progress)
+	if err != nil {
+		fmt.Println(render.HttpStatusOrError(code, err))
+		return
+	}
+	time.Sleep(50 * time.Millisecond)
+
+	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%s downloaded", localPath)))
 }

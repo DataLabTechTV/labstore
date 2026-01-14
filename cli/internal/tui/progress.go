@@ -67,12 +67,13 @@ func (m *ProgressBarModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case progressMsg:
 		pct := float64(msg.current) / float64(msg.total)
-		cmd := m.Bar.SetPercent(pct)
 
 		if pct >= 1.0 {
+			cmd := m.Bar.SetPercent(1.0)
 			return m, tea.Sequence(cmd, tea.Quit)
 		}
 
+		cmd := m.Bar.SetPercent(pct)
 		return m, cmd
 
 	case consoleMsg:
@@ -84,7 +85,7 @@ func (m *ProgressBarModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyCtrlC {
-			fmt.Println("SIGINT caught, upload canceled...")
+			fmt.Println("SIGINT caught, quitting...")
 			return m, tea.Quit
 		}
 		return m, nil
