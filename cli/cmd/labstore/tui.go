@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +34,7 @@ func NewPalettePreviewCmd() *cobra.Command {
 		Use:   "view",
 		Short: "View palette",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(tui.ActivePalette.Render())
+			fmt.Println(render.ActivePalette.Render())
 		},
 	}
 

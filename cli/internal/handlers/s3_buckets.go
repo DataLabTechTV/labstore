@@ -5,39 +5,39 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
 )
 
 func (h *S3Handler) CreateBucket(bucket string) {
-	tui.PrintTitle(fmt.Sprintf("CreateBucket: %s", bucket))
+	render.Title(fmt.Sprintf("CreateBucket: %s", bucket))
 
 	code, err := h.Client.CreateBucket(bucket)
 	if err != nil {
-		tui.PrintStatusOrError(code, err)
+		render.HttpStatusOrError(code, err)
 		return
 	}
 
-	tui.PrintStatus(code, "Bucket created")
+	render.HttpStatus(code, "Bucket created")
 }
 
 func (h *S3Handler) HeadBucket(bucket string) {
-	tui.PrintTitle(fmt.Sprintf("HeadBucket: %s", bucket))
+	render.Title(fmt.Sprintf("HeadBucket: %s", bucket))
 
 	code, err := h.Client.HeadBucket(bucket)
 	if err != nil {
-		tui.PrintStatusOrError(code, err)
+		render.HttpStatusOrError(code, err)
 		return
 	}
 
 	switch code {
 	case http.StatusForbidden:
-		tui.PrintStatus(code, "Bucket access denied")
+		render.HttpStatus(code, "Bucket access denied")
 	case http.StatusNotFound:
-		tui.PrintStatus(code, "Bucket does not exist")
+		render.HttpStatus(code, "Bucket does not exist")
 	case http.StatusOK:
-		tui.PrintStatus(code, "Bucket access allowed")
+		render.HttpStatus(code, "Bucket access allowed")
 	default:
-		tui.PrintStatus(code, "Unknown status")
+		render.HttpStatus(code, "Unknown status")
 	}
 }
 
@@ -46,32 +46,32 @@ func (h *S3Handler) ListObjects(bucket string, key *string) {
 		key = helper.StringPtr("/")
 	}
 
-	tui.PrintTitle(fmt.Sprintf("ListObjectsV2: %s", bucket))
+	render.Title(fmt.Sprintf("ListObjectsV2: %s", bucket))
 
 	res := h.Client.ListObjects(bucket, *key, true)
 	for r := range res {
 		if r.Err != nil {
-			tui.PrintError(r.Err)
+			render.Error(r.Err)
 			return
 		}
 
 		switch {
 		case r.IsObject():
-			tui.PrintObject(*r.Object)
+			render.Object(*r.Object)
 		case r.IsCommonPrefix():
-			tui.PrintCommonPrefix(*r.CommonPrefix)
+			render.CommonPrefix(*r.CommonPrefix)
 		}
 	}
 }
 
 func (h *S3Handler) DeleteBucket(bucket string) {
-	tui.PrintTitle(fmt.Sprintf("DeleteBucket: %s", bucket))
+	render.Title(fmt.Sprintf("DeleteBucket: %s", bucket))
 
 	code, err := h.Client.DeleteBucket(bucket)
 	if err != nil {
-		tui.PrintStatusOrError(code, err)
+		render.HttpStatusOrError(code, err)
 		return
 	}
 
-	tui.PrintStatus(code, "Bucket deleted")
+	render.HttpStatus(code, "Bucket deleted")
 }

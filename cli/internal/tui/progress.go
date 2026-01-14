@@ -96,7 +96,7 @@ func (m *ProgressBarModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.Bar.Width = min(msg.Width, MaxWidth)
+		m.Bar.Width = min(msg.Width, 80)
 		return m, nil
 
 	default:
