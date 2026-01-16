@@ -24,13 +24,13 @@ func (c *Client) CreateUser(userName string) (*types.CreateUserResponse, error) 
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) GetUser(userName string) (*types.GetUserResponse, error) {
@@ -48,13 +48,13 @@ func (c *Client) GetUser(userName string) (*types.GetUserResponse, error) {
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) DeleteUser(userName string) (*types.DeleteUserResponse, error) {
@@ -72,13 +72,13 @@ func (c *Client) DeleteUser(userName string) (*types.DeleteUserResponse, error) 
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) CreateAccessKey(userName string) (*types.CreateAccessKeyResponse, error) {
@@ -96,13 +96,13 @@ func (c *Client) CreateAccessKey(userName string) (*types.CreateAccessKeyRespons
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) ListAccessKeys(userName string) (*types.ListAccessKeysResponse, error) {
@@ -120,17 +120,17 @@ func (c *Client) ListAccessKeys(userName string) (*types.ListAccessKeysResponse,
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
-func (c *Client) DeleteAccessKey(userName string) (*types.DeleteAccessKeyResponse, error) {
-	resp, err := c.DoRequest(iam.OpDeleteUser, "UserName", userName)
+func (c *Client) DeleteAccessKey(userName, accessKeyID string) (*types.DeleteAccessKeyResponse, error) {
+	resp, err := c.DoRequest(iam.OpDeleteAccessKey, "UserName", userName, "AccessKeyId", accessKeyID)
 	if err != nil {
 		return nil, err
 	}
@@ -144,11 +144,11 @@ func (c *Client) DeleteAccessKey(userName string) (*types.DeleteAccessKeyRespons
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }

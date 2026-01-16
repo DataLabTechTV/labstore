@@ -24,13 +24,13 @@ func (c *Client) CreateGroup(groupName string) (*types.CreateGroupResponse, erro
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) AddUserToGroup(userName, groupName string) (*types.AddUserToGroupResponse, error) {
@@ -48,13 +48,13 @@ func (c *Client) AddUserToGroup(userName, groupName string) (*types.AddUserToGro
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) GetGroup(groupName string) (*types.GetGroupResponse, error) {
@@ -72,13 +72,13 @@ func (c *Client) GetGroup(groupName string) (*types.GetGroupResponse, error) {
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) DeleteGroup(groupName string) (*types.DeleteGroupResponse, error) {
@@ -96,13 +96,13 @@ func (c *Client) DeleteGroup(groupName string) (*types.DeleteGroupResponse, erro
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) RemoveUserFromGroup(userName, groupName string) (*types.RemoveUserFromGroupResponse, error) {
@@ -120,11 +120,11 @@ func (c *Client) RemoveUserFromGroup(userName, groupName string) (*types.RemoveU
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
