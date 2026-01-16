@@ -5,28 +5,30 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
 )
 
-func (h *S3Handler) CreateBucket(bucket string) {
+func (h *S3Handler) CreateBucket(bucket string) error {
 	fmt.Println(render.Title(fmt.Sprintf("CreateBucket: %s", bucket)))
 
 	code, err := h.Client.CreateBucket(bucket)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	fmt.Println(render.HttpStatus(code, "Bucket created"))
+	return nil
 }
 
-func (h *S3Handler) HeadBucket(bucket string) {
+func (h *S3Handler) HeadBucket(bucket string) error {
 	fmt.Println(render.Title(fmt.Sprintf("HeadBucket: %s", bucket)))
 
 	code, err := h.Client.HeadBucket(bucket)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	switch code {
@@ -39,9 +41,11 @@ func (h *S3Handler) HeadBucket(bucket string) {
 	default:
 		fmt.Println(render.HttpStatus(code, "Unknown status"))
 	}
+
+	return nil
 }
 
-func (h *S3Handler) ListObjects(bucket string, key *string) {
+func (h *S3Handler) ListObjects(bucket string, key *string) error {
 	if key == nil {
 		key = helper.StringPtr("/")
 	}
@@ -52,7 +56,6 @@ func (h *S3Handler) ListObjects(bucket string, key *string) {
 	for r := range res {
 		if r.Err != nil {
 			fmt.Println(render.Error(r.Err))
-			return
 		}
 
 		switch {
@@ -62,16 +65,19 @@ func (h *S3Handler) ListObjects(bucket string, key *string) {
 			fmt.Println(render.CommonPrefix(*r.CommonPrefix))
 		}
 	}
+
+	return nil
 }
 
-func (h *S3Handler) DeleteBucket(bucket string) {
+func (h *S3Handler) DeleteBucket(bucket string) error {
 	fmt.Println(render.Title(fmt.Sprintf("DeleteBucket: %s", bucket)))
 
 	code, err := h.Client.DeleteBucket(bucket)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	fmt.Println(render.HttpStatus(code, "Bucket deleted"))
+	return nil
 }

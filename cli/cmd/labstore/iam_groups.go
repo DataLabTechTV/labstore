@@ -25,9 +25,9 @@ func NewGroupsCreateCmd() *cobra.Command {
 		Use:   "create GROUPNAME",
 		Short: "Create an IAM group",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.CreateGroup(args[0])
+			return handler.CreateGroup(args[0])
 		},
 	}
 
@@ -39,9 +39,9 @@ func NewGroupsAddUserCmd() *cobra.Command {
 		Use:   "add-user USERNAME GROUPNAME",
 		Short: "Add an IAM user to an IAM group",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.AddUserToGroup(args[0], args[1])
+			return handler.AddUserToGroup(args[0], args[1])
 		},
 	}
 
@@ -53,9 +53,9 @@ func NewGroupsGetCmd() *cobra.Command {
 		Use:   "get GROUPNAME",
 		Short: "Display IAM group information",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.GetGroup(args[0])
+			return handler.GetGroup(args[0])
 		},
 	}
 
@@ -67,9 +67,9 @@ func NewGroupsDeleteCmd() *cobra.Command {
 		Use:   "delete GROUPNAME",
 		Short: "Delete IAM group",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.DeleteGroup(args[0])
+			return handler.DeleteGroup(args[0])
 		},
 	}
 
@@ -81,9 +81,9 @@ func NewGroupsRemoveUserCmd() *cobra.Command {
 		Use:   "remove-user USERNAME GROUPNAME",
 		Short: "Remove an IAM user from an IAM group",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.RemoveUserFromGroup(args[0], args[1])
+			return handler.RemoveUserFromGroup(args[0], args[1])
 		},
 	}
 

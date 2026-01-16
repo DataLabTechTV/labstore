@@ -25,9 +25,9 @@ func NewBucketsCreateCmd() *cobra.Command {
 		Use:   "create BUCKET",
 		Short: "Create an S3 bucket",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-			handler.CreateBucket(args[0])
+			return handler.CreateBucket(args[0])
 		},
 	}
 
@@ -39,9 +39,9 @@ func NewBucketsHeadCmd() *cobra.Command {
 		Use:   "head BUCKET",
 		Short: "Status for an S3 bucket",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-			handler.HeadBucket(args[0])
+			return handler.HeadBucket(args[0])
 		},
 	}
 
@@ -54,7 +54,7 @@ func NewBucketsListObjectsCmd() *cobra.Command {
 		Short: "List S3 objects",
 		Long:  "List S3 objects for the specified BUCKET, with an optional PATH globbing expression",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
 
 			bucket := args[0]
@@ -66,7 +66,7 @@ func NewBucketsListObjectsCmd() *cobra.Command {
 				key = nil
 			}
 
-			handler.ListObjects(bucket, key)
+			return handler.ListObjects(bucket, key)
 		},
 	}
 
@@ -78,9 +78,9 @@ func NewBucketsDeleteCmd() *cobra.Command {
 		Use:   "delete BUCKET",
 		Short: "Delete S3 bucket",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-			handler.DeleteBucket(args[0])
+			return handler.DeleteBucket(args[0])
 		},
 	}
 

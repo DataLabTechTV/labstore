@@ -37,6 +37,9 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
+
 	cmd.PersistentFlags().Bool("debug", false, "Set debug level for logging")
 
 	cmd.AddCommand(NewS3Cmd())

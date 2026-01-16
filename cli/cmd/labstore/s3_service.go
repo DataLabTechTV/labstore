@@ -11,18 +11,18 @@ func NewServiceCmd() *cobra.Command {
 		Short: "Handle S3 service operations",
 	}
 
-	cmd.AddCommand(NewServiceListObjectsCmd())
+	cmd.AddCommand(NewServiceListBucketsCmd())
 
 	return cmd
 }
 
-func NewServiceListObjectsCmd() *cobra.Command {
+func NewServiceListBucketsCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "list-buckets",
 		Short: "List S3 buckets",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-			handler.ListBuckets()
+			return handler.ListBuckets()
 		},
 	}
 

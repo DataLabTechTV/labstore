@@ -37,9 +37,9 @@ func NewUsersCreateCmd() *cobra.Command {
 		Use:   "create USERNAME",
 		Short: "Create an IAM user",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.CreateUser(args[0])
+			return handler.CreateUser(args[0])
 		},
 	}
 
@@ -51,9 +51,9 @@ func NewUsersGetCmd() *cobra.Command {
 		Use:   "get USERNAME",
 		Short: "Display IAM user information",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.GetUser(args[0])
+			return handler.GetUser(args[0])
 		},
 	}
 
@@ -65,9 +65,9 @@ func NewUsersDeleteCmd() *cobra.Command {
 		Use:   "delete USERNAME",
 		Short: "Delete IAM user",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.DeleteUser(args[0])
+			return handler.DeleteUser(args[0])
 		},
 	}
 
@@ -79,9 +79,9 @@ func NewUsersAccessKeysCreateCmd() *cobra.Command {
 		Use:   "create USERNAME",
 		Short: "Create IAM user access key",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.CreateAccessKey(args[0])
+			return handler.CreateAccessKey(args[0])
 		},
 	}
 
@@ -93,9 +93,9 @@ func NewUsersAccessKeysListCmd() *cobra.Command {
 		Use:   "list USERNAME",
 		Short: "List IAM user access keys",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.ListAccessKeys(args[0])
+			return handler.ListAccessKeys(args[0])
 		},
 	}
 
@@ -107,9 +107,9 @@ func NewUsersAccessKeysDeleteCmd() *cobra.Command {
 		Use:   "delete USERNAME",
 		Short: "Delete IAM user access key",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.DeleteAccessKey(args[0])
+			return handler.DeleteAccessKey(args[0])
 		},
 	}
 
