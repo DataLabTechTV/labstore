@@ -84,10 +84,10 @@ func (h *IAMHandler) ListAccessKeys(userName string) error {
 	return nil
 }
 
-func (h *IAMHandler) DeleteAccessKey(userName string) error {
+func (h *IAMHandler) DeleteAccessKey(userName, accessKeyID string) error {
 	fmt.Println(render.Title(fmt.Sprintf("DeleteAccessKey: %s", userName)))
 
-	_, err := h.Client.DeleteAccessKey(userName)
+	_, err := h.Client.DeleteAccessKey(userName, accessKeyID)
 	if err != nil {
 		fmt.Println(render.Error(err))
 		return &errs.RuntimeError{}
