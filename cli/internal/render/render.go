@@ -3,7 +3,6 @@ package render
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
@@ -124,23 +123,10 @@ func Error(err error) string {
 
 	switch {
 	case errors.As(err, &s3Error):
-		var msg strings.Builder
-		msg.WriteString(strings.TrimSuffix(s3Error.Message, "."))
-
-		if s3Error.BucketName != "" {
-			fmt.Fprintf(&msg, ", in bucket %s", s3Error.BucketName)
-		}
-
-		if s3Error.Key != "" {
-			fmt.Fprintf(&msg, ", with key %s", s3Error.Key)
-		}
-
-		msg.WriteRune('.')
-
 		errView = lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			ErrCodeStyle(fmt.Sprintf("[%d S3 Error] %s", s3Error.StatusCode, s3Error.Code)),
-			ErrMsgStyle(msg.String()),
+			ErrMsgStyle(s3Error.Message),
 		)
 	case errors.As(err, &iamError):
 		errView = lipgloss.JoinHorizontal(
