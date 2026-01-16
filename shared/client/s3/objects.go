@@ -33,7 +33,7 @@ func (c *Client) PutObject(bucket, key string, file *os.File, progress chan<- cl
 		return 0, err
 	}
 
-	enc := NewSigV4ChunkEncoder(file, int(info.Size()), c.ChunkSize, progress)
+	enc := NewSigV4ChunkEncoder(c.Ctx, file, int(info.Size()), c.ChunkSize, progress)
 	resp, err := c.DoSigV4Request("PUT", reqURL.String(), enc)
 	if err != nil {
 		return 0, err
