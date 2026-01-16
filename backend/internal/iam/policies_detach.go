@@ -202,7 +202,7 @@ func DetachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &types.DetachUserPolicyResponse{
+	response := &types.DetachGroupPolicyResponse{
 		ResponseMetadata: &types.ResponseMetadata{
 			RequestId: core.NewRequestID(),
 		},
