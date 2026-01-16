@@ -1,0 +1,43 @@
+set shell := ["bash", "-uc"]
+
+cli := "bin/labstore"
+s3 := cli + " s3"
+test_bucket := "test-cli"
+
+default:
+    just -l
+
+[working-directory: ".."]
+check-deps:
+    @echo "Checking system binary dependencies for cli..."
+    @just check {{cli}} || make cli
+
+[working-directory: ".."]
+_test_s3 random:
+    {{s3}} buckets create {{test_bucket}}
+    {{s3}} service list-buckets
+    {{s3}} buckets head {{test_bucket}}
+    {{s3}} objects put {{test_bucket}} random.data {{random}}
+    {{s3}} objects head {{test_bucket}} random.data
+    {{s3}} objects get {{test_bucket}} random.data "{{random}}.download"
+    {{s3}} buckets list-objects {{test_bucket}}
+    {{s3}} objects delete {{test_bucket}} random.data
+    {{s3}} objects put {{test_bucket}} random2.data {{random}}
+    {{s3}} objects put {{test_bucket}} random3.data {{random}}
+    {{s3}} buckets list-objects {{test_bucket}} 'rand*'
+    {{s3}} objects delete {{test_bucket}} random2.data random3.data
+    {{s3}} buckets list-objects {{test_bucket}} 'rand*'
+    {{s3}} buckets delete {{test_bucket}}
+    rm -f "{{random}}.download"
+
+test-s3: check-deps
+    #!/bin/bash
+    echo "Creating a random data file for testing..."
+    tmpfile=$(mktemp /tmp/randomXXXX.data)
+    dd if=/dev/random of=$tmpfile bs=1M count=100
+    echo "Running S3 tests..."
+    just _test_s3 $tmpfile
+    rm -f $tmpfile
+    echo "Done"
+
+test-iam: check-deps
