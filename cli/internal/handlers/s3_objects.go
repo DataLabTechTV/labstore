@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
 )
 
-func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) {
+func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) error {
 	if !helper.FileExists(localPath) {
-		fmt.Println(render.Error(fmt.Errorf("file not found: %s", localPath)))
-		return
+		err := fmt.Errorf("file not found: %s", localPath)
+		fmt.Println(render.Error(err))
+		return &errs.RuntimeError{}
 	}
 
 	fmt.Println(render.Title(fmt.Sprintf("PutObject: %s/%s", bucket, key)))
@@ -21,13 +23,13 @@ func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) {
 	file, err := os.Open(localPath)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	progressBar, err := tui.NewProgressBarModel(debug)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 	go progressBar.Run()
 	defer progressBar.Close()
@@ -35,19 +37,20 @@ func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) {
 	code, err := h.Client.PutObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%s uploaded", localPath)))
+	return nil
 }
 
-func (h *S3Handler) HeadObject(bucket, key string) {
+func (h *S3Handler) HeadObject(bucket, key string) error {
 	fmt.Println(render.Title(fmt.Sprintf("HeadObject: %s/%s", bucket, key)))
 
 	out, err := h.Client.HeadObject(bucket, key)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	metadata := render.Metadata{
@@ -57,22 +60,23 @@ func (h *S3Handler) HeadObject(bucket, key string) {
 	}
 
 	fmt.Println(metadata.Render())
+	return nil
 }
 
-func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) {
+func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) error {
 	fmt.Println(render.Title(fmt.Sprintf("GetObject: %s/%s", bucket, key)))
 
 	file, err := os.Create(localPath)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 	defer helper.CloseWithErr(file, &err)
 
 	progressBar, err := tui.NewProgressBarModel(debug)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 	go progressBar.Run()
 	defer progressBar.Close()
@@ -80,14 +84,15 @@ func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) {
 	code, err := h.Client.GetObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
-		return
+		return &errs.RuntimeError{}
 	}
 	time.Sleep(50 * time.Millisecond)
 
 	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%s downloaded", localPath)))
+	return nil
 }
 
-func (h *S3Handler) DeleteObjects(bucket string, keys ...string) {
+func (h *S3Handler) DeleteObjects(bucket string, keys ...string) error {
 	if len(keys) == 1 {
 		fmt.Println(render.Title(fmt.Sprintf("DeleteObject: %s/%s", bucket, keys[0])))
 	} else {
@@ -97,7 +102,7 @@ func (h *S3Handler) DeleteObjects(bucket string, keys ...string) {
 	res, code, err := h.Client.DeleteObjects(bucket, keys...)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	okCount := 0
@@ -112,4 +117,5 @@ func (h *S3Handler) DeleteObjects(bucket string, keys ...string) {
 	}
 
 	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%d out of %d object(s) deleted", okCount, len(keys))))
+	return nil
 }

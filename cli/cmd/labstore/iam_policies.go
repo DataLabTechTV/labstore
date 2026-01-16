@@ -29,9 +29,9 @@ func NewPoliciesCreateCmd() *cobra.Command {
 		Use:   "create POLICY_NAME POLICY_DOCUMENT_PATH",
 		Short: "Create an IAM policy",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.CreatePolicy(args[0], args[1])
+			return handler.CreatePolicy(args[0], args[1])
 		},
 	}
 
@@ -43,9 +43,9 @@ func NewPoliciesAttachToUserCmd() *cobra.Command {
 		Use:   "attach-user USERNAME POLICY_ARN",
 		Short: "Attach an IAM policy to an IAM user",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.AttachUserPolicy(args[0], args[1])
+			return handler.AttachUserPolicy(args[0], args[1])
 		},
 	}
 
@@ -57,9 +57,9 @@ func NewPoliciesAttachToGroupCmd() *cobra.Command {
 		Use:   "attach-group GROUPNAME POLICY_ARN",
 		Short: "Attach an IAM policy to an IAM group",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.AttachGroupPolicy(args[0], args[1])
+			return handler.AttachGroupPolicy(args[0], args[1])
 		},
 	}
 
@@ -71,9 +71,9 @@ func NewPoliciesGetCmd() *cobra.Command {
 		Use:   "get POLICY_ARN",
 		Short: "Display IAM policy information",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.GetPolicy(args[0])
+			return handler.GetPolicy(args[0])
 		},
 	}
 
@@ -85,9 +85,9 @@ func NewPoliciesListAttachedToUserCmd() *cobra.Command {
 		Use:   "list-user-attached USERNAME",
 		Short: "List IAM policies attached to an IAM user",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.ListAttachedUserPolicies(args[0])
+			return handler.ListAttachedUserPolicies(args[0])
 		},
 	}
 
@@ -99,9 +99,9 @@ func NewPoliciesListAttachedToGroupCmd() *cobra.Command {
 		Use:   "list-group-attached GROUPNAME",
 		Short: "List IAM policies attached to an IAM group",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.ListAttachedGroupPolicies(args[0])
+			return handler.ListAttachedGroupPolicies(args[0])
 		},
 	}
 
@@ -113,9 +113,9 @@ func NewPoliciesDeleteCmd() *cobra.Command {
 		Use:   "delete POLICY_ARN",
 		Short: "Delete IAM policy",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.DeletePolicy(args[0])
+			return handler.DeletePolicy(args[0])
 		},
 	}
 
@@ -127,9 +127,9 @@ func NewPoliciesDetachFromUserCmd() *cobra.Command {
 		Use:   "detach-user USERNAME POLICY_ARN",
 		Short: "Detach an IAM policy from an IAM user",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.DetachUserPolicy(args[0], args[1])
+			return handler.DetachUserPolicy(args[0], args[1])
 		},
 	}
 
@@ -141,9 +141,9 @@ func NewPoliciesDetachFromGroupCmd() *cobra.Command {
 		Use:   "detach-group GROUPNAME POLICY_ARN",
 		Short: "Detach an IAM policy from an IAM group",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			handler.DetachGroupPolicy(args[0], args[1])
+			return handler.DetachGroupPolicy(args[0], args[1])
 		},
 	}
 

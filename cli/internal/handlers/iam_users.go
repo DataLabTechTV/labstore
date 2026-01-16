@@ -5,67 +5,72 @@ import (
 	"net/http"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
 )
 
-func (h *IAMHandler) CreateUser(userName string) {
+func (h *IAMHandler) CreateUser(userName string) error {
 	fmt.Println(render.Title(fmt.Sprintf("CreateUser: %s", userName)))
 
 	res, err := h.Client.CreateUser(userName)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	metadata := userMetadata(res.CreateUserResult.User)
 	fmt.Println(metadata.Render())
+	return nil
 }
 
-func (h *IAMHandler) GetUser(userName string) {
+func (h *IAMHandler) GetUser(userName string) error {
 	fmt.Println(render.Title(fmt.Sprintf("GetUsers: %s", userName)))
 
 	res, err := h.Client.GetUser(userName)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	metadata := userMetadata(res.GetUserResult.User)
 	fmt.Println(metadata.Render())
+	return nil
 }
 
-func (h *IAMHandler) DeleteUser(userName string) {
+func (h *IAMHandler) DeleteUser(userName string) error {
 	fmt.Println(render.Title(fmt.Sprintf("DeleteUser: %s", userName)))
 
 	_, err := h.Client.DeleteUser(userName)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	fmt.Println(render.HttpStatus(http.StatusOK, "User deleted"))
+	return nil
 }
 
-func (h *IAMHandler) CreateAccessKey(userName string) {
+func (h *IAMHandler) CreateAccessKey(userName string) error {
 	fmt.Println(render.Title(fmt.Sprintf("CreateAccessKey: %s", userName)))
 
 	res, err := h.Client.CreateAccessKey(userName)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	metadata := accessKeyMetadata(res.CreateAccessKeyResult.AccessKey)
 	fmt.Println(metadata.Render())
+	return nil
 }
 
-func (h *IAMHandler) ListAccessKeys(userName string) {
+func (h *IAMHandler) ListAccessKeys(userName string) error {
 	fmt.Println(render.Title(fmt.Sprintf("ListAccessKeys: %s", userName)))
 
 	res, err := h.Client.ListAccessKeys(userName)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	keysMetadata := accessKeyMembersMetadata(res.ListAccessKeysResult.AccessKeyMetadata.Member)
@@ -75,18 +80,21 @@ func (h *IAMHandler) ListAccessKeys(userName string) {
 		}
 		fmt.Println(metadata.Render())
 	}
+
+	return nil
 }
 
-func (h *IAMHandler) DeleteAccessKey(userName string) {
+func (h *IAMHandler) DeleteAccessKey(userName string) error {
 	fmt.Println(render.Title(fmt.Sprintf("DeleteAccessKey: %s", userName)))
 
 	_, err := h.Client.DeleteAccessKey(userName)
 	if err != nil {
 		fmt.Println(render.Error(err))
-		return
+		return &errs.RuntimeError{}
 	}
 
 	fmt.Println(render.HttpStatus(http.StatusOK, "Access key deleted"))
+	return nil
 }
 
 func userMetadata(res *types.UserResult) render.Metadata {

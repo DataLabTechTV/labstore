@@ -25,7 +25,7 @@ func NewObjectsPutCmd() *cobra.Command {
 		Use:   "put BUCKET PATH LOCAL_PATH",
 		Short: "Put S3 object",
 		Args:  cobra.MinimumNArgs(3),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
 
 			bucket := args[0]
@@ -34,7 +34,7 @@ func NewObjectsPutCmd() *cobra.Command {
 
 			debug := helper.Must(cmd.Flags().GetBool("debug"))
 
-			handler.PutObject(bucket, key, localPath, debug)
+			return handler.PutObject(bucket, key, localPath, debug)
 		},
 	}
 
@@ -46,9 +46,9 @@ func NewObjectsHeadCmd() *cobra.Command {
 		Use:   "head BUCKET KEY",
 		Short: "Metadata for an S3 object",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-			handler.HeadObject(args[0], args[1])
+			return handler.HeadObject(args[0], args[1])
 		},
 	}
 
@@ -60,7 +60,7 @@ func NewObjectsGetCmd() *cobra.Command {
 		Use:   "get BUCKET PATH LOCAL_PATH",
 		Short: "Download an S3 object",
 		Args:  cobra.MinimumNArgs(3),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
 
 			bucket := args[0]
@@ -69,7 +69,7 @@ func NewObjectsGetCmd() *cobra.Command {
 
 			debug := helper.Must(cmd.Flags().GetBool("debug"))
 
-			handler.GetObject(bucket, key, localPath, debug)
+			return handler.GetObject(bucket, key, localPath, debug)
 		},
 	}
 
@@ -82,9 +82,9 @@ func NewObjectsDeleteCmd() *cobra.Command {
 		Short: "Delete one or multiple S3 objects",
 		Long:  "Delete one or multiple S3 objects, either using DeleteObject (DELETE) or DeleteObjects (POST ?delete)",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-			handler.DeleteObjects(args[0], args[1:]...)
+			return handler.DeleteObjects(args[0], args[1:]...)
 		},
 	}
 
