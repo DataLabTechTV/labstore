@@ -151,12 +151,22 @@ func (m *ProgressBarModel) Run() {
 		for {
 			select {
 			case <-m.Ctx.Done():
-				go func() {
-					for range m.Progress {
-						// Drain
+				for {
+					// Consume remaining
+					select {
+					case msg, ok := <-m.Progress:
+						if !ok {
+							return
+						}
+						m.program.Send(progressMsg{
+							current: msg.Current,
+							total:   msg.Total,
+						})
+					default:
+						return
 					}
-				}()
-				return
+				}
+
 			case msg, ok := <-m.Progress:
 				if !ok {
 					return
@@ -205,6 +215,8 @@ func (m *ProgressBarModel) Close() {
 	}
 
 	close(m.Message)
+
+	<-m.done
 }
 
 func (w *consoleWriter) Write(buf []byte) (n int, err error) {
@@ -213,6 +225,7 @@ func (w *consoleWriter) Write(buf []byte) (n int, err error) {
 	select {
 	case <-w.ctx.Done():
 		return 0, io.ErrClosedPipe
+	// !FIXME: a panic occurs when channel is prematurely closed (e.g., PUT /:bucket/:key for non-existing bucket)
 	case w.ch <- msg:
 		return len(buf), nil
 	}
