@@ -34,7 +34,7 @@ func ReadXML(r io.ReadCloser, dst any) error {
 	dec := xml.NewDecoder(r)
 	defer CloseWithErr(r, nil)
 
-	if err := dec.Decode(&dst); err != nil {
+	if err := dec.Decode(dst); err != nil {
 		return fmt.Errorf("failed to decode XML: %w", err)
 	}
 
