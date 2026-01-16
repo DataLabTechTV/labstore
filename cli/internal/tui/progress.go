@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"strings"
 	"sync"
@@ -23,34 +25,41 @@ type progressMsg struct {
 type consoleMsg string
 
 type ProgressBarModel struct {
+	Ctx            context.Context
 	Bar            progress.Model
 	MaxConsoleSize int
 	Debug          bool
 
 	Progress chan client.Progress
 	Message  chan string
-	Done     chan struct{}
+	done     chan struct{}
 
+	cancel  context.CancelFunc
 	program *tea.Program
 	width   int
 	height  int
 	console []string
 }
 
-type ConsoleWriter struct {
-	channel chan<- string
+type consoleWriter struct {
+	ctx context.Context
+	ch  chan<- string
 }
 
-func NewProgressBarModel(debug bool) (*ProgressBarModel, error) {
+func NewProgressBarModel(ctx context.Context, debug bool) (*ProgressBarModel, error) {
+	ctx, cancel := context.WithCancel(ctx)
+
 	m := &ProgressBarModel{
+		Ctx:            ctx,
 		Bar:            progress.New(progress.WithDefaultGradient()),
 		MaxConsoleSize: defaultMaxConsoleSize,
 		Debug:          debug,
 
 		Progress: make(chan client.Progress, 10),
 		Message:  make(chan string, 10),
-		Done:     make(chan struct{}),
 
+		cancel:  cancel,
+		done:    make(chan struct{}),
 		console: make([]string, 0),
 	}
 
@@ -129,32 +138,54 @@ func (m *ProgressBarModel) View() string {
 }
 
 func (m *ProgressBarModel) Run() {
-	defer close(m.Done)
+	defer close(m.done)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	output := ConsoleWriter{channel: m.Message}
+	output := &consoleWriter{ctx: m.Ctx, ch: m.Message}
 	revert := logger.Temporary(output, logger.WithDebugFlag(m.Debug))
 
 	go func() {
 		defer wg.Done()
-		for msg := range m.Progress {
-			m.program.Send(progressMsg{
-				current: msg.Current,
-				total:   msg.Total,
-			})
+		for {
+			select {
+			case <-m.Ctx.Done():
+				go func() {
+					for range m.Progress {
+						// Drain
+					}
+				}()
+				return
+			case msg, ok := <-m.Progress:
+				if !ok {
+					return
+				}
+				m.program.Send(progressMsg{
+					current: msg.Current,
+					total:   msg.Total,
+				})
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		for msg := range m.Message {
-			m.program.Send(consoleMsg(msg))
+		for {
+			select {
+			case <-m.Ctx.Done():
+				return
+			case msg, ok := <-m.Message:
+				if !ok {
+					return
+				}
+				m.program.Send(consoleMsg(msg))
+			}
 		}
 	}()
 
 	_, err := m.program.Run()
+	m.cancel()
 	wg.Wait()
 	revert()
 
@@ -167,13 +198,22 @@ func (m *ProgressBarModel) Run() {
 }
 
 func (m *ProgressBarModel) Close() {
-	close(m.Progress)
+	m.cancel()
+
+	if m.program != nil {
+		m.program.Quit()
+	}
+
 	close(m.Message)
-	<-m.Done
 }
 
-func (w ConsoleWriter) Write(buf []byte) (n int, err error) {
+func (w *consoleWriter) Write(buf []byte) (n int, err error) {
 	msg := strings.TrimRight(string(buf), "\n")
-	w.channel <- msg
-	return len(buf), nil
+
+	select {
+	case <-w.ctx.Done():
+		return 0, io.ErrClosedPipe
+	case w.ch <- msg:
+		return len(buf), nil
+	}
 }
