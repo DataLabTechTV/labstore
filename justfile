@@ -6,6 +6,9 @@ config_path := "labstore.yml"
 mod backend "backend/justfile"
 
 [group("projects")]
+mod cli "cli/justfile"
+
+[group("projects")]
 mod infra "infra/justfile"
 
 [group("projects")]
