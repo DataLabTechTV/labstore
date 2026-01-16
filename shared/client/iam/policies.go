@@ -31,13 +31,13 @@ func (c *Client) CreatePolicy(policyName string, policyReader io.Reader) (*types
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) AttachUserPolicy(userName, policyArn string) (*types.AttachUserPolicyResponse, error) {
@@ -55,13 +55,13 @@ func (c *Client) AttachUserPolicy(userName, policyArn string) (*types.AttachUser
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) AttachGroupPolicy(groupName, policyArn string) (*types.AttachUserPolicyResponse, error) {
@@ -79,13 +79,13 @@ func (c *Client) AttachGroupPolicy(groupName, policyArn string) (*types.AttachUs
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) GetPolicy(policyArn string) (*types.GetPolicyResponse, error) {
@@ -103,13 +103,13 @@ func (c *Client) GetPolicy(policyArn string) (*types.GetPolicyResponse, error) {
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) ListAttachedUserPolicies(userName string) (*types.ListAttachedUserPoliciesResponse, error) {
@@ -127,13 +127,13 @@ func (c *Client) ListAttachedUserPolicies(userName string) (*types.ListAttachedU
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) ListAttachedGroupPolicies(groupName string) (*types.ListAttachedGroupPoliciesResponse, error) {
@@ -151,13 +151,13 @@ func (c *Client) ListAttachedGroupPolicies(groupName string) (*types.ListAttache
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) DeletePolicy(policyArn string) (*types.DeletePolicyResponse, error) {
@@ -175,13 +175,13 @@ func (c *Client) DeletePolicy(policyArn string) (*types.DeletePolicyResponse, er
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) DetachUserPolicy(userName, policyArn string) (*types.DetachUserPolicyResponse, error) {
@@ -199,13 +199,13 @@ func (c *Client) DetachUserPolicy(userName, policyArn string) (*types.DetachUser
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
 
 func (c *Client) DetachGroupPolicy(groupName, policyArn string) (*types.DetachGroupPolicyResponse, error) {
@@ -223,11 +223,11 @@ func (c *Client) DetachGroupPolicy(groupName, policyArn string) (*types.DetachGr
 		return &res, nil
 	}
 
-	var iamErr errs.IAMError
-	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
+	var iamErrResp errs.IAMErrorResponse
+	if err := helper.ReadXML(resp.Body, &iamErrResp); err != nil {
 		return nil, err
 	}
-	iamErr.StatusCode = resp.StatusCode
+	iamErrResp.Error.StatusCode = resp.StatusCode
 
-	return nil, &iamErr
+	return nil, iamErrResp.Error
 }
