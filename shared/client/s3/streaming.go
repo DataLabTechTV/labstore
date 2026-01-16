@@ -3,6 +3,7 @@ package s3
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"log/slog"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 )
 
 type SigV4ChunkEncoder struct {
+	Ctx       context.Context
 	Src       io.ReadCloser
 	DataSize  int
 	TotalSize int
@@ -26,12 +28,14 @@ type SigV4ChunkEncoder struct {
 }
 
 func NewSigV4ChunkEncoder(
+	ctx context.Context,
 	src io.ReadCloser,
 	dataSize int,
 	chunkSize int,
 	progress chan<- client.Progress,
 ) *SigV4ChunkEncoder {
 	enc := &SigV4ChunkEncoder{
+		Ctx:       ctx,
 		Src:       src,
 		DataSize:  dataSize,
 		ChunkSize: chunkSize,
@@ -63,7 +67,13 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 		)
 
 		if enc.progress != nil {
-			enc.progress <- client.Progress{Current: enc.read, Total: enc.TotalSize}
+			msg := client.Progress{Current: enc.read, Total: enc.TotalSize}
+
+			select {
+			case <-enc.Ctx.Done():
+				return 0, io.ErrClosedPipe
+			case enc.progress <- msg:
+			}
 		}
 
 		return n, nil
@@ -116,7 +126,13 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	)
 
 	if enc.progress != nil {
-		enc.progress <- client.Progress{Current: enc.read, Total: enc.TotalSize}
+		msg := client.Progress{Current: enc.read, Total: enc.TotalSize}
+
+		select {
+		case <-enc.Ctx.Done():
+			return 0, io.ErrClosedPipe
+		case enc.progress <- msg:
+		}
 	}
 
 	return n, nil
