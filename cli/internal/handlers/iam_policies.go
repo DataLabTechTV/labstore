@@ -54,7 +54,7 @@ func (h *IAMHandler) AttachGroupPolicy(groupName, policyArn string) error {
 		return &errs.RuntimeError{}
 	}
 
-	fmt.Println(render.HttpStatus(http.StatusOK, "Policy attached to user"))
+	fmt.Println(render.HttpStatus(http.StatusOK, "Policy attached to group"))
 	return nil
 }
 
