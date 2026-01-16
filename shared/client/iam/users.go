@@ -24,13 +24,13 @@ func (c *Client) CreateUser(userName string) (*types.CreateUserResponse, error) 
 		return &res, nil
 	}
 
-	var s3Err errs.S3Error
-	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+	var iamErr errs.IAMError
+	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
 		return nil, err
 	}
-	s3Err.StatusCode = resp.StatusCode
+	iamErr.StatusCode = resp.StatusCode
 
-	return nil, &s3Err
+	return nil, &iamErr
 }
 
 func (c *Client) GetUser(userName string) (*types.GetUserResponse, error) {
@@ -48,13 +48,13 @@ func (c *Client) GetUser(userName string) (*types.GetUserResponse, error) {
 		return &res, nil
 	}
 
-	var s3Err errs.S3Error
-	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+	var iamErr errs.IAMError
+	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
 		return nil, err
 	}
-	s3Err.StatusCode = resp.StatusCode
+	iamErr.StatusCode = resp.StatusCode
 
-	return nil, &s3Err
+	return nil, &iamErr
 }
 
 func (c *Client) DeleteUser(userName string) (*types.DeleteUserResponse, error) {
@@ -72,13 +72,13 @@ func (c *Client) DeleteUser(userName string) (*types.DeleteUserResponse, error) 
 		return &res, nil
 	}
 
-	var s3Err errs.S3Error
-	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+	var iamErr errs.IAMError
+	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
 		return nil, err
 	}
-	s3Err.StatusCode = resp.StatusCode
+	iamErr.StatusCode = resp.StatusCode
 
-	return nil, &s3Err
+	return nil, &iamErr
 }
 
 func (c *Client) CreateAccessKey(userName string) (*types.CreateAccessKeyResponse, error) {
@@ -96,13 +96,13 @@ func (c *Client) CreateAccessKey(userName string) (*types.CreateAccessKeyRespons
 		return &res, nil
 	}
 
-	var s3Err errs.S3Error
-	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+	var iamErr errs.IAMError
+	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
 		return nil, err
 	}
-	s3Err.StatusCode = resp.StatusCode
+	iamErr.StatusCode = resp.StatusCode
 
-	return nil, &s3Err
+	return nil, &iamErr
 }
 
 func (c *Client) ListAccessKeys(userName string) (*types.ListAccessKeysResponse, error) {
@@ -120,13 +120,13 @@ func (c *Client) ListAccessKeys(userName string) (*types.ListAccessKeysResponse,
 		return &res, nil
 	}
 
-	var s3Err errs.S3Error
-	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+	var iamErr errs.IAMError
+	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
 		return nil, err
 	}
-	s3Err.StatusCode = resp.StatusCode
+	iamErr.StatusCode = resp.StatusCode
 
-	return nil, &s3Err
+	return nil, &iamErr
 }
 
 func (c *Client) DeleteAccessKey(userName string) (*types.DeleteAccessKeyResponse, error) {
@@ -144,11 +144,11 @@ func (c *Client) DeleteAccessKey(userName string) (*types.DeleteAccessKeyRespons
 		return &res, nil
 	}
 
-	var s3Err errs.S3Error
-	if err := helper.ReadXML(resp.Body, &s3Err); err != nil {
+	var iamErr errs.IAMError
+	if err := helper.ReadXML(resp.Body, &iamErr); err != nil {
 		return nil, err
 	}
-	s3Err.StatusCode = resp.StatusCode
+	iamErr.StatusCode = resp.StatusCode
 
-	return nil, &s3Err
+	return nil, &iamErr
 }
