@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -47,10 +46,7 @@ func (store *Store) DeleteAccessKey(ctx context.Context, userName, accessKeyID s
 	}
 
 	if user.AccessKeyID.Valid {
-		if _, ok := store.CachedUsers[user.AccessKeyID.String]; ok {
-			store.CachedUsers[user.AccessKeyID.String].User.AccessKeyID = sql.NullString{Valid: false}
-			store.CachedUsers[user.AccessKeyID.String].User.SecretKey = nil
-		}
+		delete(store.CachedUsers, user.AccessKeyID.String)
 	}
 
 	return nil
