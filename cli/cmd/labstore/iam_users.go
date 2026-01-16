@@ -104,12 +104,12 @@ func NewUsersAccessKeysListCmd() *cobra.Command {
 
 func NewUsersAccessKeysDeleteCmd() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "delete USERNAME",
+		Use:   "delete USERNAME ACCESS_KEY_ID",
 		Short: "Delete IAM user access key",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.IAMHandler)
-			return handler.DeleteAccessKey(args[0])
+			return handler.DeleteAccessKey(args[0], args[1])
 		},
 	}
 
