@@ -31,6 +31,7 @@ func Temporary(output io.Writer, opts ...Option) func() {
 	revert := func() {
 		AppLogger = previous
 		slog.SetDefault(AppLogger)
+		slog.Debug("reverted to default logger")
 	}
 
 	InitWithOutput(output, opts...)
