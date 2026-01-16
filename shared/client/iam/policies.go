@@ -17,7 +17,7 @@ func (c *Client) CreatePolicy(policyName string, policyReader io.Reader) (*types
 	}
 	policyDocument := string(buf)
 
-	resp, err := c.DoRequest(iam.OpCreateGroup, "PolicyName", policyName, "PolicyDocument", policyDocument)
+	resp, err := c.DoRequest(iam.OpCreatePolicy, "PolicyName", policyName, "PolicyDocument", policyDocument)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (c *Client) DeletePolicy(policyArn string) (*types.DeletePolicyResponse, er
 }
 
 func (c *Client) DetachUserPolicy(userName, policyArn string) (*types.DetachUserPolicyResponse, error) {
-	resp, err := c.DoRequest(iam.OpAttachUserPolicy, "UserName", userName, "PolicyArn", policyArn)
+	resp, err := c.DoRequest(iam.OpDetachUserPolicy, "UserName", userName, "PolicyArn", policyArn)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (c *Client) DetachUserPolicy(userName, policyArn string) (*types.DetachUser
 }
 
 func (c *Client) DetachGroupPolicy(groupName, policyArn string) (*types.DetachGroupPolicyResponse, error) {
-	resp, err := c.DoRequest(iam.OpAttachUserPolicy, "GroupName", groupName, "PolicyArn", policyArn)
+	resp, err := c.DoRequest(iam.OpDetachGroupPolicy, "GroupName", groupName, "PolicyArn", policyArn)
 	if err != nil {
 		return nil, err
 	}
