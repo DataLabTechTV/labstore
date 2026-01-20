@@ -30,7 +30,7 @@ BREAKING CHANGE: use javascript features not available in node 6
 
 ### Type Scope
 
-For the type scope, use nothing for top-level files (e.g., `justfile`, `.gitignore`, etc.), but only when there is no other option. Otherwise, always use the project name (i.e., the name of the folder at the top-level, e.g., `web`, `backend`, etc.) as the optional scope.
+For the type scope, use nothing for top-level files (e.g., `justfile`, `.gitignore`, etc.), but only when there is no other option. Otherwise, always use the project name (i.e., the name of the folder at the top-level, e.g., `web`, `server`, etc.) as the optional scope.
 
 An example for root-level:
 
@@ -38,10 +38,10 @@ An example for root-level:
 chore: add node_modules to gitignore
 ```
 
-Another example for root-level, affecting the `justfile` for the `backend` project:
+Another example for root-level, affecting the `justfile` for the `server` project:
 
 ```
-chore(backend): add server run command
+chore(server): add server run command
 ```
 
 An example for the `web/` project (web UI frontend):
@@ -50,10 +50,10 @@ An example for the `web/` project (web UI frontend):
 feat(web): initialize svelte project
 ```
 
-Or for the `backend/` project:
+Or for the `server/` project:
 
 ```
-chore(backend): add logger dependency
+chore(server): add logger dependency
 ```
 
 ## Repo Structure
@@ -64,7 +64,8 @@ We'll use a monorepo structure, where top-level directories correspond to indepe
 monorepo/
 ├── .github/
 ├── web/
-├── backend/
+├── client/
+├── server/
 ├── shared/
 ├── infra/
 ├── cli/
@@ -78,7 +79,8 @@ monorepo/
 
 - `.github/` – GitHub templates (PRs, issues, etc.) and workflows (CI/CD)
 - `web/` – web ui frontend
-- `backend/` – REST API endpoint and admin tools
+- `client/` -
+- `server/` – REST API endpoints and admin tools
 - `shared/` – shared assets, specs, etc. (no libs here—create another top-level project as those come along)
 - `infra/` – CI/CD (to call from GH workflows), deployment scripts, Docker, etc.
 - `cli/` – master command line tool that brings all projects together
