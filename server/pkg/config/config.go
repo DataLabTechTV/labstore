@@ -50,6 +50,7 @@ var (
 
 type AppConfig struct {
 	Server *ServerConfig `mapstructure:"server"`
+	Web    *WebConfig    `mapstructure:"web"`
 }
 
 type ServerConfig struct {
@@ -57,6 +58,10 @@ type ServerConfig struct {
 	Admin   *AdminConfig   `mapstructure:"admin"`
 	IAM     *IAMConfig     `mapstructure:"iam"`
 	S3      *S3Config      `mapstructure:"s3"`
+}
+
+type WebConfig struct {
+	Address *AddressConfig `mapstructure:"address"`
 }
 
 type StorageConfig struct {
