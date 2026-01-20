@@ -13,11 +13,7 @@ import (
 )
 
 func NewS3ServerDescriptor(host string, port uint16) *ServerDescriptor {
-	slog.Info(
-		"s3-compatible api server",
-		"host", host,
-		"port", port,
-	)
+	slog.Info("s3-compatible api server", "host", host, "port", port)
 
 	router := http.NewServeMux()
 	loadS3Routes(router)
