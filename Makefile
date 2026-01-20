@@ -10,7 +10,7 @@ WEB_DIR := web
 WEB_SRC_DIRS := $(WEB_DIR)/src $(WEB_DIR)/static
 WEB_BUILD_DIR := $(WEB_DIR)/build
 
-.PHONY: all backend cli web build run profile test clean-debug clean-bin clean-web clean
+.PHONY: all cli web build run profile test clean-debug clean-cli clean-web clean
 
 all: build
 
@@ -47,7 +47,7 @@ profile: cli
 		-c blue,yellow \
 		"$(CLI_CMD) --pprof serve" \
 		"go tool pprof \
-			-focus=github.com/IllumiKnowLabs/labstore/backend \
+			-focus=github.com/IllumiKnowLabs/labstore/server \
 			-http=:8081 \
 			http://localhost:6060/debug/pprof/profile?seconds=60"
 
