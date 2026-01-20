@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/profiler"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/logger"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/profiler"
 	"github.com/spf13/cobra"
 )
 

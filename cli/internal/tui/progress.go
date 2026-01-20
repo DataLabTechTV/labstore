@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
 	"github.com/IllumiKnowLabs/labstore/client"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/logger"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

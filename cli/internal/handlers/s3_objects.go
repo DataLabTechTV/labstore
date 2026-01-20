@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/tui"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
 )
 
 func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) error {

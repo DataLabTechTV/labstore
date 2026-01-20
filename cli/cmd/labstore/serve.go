@@ -3,15 +3,16 @@ package main
 import (
 	"log/slog"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/router"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/router"
 	"github.com/spf13/cobra"
 )
 
 func NewServeCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "serve",
-		Short: "Run backend server",
+		Short: "Run server",
+		Long:  "Run server for S3, IAM, and admin services",
 		Run: func(cmd *cobra.Command, args []string) {
 			adminPass := cmd.Flags().Lookup("admin-pass")
 			if adminPass != nil && adminPass.Changed {
