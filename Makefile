@@ -2,6 +2,7 @@ BIN_DIR := bin
 
 SERVER_DIR := server
 CLIENT_DIR := client
+ASSETS_DIR := $(SERVER_DIR)/pkg/router/assets
 
 CLI_DIR := cli
 CLI_CMD := $(BIN_DIR)/labstore
@@ -28,7 +29,10 @@ $(WEB_BUILD_DIR): $(WEB_SRCS)
 	cd $(WEB_DIR) && npm ci
 	cd $(WEB_DIR) && npm run build
 
-cli: web $(CLI_CMD)
+assets: web
+	rsync -a --delete web/build/ $(ASSETS_DIR)/
+
+cli: assets $(CLI_CMD)
 
 web: $(WEB_BUILD_DIR)
 
@@ -56,13 +60,16 @@ SERVER_TEST_SRCS := $(shell find $(SERVER_DIR) -name '*.go')
 test: $(SERVER_TEST_SRCS)
 	cd $(SERVER_DIR) && go test ./... | grep -v '\[no test files\]'
 
+clean-assets:
+	rm -rf $(ASSETS_DIR)/
+
 clean-debug:
 	find . -type f -name '__debug_bin*' -delete
 
-clean-cli:
+clean-cli: clean-assets clean-debug
 	rm -rf $(BIN_DIR)/
 
 clean-web:
 	rm -rf $(WEB_DIR)/node_modules $(WEB_DIR)/.svelte-kit $(WEB_BUILD_DIR)
 
-clean: clean-cli clean-web clean-debug
+clean: clean-cli clean-web
