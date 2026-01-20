@@ -30,7 +30,10 @@ func Start() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// webServerDescriptor := NewWebServerDescriptor(config.)
+	webServerDescriptor := NewWebServerDescriptor(
+		config.App.Web.Address.Host,
+		config.App.Web.Address.Port,
+	)
 
 	s3ServerDescriptor := NewS3ServerDescriptor(
 		config.App.Server.S3.Address.Host,
@@ -48,7 +51,12 @@ func Start() {
 		[]*ServerDescriptor{s3ServerDescriptor, iamServerDescriptor},
 	)
 
-	serverDescriptors := []*ServerDescriptor{adminServerDescriptor, iamServerDescriptor, s3ServerDescriptor}
+	serverDescriptors := []*ServerDescriptor{
+		adminServerDescriptor,
+		iamServerDescriptor,
+		s3ServerDescriptor,
+		webServerDescriptor,
+	}
 
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(serverDescriptors))
