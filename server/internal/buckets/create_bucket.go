@@ -23,7 +23,7 @@ func CreateBucket(bucket string) error {
 		return &errs.ErrExists{Type: errs.ErrEntityTypeBucket, Resource: bucket}
 	}
 
-	if err := os.MkdirAll(path, 0755); err != nil {
+	if err := os.MkdirAll(path, 0o755); err != nil {
 		return err
 	}
 
