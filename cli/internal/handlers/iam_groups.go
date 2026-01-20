@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 )
 
 func (h *IAMHandler) CreateGroup(groupName string) error {

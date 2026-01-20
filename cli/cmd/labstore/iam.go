@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/handlers"
 	"github.com/IllumiKnowLabs/labstore/client/iam"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -16,8 +16,8 @@ func NewIAMCmd() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			client := iam.NewIAMClient(
 				cmd.Context(),
-				config.IAM.Server.Host,
-				config.IAM.Server.Port,
+				config.IAM.Address.Host,
+				config.IAM.Address.Port,
 			)
 
 			handler := handlers.NewIAMHandler(client)

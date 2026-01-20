@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 )
 
 func (h *IAMHandler) CreatePolicy(policyName, policyDocumentPath string) error {

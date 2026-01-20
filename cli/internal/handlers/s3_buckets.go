@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
 )
 
 func (h *S3Handler) CreateBucket(bucket string) error {

@@ -5,11 +5,11 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/credentials"
 	"github.com/IllumiKnowLabs/labstore/cli/internal/handlers"
 	"github.com/IllumiKnowLabs/labstore/client/s3"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ func NewS3Cmd() *cobra.Command {
 			credentials.Init()
 
 			profileName := helper.Must(cmd.Flags().GetString("profile"))
-			slog.Debug("s3", "profile", profileName, "host", config.S3.Server.Host, "port", config.S3.Server.Port)
+			slog.Debug("s3", "profile", profileName, "host", config.S3.Address.Host, "port", config.S3.Address.Port)
 
 			var profile *credentials.Profile
 			var err error
@@ -39,8 +39,8 @@ func NewS3Cmd() *cobra.Command {
 
 			client := s3.NewS3Client(
 				cmd.Context(),
-				config.S3.Server.Host,
-				config.S3.Server.Port,
+				config.S3.Address.Host,
+				config.S3.Address.Port,
 				profile.AccessKey,
 				profile.SecretKey,
 				false,

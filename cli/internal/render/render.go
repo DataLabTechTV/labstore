@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 	"github.com/charmbracelet/lipgloss"
 )
 
