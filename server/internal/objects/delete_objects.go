@@ -6,12 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/server/internal/core"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/security"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 )
 
 func DeleteObjects(bucket string, r *types.DeleteObjectsRequest) *types.DeleteResult {

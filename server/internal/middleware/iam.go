@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/iam"
 )
 
 func WithIAM(action iam.Action, next http.Handler) http.Handler {

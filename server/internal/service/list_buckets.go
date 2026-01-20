@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/server/internal/middleware"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 
 	"github.com/djherbis/times"
 )

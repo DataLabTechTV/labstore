@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
 )
 
 const Redacted = "**REDACTED**"

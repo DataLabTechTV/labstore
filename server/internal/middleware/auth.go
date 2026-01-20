@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/auth"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
 )
 
 type contextKey string

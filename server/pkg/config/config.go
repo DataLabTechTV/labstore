@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/security"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,10 +49,10 @@ var (
 )
 
 type AppConfig struct {
-	Backend *BackendConfig `mapstructure:"backend"`
+	Server *ServerConfig `mapstructure:"server"`
 }
 
-type BackendConfig struct {
+type ServerConfig struct {
 	Storage *StorageConfig `mapstructure:"storage"`
 	Admin   *AdminConfig   `mapstructure:"admin"`
 	IAM     *IAMConfig     `mapstructure:"iam"`
@@ -69,22 +69,22 @@ type StorageConfig struct {
 }
 
 type AdminConfig struct {
-	Server *ServerConfig `mapstructure:"server"`
-	Auth   *AuthConfig   `mapstructure:"auth"`
+	Address *AddressConfig `mapstructure:"address"`
+	Auth    *AuthConfig    `mapstructure:"auth"`
 }
 
 type IAMConfig struct {
-	Server *ServerConfig `mapstructure:"server"`
-	DB     *IAMDBConfig  `mapstructure:"db"`
+	Address *AddressConfig `mapstructure:"address"`
+	DB      *IAMDBConfig   `mapstructure:"db"`
 }
 
 type S3Config struct {
-	Server *ServerConfig `mapstructure:"server"`
-	Paging *PagingConfig `mapstructure:"paging"`
-	IO     *IOConfig     `mapstructure:"io"`
+	Address *AddressConfig `mapstructure:"address"`
+	Paging  *PagingConfig  `mapstructure:"paging"`
+	IO      *IOConfig      `mapstructure:"io"`
 }
 
-type ServerConfig struct {
+type AddressConfig struct {
 	Host string `mapstructure:"host"`
 	Port uint16 `mapstructure:"port"`
 }
@@ -117,14 +117,14 @@ var IAM *IAMConfig
 var S3 *S3Config
 
 func (config *StorageConfig) Debug() {
-	slog.Debug("config set", "name", "backend.storage.data_dir", "value", config.DataDir)
-	slog.Debug("config set", "name", "backend.storage.keys_dir", "value", config.KeysDir)
+	slog.Debug("config set", "name", "server.storage.data_dir", "value", config.DataDir)
+	slog.Debug("config set", "name", "server.storage.keys_dir", "value", config.KeysDir)
 }
 
 func (config *AdminConfig) Debug() {
-	slog.Debug("config set", "name", "backend.admin.server.host", "value", config.Server.Host)
-	slog.Debug("config set", "name", "backend.admin.server.port", "value", config.Server.Port)
-	slog.Debug("config set", "name", "backend.admin.access_key", "value", config.Auth.AccessKey)
+	slog.Debug("config set", "name", "server.admin.address.host", "value", config.Address.Host)
+	slog.Debug("config set", "name", "server.admin.address.port", "value", config.Address.Port)
+	slog.Debug("config set", "name", "server.admin.access_key", "value", config.Auth.AccessKey)
 
 	var adminSecretKeyDisplay string
 	if len(config.Auth.SecretKey) > 0 {
@@ -132,25 +132,25 @@ func (config *AdminConfig) Debug() {
 	} else {
 		adminSecretKeyDisplay = constants.Empty
 	}
-	slog.Debug("config set", "name", "backend.admin.secret_key", "value", adminSecretKeyDisplay)
+	slog.Debug("config set", "name", "server.admin.secret_key", "value", adminSecretKeyDisplay)
 }
 
 func (config *IAMConfig) Debug() {
-	slog.Debug("config set", "name", "backend.iam.server.host", "value", config.Server.Host)
-	slog.Debug("config set", "name", "backend.iam.server.port", "value", config.Server.Port)
-	slog.Debug("config set", "name", "backend.iam.db.max_open_conns", "value", config.DB.MaxOpenConns)
-	slog.Debug("config set", "name", "backend.iam.db.max_idle_conns", "value", config.DB.MaxIdleConns)
-	slog.Debug("config set", "name", "backend.iam.db.write_chan_cap", "value", config.DB.WriteChanCap)
-	slog.Debug("config set", "name", "backend.iam.db.timeout_ms", "value", config.DB.TimeoutMs)
-	slog.Debug("config set", "name", "backend.iam.db.read_cache_size_kib", "value", config.DB.ReadCacheSizeKiB)
-	slog.Debug("config set", "name", "backend.iam.db.write_cache_size_kib", "value", config.DB.WriteCacheSizeKiB)
+	slog.Debug("config set", "name", "server.iam.address.host", "value", config.Address.Host)
+	slog.Debug("config set", "name", "server.iam.address.port", "value", config.Address.Port)
+	slog.Debug("config set", "name", "server.iam.db.max_open_conns", "value", config.DB.MaxOpenConns)
+	slog.Debug("config set", "name", "server.iam.db.max_idle_conns", "value", config.DB.MaxIdleConns)
+	slog.Debug("config set", "name", "server.iam.db.write_chan_cap", "value", config.DB.WriteChanCap)
+	slog.Debug("config set", "name", "server.iam.db.timeout_ms", "value", config.DB.TimeoutMs)
+	slog.Debug("config set", "name", "server.iam.db.read_cache_size_kib", "value", config.DB.ReadCacheSizeKiB)
+	slog.Debug("config set", "name", "server.iam.db.write_cache_size_kib", "value", config.DB.WriteCacheSizeKiB)
 }
 
 func (config *S3Config) Debug() {
-	slog.Debug("config set", "name", "backend.s3.server.host", "value", config.Server.Host)
-	slog.Debug("config set", "name", "backend.s3.server.port", "value", config.Server.Port)
-	slog.Debug("config set", "name", "backend.s3.paging.max_keys", "value", config.Paging.MaxKeys)
-	slog.Debug("config set", "name", "backend.s3.io.buffer_size", "value", config.IO.BufferSize)
+	slog.Debug("config set", "name", "server.s3.address.host", "value", config.Address.Host)
+	slog.Debug("config set", "name", "server.s3.address.port", "value", config.Address.Port)
+	slog.Debug("config set", "name", "server.s3.paging.max_keys", "value", config.Paging.MaxKeys)
+	slog.Debug("config set", "name", "server.s3.io.buffer_size", "value", config.IO.BufferSize)
 }
 
 func Load(rootCmd *cobra.Command) {
@@ -184,13 +184,13 @@ func setDefaults() {
 	slog.Debug("setting config defaults")
 
 	// storage
-	viper.SetDefault("backend.storage.data_dir", DefaultStorageDataDir)
-	viper.SetDefault("backend.storage.keys_dir", DefaultStorageKeysDir)
+	viper.SetDefault("server.storage.data_dir", DefaultStorageDataDir)
+	viper.SetDefault("server.storage.keys_dir", DefaultStorageKeysDir)
 
 	// admin
-	viper.SetDefault("backend.admin.server.host", DefaultAdminServerHost)
-	viper.SetDefault("backend.admin.server.port", DefaultAdminServerPort)
-	viper.SetDefault("backend.admin.auth.access_key", DefaultAdminAuthAccessKey)
+	viper.SetDefault("server.admin.address.host", DefaultAdminServerHost)
+	viper.SetDefault("server.admin.address.port", DefaultAdminServerPort)
+	viper.SetDefault("server.admin.auth.access_key", DefaultAdminAuthAccessKey)
 
 	randomSecretKey, err := security.GeneratePassword(32)
 	if err != nil {
@@ -199,23 +199,23 @@ func setDefaults() {
 		DefaultAdminSecretKey = randomSecretKey
 	}
 
-	viper.SetDefault("backend.admin.auth.secret_key", DefaultAdminSecretKey)
+	viper.SetDefault("server.admin.auth.secret_key", DefaultAdminSecretKey)
 
 	// iam
-	viper.SetDefault("backend.iam.server.host", DefaultIAMServerHost)
-	viper.SetDefault("backend.iam.server.port", DefaultIAMServerPort)
-	viper.SetDefault("backend.iam.db.max_open_conns", DefaultIAMDBMaxOpenConns)
-	viper.SetDefault("backend.iam.db.max_idle_conns", DefaultIAMDBMaxIdleConns)
-	viper.SetDefault("backend.iam.db.write_chan_cap", DefaultIAMWriteChanCap)
-	viper.SetDefault("backend.iam.db.timeout_ms", DefaultIAMDBTimeoutMs)
-	viper.SetDefault("backend.iam.db.read_cache_size_kib", DefaultIAMDBReadCacheSizeKiB)
-	viper.SetDefault("backend.iam.db.write_cache_size_kib", DefaultIAMDBWriteCacheSizeKiB)
+	viper.SetDefault("server.iam.address.host", DefaultIAMServerHost)
+	viper.SetDefault("server.iam.address.port", DefaultIAMServerPort)
+	viper.SetDefault("server.iam.db.max_open_conns", DefaultIAMDBMaxOpenConns)
+	viper.SetDefault("server.iam.db.max_idle_conns", DefaultIAMDBMaxIdleConns)
+	viper.SetDefault("server.iam.db.write_chan_cap", DefaultIAMWriteChanCap)
+	viper.SetDefault("server.iam.db.timeout_ms", DefaultIAMDBTimeoutMs)
+	viper.SetDefault("server.iam.db.read_cache_size_kib", DefaultIAMDBReadCacheSizeKiB)
+	viper.SetDefault("server.iam.db.write_cache_size_kib", DefaultIAMDBWriteCacheSizeKiB)
 
 	// s3
-	viper.SetDefault("backend.s3.server.host", DefaultS3ServerHost)
-	viper.SetDefault("backend.s3.server.port", DefaultS3ServerPort)
-	viper.SetDefault("backend.s3.paging.max_keys", DefaultS3PagingMaxKeys)
-	viper.SetDefault("backend.s3.io.buffer_size", DefaultS3IOBufferSize)
+	viper.SetDefault("server.s3.address.host", DefaultS3ServerHost)
+	viper.SetDefault("server.s3.address.port", DefaultS3ServerPort)
+	viper.SetDefault("server.s3.paging.max_keys", DefaultS3PagingMaxKeys)
+	viper.SetDefault("server.s3.io.buffer_size", DefaultS3IOBufferSize)
 }
 
 func setOverrides(rootCmd *cobra.Command) {
@@ -238,30 +238,30 @@ func setOverrides(rootCmd *cobra.Command) {
 	}
 
 	// storage
-	bindPFlagIfExists("backend.storage.data_dir", serverCmd, "storage-data-dir")
-	bindPFlagIfExists("backend.storage.keys_dir", serverCmd, "storage-keys-dir")
+	bindPFlagIfExists("server.storage.data_dir", serverCmd, "storage-data-dir")
+	bindPFlagIfExists("server.storage.keys_dir", serverCmd, "storage-keys-dir")
 
 	// admin
-	bindPFlagIfExists("backend.admin.server.host", serverCmd, "admin-server-host")
-	bindPFlagIfExists("backend.admin.server.port", serverCmd, "admin-server-port")
-	bindPFlagIfExists("backend.admin.auth.access_key", serverCmd, "admin-auth-access-key")
-	bindPFlagIfExists("backend.admin.auth.secret_key", serverCmd, "admin-auth-secret-key")
+	bindPFlagIfExists("server.admin.address.host", serverCmd, "admin-server-host")
+	bindPFlagIfExists("server.admin.address.port", serverCmd, "admin-server-port")
+	bindPFlagIfExists("server.admin.auth.access_key", serverCmd, "admin-auth-access-key")
+	bindPFlagIfExists("server.admin.auth.secret_key", serverCmd, "admin-auth-secret-key")
 
 	// iam
-	bindPFlagIfExists("backend.iam.server.host", serverCmd, "iam-server-host")
-	bindPFlagIfExists("backend.aim.server.port", serverCmd, "iam-server-port")
-	bindPFlagIfExists("backend.iam.db.max_open_conns", serverCmd, "iam-db-max-open-conns")
-	bindPFlagIfExists("backend.iam.db.max_idle_conns", serverCmd, "iam-db-max-idle-conns")
-	bindPFlagIfExists("backend.iam.db.write_chan_cap", serverCmd, "iam-db-write-chan-cap")
-	bindPFlagIfExists("backend.iam.db.timeout_ms", serverCmd, "iam-db-timeout-ms")
-	bindPFlagIfExists("backend.iam.db.read_cache_size_kib", serverCmd, "iam-db-read-cache-size-kib")
-	bindPFlagIfExists("backend.iam.db.write_cache_size_kib", serverCmd, "iam-db-write-cache-size-kib")
+	bindPFlagIfExists("server.iam.address.host", serverCmd, "iam-server-host")
+	bindPFlagIfExists("server.aim.address.port", serverCmd, "iam-server-port")
+	bindPFlagIfExists("server.iam.db.max_open_conns", serverCmd, "iam-db-max-open-conns")
+	bindPFlagIfExists("server.iam.db.max_idle_conns", serverCmd, "iam-db-max-idle-conns")
+	bindPFlagIfExists("server.iam.db.write_chan_cap", serverCmd, "iam-db-write-chan-cap")
+	bindPFlagIfExists("server.iam.db.timeout_ms", serverCmd, "iam-db-timeout-ms")
+	bindPFlagIfExists("server.iam.db.read_cache_size_kib", serverCmd, "iam-db-read-cache-size-kib")
+	bindPFlagIfExists("server.iam.db.write_cache_size_kib", serverCmd, "iam-db-write-cache-size-kib")
 
 	// s3
-	bindPFlagIfExists("backend.s3.server.host", serverCmd, "s3-server-host")
-	bindPFlagIfExists("backend.s3.server.port", serverCmd, "s3-server-port")
-	bindPFlagIfExists("backend.s3.paging.max_keys", serverCmd, "s3-paging-max-keys")
-	bindPFlagIfExists("backend.s3.io.buffer_size", serverCmd, "s3-io-buffer-size")
+	bindPFlagIfExists("server.s3.address.host", serverCmd, "s3-server-host")
+	bindPFlagIfExists("server.s3.address.port", serverCmd, "s3-server-port")
+	bindPFlagIfExists("server.s3.paging.max_keys", serverCmd, "s3-paging-max-keys")
+	bindPFlagIfExists("server.s3.io.buffer_size", serverCmd, "s3-io-buffer-size")
 }
 
 func bindPFlagIfExists(configKey string, cmd *cobra.Command, flagName string) {
@@ -289,16 +289,16 @@ func parseConfig() {
 		return
 	}
 
-	Storage = config.Backend.Storage
+	Storage = config.Server.Storage
 	Storage.Debug()
 
-	Admin = config.Backend.Admin
+	Admin = config.Server.Admin
 	Admin.Debug()
 
-	IAM = config.Backend.IAM
+	IAM = config.Server.IAM
 	IAM.Debug()
 
-	S3 = config.Backend.S3
+	S3 = config.Server.S3
 	S3.Debug()
 
 	relStorageDataDir := helper.MustResolveToRelativePath(Storage.DataDir)

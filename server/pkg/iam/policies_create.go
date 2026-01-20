@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/server/internal/core"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 )
 
 func (store *Store) CreatePolicy(ctx context.Context, name string, doc *PolicyDocument) (*Policy, error) {

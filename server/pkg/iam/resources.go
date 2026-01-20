@@ -3,7 +3,7 @@ package iam
 import (
 	"encoding/json"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/core"
+	"github.com/IllumiKnowLabs/labstore/server/internal/core"
 	"github.com/gobwas/glob"
 )
 

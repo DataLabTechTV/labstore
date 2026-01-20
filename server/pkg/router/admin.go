@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
+	"github.com/IllumiKnowLabs/labstore/server/internal/middleware"
 )
 
 var healthStatus []*atomic.Bool
