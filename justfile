@@ -3,7 +3,7 @@ set shell := ["bash", "-uc"]
 config_path := "labstore.yml"
 
 [group("projects")]
-mod backend "backend/justfile"
+mod server "server/justfile"
 
 [group("projects")]
 mod cli "cli/justfile"
