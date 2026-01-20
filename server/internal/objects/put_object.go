@@ -19,7 +19,7 @@ import (
 func PutObject(bucket string, key string, reader io.Reader) error {
 	bucketPath := core.BucketSystemPath(bucket)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, bucketPath) {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: bucket}
 	}
 
@@ -48,8 +48,8 @@ func PutObject(bucket string, key string, reader io.Reader) error {
 	}
 	defer helper.CloseWithErr(file, &err)
 
-	writer := bufio.NewWriterSize(file, config.S3.IO.BufferSize)
-	buf := make([]byte, config.S3.IO.BufferSize)
+	writer := bufio.NewWriterSize(file, config.App.Server.S3.IO.BufferSize)
+	buf := make([]byte, config.App.Server.S3.IO.BufferSize)
 
 	_, err = io.CopyBuffer(writer, reader, buf)
 	if err != nil {

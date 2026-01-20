@@ -30,12 +30,21 @@ func Start() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	s3ServerDescriptor := NewS3ServerDescriptor(config.S3.Address.Host, config.S3.Address.Port)
-	iamServerDescriptor := NewIAMServerDescriptor(config.IAM.Address.Host, config.IAM.Address.Port)
+	// webServerDescriptor := NewWebServerDescriptor(config.)
+
+	s3ServerDescriptor := NewS3ServerDescriptor(
+		config.App.Server.S3.Address.Host,
+		config.App.Server.S3.Address.Port,
+	)
+
+	iamServerDescriptor := NewIAMServerDescriptor(
+		config.App.Server.IAM.Address.Host,
+		config.App.Server.IAM.Address.Port,
+	)
 
 	adminServerDescriptor := NewAdminServerDescriptor(
-		config.Admin.Address.Host,
-		config.Admin.Address.Port,
+		config.App.Server.Admin.Address.Host,
+		config.App.Server.Admin.Address.Port,
 		[]*ServerDescriptor{s3ServerDescriptor, iamServerDescriptor},
 	)
 
@@ -65,11 +74,11 @@ func Start() {
 func ensureDirectories() error {
 	slog.Debug("ensuring data directories")
 
-	if err := os.MkdirAll(config.Storage.ObjectsPath, 0750); err != nil {
+	if err := os.MkdirAll(config.App.Server.Storage.ObjectsPath, 0750); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(config.Storage.MetadataPath, 0750); err != nil {
+	if err := os.MkdirAll(config.App.Server.Storage.MetadataPath, 0750); err != nil {
 		return err
 	}
 

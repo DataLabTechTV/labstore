@@ -62,8 +62,8 @@ func newSQLTask(ctx context.Context, resCh chan<- sqlTaskResult, fn sqlFn) sqlTa
 }
 
 func newWriterWorker(db *sqlx.DB) chan<- sqlTask {
-	slog.Debug("new writer worker", "writeChanCap", config.IAM.DB.WriteChanCap)
-	taskCh := make(chan sqlTask, config.IAM.DB.WriteChanCap)
+	slog.Debug("new writer worker", "writeChanCap", config.App.Server.IAM.DB.WriteChanCap)
+	taskCh := make(chan sqlTask, config.App.Server.IAM.DB.WriteChanCap)
 
 	go func() {
 		for task := range taskCh {
@@ -107,7 +107,7 @@ func (store *Store) sqlNamedExecContext(ctx context.Context, query string, arg a
 }
 
 func (store *Store) open() error {
-	dbPath := filepath.Join(config.Storage.MetadataPath, IAMDBFilename)
+	dbPath := filepath.Join(config.App.Server.Storage.MetadataPath, IAMDBFilename)
 
 	f, err := os.OpenFile(dbPath, os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
@@ -115,9 +115,9 @@ func (store *Store) open() error {
 	}
 	helper.CloseWithErr(f, &err)
 
-	timeoutMs := fmt.Sprint(config.IAM.DB.TimeoutMs)
-	readCacheSize := fmt.Sprint(config.IAM.DB.ReadCacheSizeKiB)
-	writeCacheSize := fmt.Sprint(config.IAM.DB.WriteCacheSizeKiB)
+	timeoutMs := fmt.Sprint(config.App.Server.IAM.DB.TimeoutMs)
+	readCacheSize := fmt.Sprint(config.App.Server.IAM.DB.ReadCacheSizeKiB)
+	writeCacheSize := fmt.Sprint(config.App.Server.IAM.DB.WriteCacheSizeKiB)
 
 	readDSN := "file:" + dbPath +
 		"?_pragma=journal_mode(WAL)" +
@@ -147,8 +147,8 @@ func (store *Store) open() error {
 		return err
 	}
 
-	readDB.SetMaxOpenConns(config.IAM.DB.MaxOpenConns)
-	readDB.SetMaxIdleConns(config.IAM.DB.MaxIdleConns)
+	readDB.SetMaxOpenConns(config.App.Server.IAM.DB.MaxOpenConns)
+	readDB.SetMaxIdleConns(config.App.Server.IAM.DB.MaxIdleConns)
 
 	writeDB.SetMaxOpenConns(1)
 	writeDB.SetMaxIdleConns(1)
@@ -160,7 +160,7 @@ func (store *Store) open() error {
 }
 
 func (store *Store) ensureSchema() error {
-	dbPath := filepath.Join(config.Storage.MetadataPath, "iam.db")
+	dbPath := filepath.Join(config.App.Server.Storage.MetadataPath, "iam.db")
 
 	db, err := sqlx.Open("sqlite", dbPath)
 	if err != nil {

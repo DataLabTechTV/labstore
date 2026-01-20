@@ -15,7 +15,7 @@ import (
 func CreateBucket(bucket string) error {
 	path := core.BucketSystemPath(bucket)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, path) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, path) {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: bucket}
 	}
 

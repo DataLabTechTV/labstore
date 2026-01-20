@@ -18,7 +18,7 @@ func (store *Store) DeleteAccessKey(ctx context.Context, userName, accessKeyID s
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeUser, Resource: userName}
 	}
 
-	if accessKeyID == config.Admin.Auth.AccessKey {
+	if accessKeyID == config.App.Server.Admin.Auth.AccessKey {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeAccessKey, Resource: accessKeyID}
 	}
 

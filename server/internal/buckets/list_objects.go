@@ -65,17 +65,21 @@ func ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if mk := q.Get("maxKeys"); mk == "" {
-		maxKeys = config.S3.Paging.MaxKeys
+		maxKeys = config.App.Server.S3.Paging.MaxKeys
 	} else {
 		if maxKeys, err = strconv.Atoi(mk); err != nil {
-			slog.Warn("invalid max-keys value, using default", "input", mk, "default", config.S3.Paging.MaxKeys)
-			maxKeys = config.S3.Paging.MaxKeys
+			slog.Warn(
+				"invalid max-keys value, using default",
+				"input", mk,
+				"default", config.App.Server.S3.Paging.MaxKeys,
+			)
+			maxKeys = config.App.Server.S3.Paging.MaxKeys
 		}
 	}
 
-	if maxKeys > config.S3.Paging.MaxKeys {
-		slog.Warn("max-keys capped", "input", maxKeys, "cap", config.S3.Paging.MaxKeys)
-		maxKeys = config.S3.Paging.MaxKeys
+	if maxKeys > config.App.Server.S3.Paging.MaxKeys {
+		slog.Warn("max-keys capped", "input", maxKeys, "cap", config.App.Server.S3.Paging.MaxKeys)
+		maxKeys = config.App.Server.S3.Paging.MaxKeys
 	}
 
 	rBase := BaseListObjectsRequest{
@@ -198,13 +202,13 @@ func ListObjectsV2(r *ListObjectsRequestV2) (*types.ListBucketResultV2, error) {
 func list(res *types.BaseListBucketResult, req *BaseListObjectsRequest) error {
 	bucketPath := core.BucketSystemPath(req.Bucket)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, bucketPath) {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: req.Bucket}
 	}
 
 	filterPath := fmt.Sprintf("%s%c%s*", bucketPath, os.PathSeparator, req.Prefix)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, filterPath) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, filterPath) {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(req.Bucket, req.Prefix)}
 	}
 

@@ -17,7 +17,7 @@ import (
 func GetObject(bucket, key string) (*types.GetObjectResult, error) {
 	bucketPath := core.BucketSystemPath(bucket)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, bucketPath) {
 		return nil, &errs.ErrForbidden{Type: errs.ErrEntityTypeBucket, Resource: bucket}
 	}
 
@@ -27,7 +27,7 @@ func GetObject(bucket, key string) (*types.GetObjectResult, error) {
 
 	objPath := core.ObjectSystemPath(bucket, key)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, objPath) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, objPath) {
 		return nil, &errs.ErrForbidden{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(bucket, key)}
 	}
 

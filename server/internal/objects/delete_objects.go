@@ -21,7 +21,7 @@ func DeleteObjects(bucket string, r *types.DeleteObjectsRequest) *types.DeleteRe
 	for _, obj := range r.Object {
 		objPath := filepath.Join(bucketPath, obj.Key)
 
-		if !security.IsSubdir(config.Storage.ObjectsPath, objPath) {
+		if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, objPath) {
 			res.Error = append(res.Error, *errs.S3AccessDenied())
 		}
 

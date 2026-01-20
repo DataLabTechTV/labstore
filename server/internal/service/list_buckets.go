@@ -17,7 +17,7 @@ import (
 )
 
 func ListBuckets(accessKey string) (*types.ListAllMyBucketsResult, error) {
-	entries, err := os.ReadDir(config.Storage.ObjectsPath)
+	entries, err := os.ReadDir(config.App.Server.Storage.ObjectsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func ListBuckets(accessKey string) (*types.ListAllMyBucketsResult, error) {
 		if entry.IsDir() {
 			var birthDate time.Time
 
-			path := filepath.Join(config.Storage.ObjectsPath, entry.Name())
+			path := filepath.Join(config.App.Server.Storage.ObjectsPath, entry.Name())
 
 			stat, err := times.Stat(path)
 			if err != nil {
