@@ -23,12 +23,12 @@ const (
 	DefaultStorageKeysDir     = "./keys"
 	DefaultMasterKeyFilename  = "master.key"
 
-	DefaultAdminServerHost    = "0.0.0.0"
-	DefaultAdminServerPort    = 6787
+	DefaultAdminAddressHost   = "0.0.0.0"
+	DefaultAdminAddressPort   = 6787
 	DefaultAdminAuthAccessKey = "admin"
 
-	DefaultIAMServerHost     = "0.0.0.0"
-	DefaultIAMServerPort     = 6788
+	DefaultIAMAddressHost    = "0.0.0.0"
+	DefaultIAMAddressPort    = 6788
 	DefaultIAMDBMaxOpenConns = 3
 	DefaultIAMDBMaxIdleConns = 3
 	DefaultIAMWriteChanCap   = 32
@@ -37,10 +37,13 @@ const (
 	DefaultIAMDBReadCacheSizeKiB  = 65536
 	DefaultIAMDBWriteCacheSizeKiB = 16384
 
-	DefaultS3ServerHost    = "0.0.0.0"
-	DefaultS3ServerPort    = 6789
+	DefaultS3AddressHost   = "0.0.0.0"
+	DefaultS3AddressPort   = 6789
 	DefaultS3PagingMaxKeys = 1000
 	DefaultS3IOBufferSize  = 256 * helper.KiB
+
+	DefaultWebAddressHost = "0.0.0.0"
+	DefaultWebAddressPort = 6790
 )
 
 var (
@@ -120,6 +123,7 @@ var App *AppConfig
 
 func (config *AppConfig) Debug() {
 	config.Server.Debug()
+	config.Web.Debug()
 }
 
 func (config *ServerConfig) Debug() {
@@ -127,6 +131,11 @@ func (config *ServerConfig) Debug() {
 	config.Admin.Debug()
 	config.IAM.Debug()
 	config.S3.Debug()
+}
+
+func (config *WebConfig) Debug() {
+	slog.Debug("config set", "name", "web.address.host", "value", config.Address.Host)
+	slog.Debug("config set", "name", "web.address.port", "value", config.Address.Port)
 }
 
 func (config *StorageConfig) Debug() {
@@ -220,8 +229,8 @@ func setDefaults() {
 	viper.SetDefault("server.storage.keys_dir", DefaultStorageKeysDir)
 
 	// admin
-	viper.SetDefault("server.admin.address.host", DefaultAdminServerHost)
-	viper.SetDefault("server.admin.address.port", DefaultAdminServerPort)
+	viper.SetDefault("server.admin.address.host", DefaultAdminAddressHost)
+	viper.SetDefault("server.admin.address.port", DefaultAdminAddressPort)
 	viper.SetDefault("server.admin.auth.access_key", DefaultAdminAuthAccessKey)
 
 	randomSecretKey, err := security.GeneratePassword(32)
@@ -234,8 +243,8 @@ func setDefaults() {
 	viper.SetDefault("server.admin.auth.secret_key", DefaultAdminSecretKey)
 
 	// iam
-	viper.SetDefault("server.iam.address.host", DefaultIAMServerHost)
-	viper.SetDefault("server.iam.address.port", DefaultIAMServerPort)
+	viper.SetDefault("server.iam.address.host", DefaultIAMAddressHost)
+	viper.SetDefault("server.iam.address.port", DefaultIAMAddressPort)
 	viper.SetDefault("server.iam.db.max_open_conns", DefaultIAMDBMaxOpenConns)
 	viper.SetDefault("server.iam.db.max_idle_conns", DefaultIAMDBMaxIdleConns)
 	viper.SetDefault("server.iam.db.write_chan_cap", DefaultIAMWriteChanCap)
@@ -244,10 +253,14 @@ func setDefaults() {
 	viper.SetDefault("server.iam.db.write_cache_size_kib", DefaultIAMDBWriteCacheSizeKiB)
 
 	// s3
-	viper.SetDefault("server.s3.address.host", DefaultS3ServerHost)
-	viper.SetDefault("server.s3.address.port", DefaultS3ServerPort)
+	viper.SetDefault("server.s3.address.host", DefaultS3AddressHost)
+	viper.SetDefault("server.s3.address.port", DefaultS3AddressPort)
 	viper.SetDefault("server.s3.paging.max_keys", DefaultS3PagingMaxKeys)
 	viper.SetDefault("server.s3.io.buffer_size", DefaultS3IOBufferSize)
+
+	// web
+	viper.SetDefault("web.address.host", DefaultWebAddressHost)
+	viper.SetDefault("web.address.port", DefaultWebAddressPort)
 }
 
 func setOverrides(rootCmd *cobra.Command) {
@@ -274,14 +287,14 @@ func setOverrides(rootCmd *cobra.Command) {
 	bindPFlagIfExists("server.storage.keys_dir", serverCmd, "storage-keys-dir")
 
 	// admin
-	bindPFlagIfExists("server.admin.address.host", serverCmd, "admin-server-host")
-	bindPFlagIfExists("server.admin.address.port", serverCmd, "admin-server-port")
+	bindPFlagIfExists("server.admin.address.host", serverCmd, "admin-address-host")
+	bindPFlagIfExists("server.admin.address.port", serverCmd, "admin-address-port")
 	bindPFlagIfExists("server.admin.auth.access_key", serverCmd, "admin-auth-access-key")
 	bindPFlagIfExists("server.admin.auth.secret_key", serverCmd, "admin-auth-secret-key")
 
 	// iam
-	bindPFlagIfExists("server.iam.address.host", serverCmd, "iam-server-host")
-	bindPFlagIfExists("server.aim.address.port", serverCmd, "iam-server-port")
+	bindPFlagIfExists("server.iam.address.host", serverCmd, "iam-address-host")
+	bindPFlagIfExists("server.aim.address.port", serverCmd, "iam-address-port")
 	bindPFlagIfExists("server.iam.db.max_open_conns", serverCmd, "iam-db-max-open-conns")
 	bindPFlagIfExists("server.iam.db.max_idle_conns", serverCmd, "iam-db-max-idle-conns")
 	bindPFlagIfExists("server.iam.db.write_chan_cap", serverCmd, "iam-db-write-chan-cap")
@@ -290,10 +303,14 @@ func setOverrides(rootCmd *cobra.Command) {
 	bindPFlagIfExists("server.iam.db.write_cache_size_kib", serverCmd, "iam-db-write-cache-size-kib")
 
 	// s3
-	bindPFlagIfExists("server.s3.address.host", serverCmd, "s3-server-host")
-	bindPFlagIfExists("server.s3.address.port", serverCmd, "s3-server-port")
+	bindPFlagIfExists("server.s3.address.host", serverCmd, "s3-address-host")
+	bindPFlagIfExists("server.s3.address.port", serverCmd, "s3-address-port")
 	bindPFlagIfExists("server.s3.paging.max_keys", serverCmd, "s3-paging-max-keys")
 	bindPFlagIfExists("server.s3.io.buffer_size", serverCmd, "s3-io-buffer-size")
+
+	// web
+	bindPFlagIfExists("web.address.host", serverCmd, "web-address-host")
+	bindPFlagIfExists("web.address.port", serverCmd, "web-address-port")
 }
 
 func bindPFlagIfExists(configKey string, cmd *cobra.Command, flagName string) {

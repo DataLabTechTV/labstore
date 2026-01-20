@@ -14,7 +14,7 @@ import (
 var frontendFiles embed.FS
 
 func NewWebServerDescriptor(host string, port uint16) *ServerDescriptor {
-	slog.Info("web frontend server", "host", host, "port", port)
+	slog.Info("web ui server", "host", host, "port", port)
 
 	addr := fmt.Sprintf("%s:%d", host, port)
 
