@@ -28,11 +28,11 @@ $(WEB_BUILD_DIR): $(WEB_SRCS)
 	cd $(WEB_DIR) && npm ci
 	cd $(WEB_DIR) && npm run build
 
-cli: $(CLI_CMD)
+cli: web $(CLI_CMD)
 
 web: $(WEB_BUILD_DIR)
 
-build: cli web
+build: cli
 
 run: build
 	npx concurrently \
