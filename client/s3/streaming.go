@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/auth"
 	"github.com/IllumiKnowLabs/labstore/client"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/auth"
 )
 
 type SigV4ChunkEncoder struct {

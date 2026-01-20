@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/iam"
 )
 
 func (c *Client) DoRequest(op iam.IAMOp, formKeyVals ...string) (*http.Response, error) {

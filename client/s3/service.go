@@ -3,9 +3,9 @@ package s3
 import (
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 )
 
 func (c *Client) ListBuckets() ([]types.Bucket, error) {

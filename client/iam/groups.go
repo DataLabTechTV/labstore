@@ -3,10 +3,10 @@ package iam
 import (
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/types"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
 )
 
 func (c *Client) CreateGroup(groupName string) (*types.CreateGroupResponse, error) {

@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"io"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
 )
 
 func XMLReader(v any) io.Reader {
