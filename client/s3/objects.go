@@ -112,7 +112,7 @@ func (c *Client) GetObject(bucket, key string, writer io.Writer, progress chan<-
 			return 0, err
 		}
 
-		buf := make([]byte, config.S3.IO.BufferSize)
+		buf := make([]byte, config.App.Server.S3.IO.BufferSize)
 		read := 0
 		for {
 			n, err := resp.Body.Read(buf)
