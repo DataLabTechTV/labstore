@@ -30,8 +30,8 @@ func NewIAMCmd() *cobra.Command {
 	cmd.Flags().String("admin-auth-access-key", config.DefaultAdminAuthAccessKey, "Administrator account access key")
 	cmd.Flags().String("admin-auth-secret-key", config.DefaultAdminSecretKey, "Administrator account secret key")
 
-	cmd.Flags().String("iam-server-host", config.DefaultIAMServerHost, "Listening host for IAM server")
-	cmd.Flags().String("iam-server-port", config.DefaultIAMServerHost, "Listening port for IAM server")
+	cmd.Flags().String("iam-address-host", config.DefaultIAMAddressHost, "Listening host for IAM server")
+	cmd.Flags().String("iam-address-port", config.DefaultIAMAddressHost, "Listening port for IAM server")
 
 	cmd.AddCommand(NewUsersCmd())
 	cmd.AddCommand(NewGroupsCmd())

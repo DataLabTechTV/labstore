@@ -15,8 +15,8 @@ func NewAdminCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("admin-server-host", config.DefaultAdminServerHost, "Listening host for admin server")
-	cmd.Flags().String("admin-server-port", config.DefaultAdminServerHost, "Listening port for admin server")
+	cmd.Flags().String("admin-address-host", config.DefaultAdminAddressHost, "Listening host for admin server")
+	cmd.Flags().String("admin-address-port", config.DefaultAdminAddressHost, "Listening port for admin server")
 	cmd.Flags().String("admin-auth-access-key", config.DefaultAdminAuthAccessKey, "Administrator account access key")
 	cmd.Flags().String("admin-auth-secret-key", config.DefaultAdminSecretKey, "Administrator account secret key")
 
