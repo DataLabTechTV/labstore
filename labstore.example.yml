@@ -30,11 +30,9 @@ server:
       buffer_size: 262144
 
 web:
-  host: 0.0.0.0
-  port: 6790
-
-shared:
-  ...
+  address:
+    host: 0.0.0.0
+    port: 6790
 
 benchmark:
   host: localhost

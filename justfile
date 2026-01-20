@@ -56,8 +56,8 @@ check-deps:
 print-env:
     #!/bin/bash
 
-    LABSTORE_WEB_HOST=$(yq ".web.host" {{config_path}})
-    LABSTORE_WEB_PORT=$(yq ".web.port" {{config_path}})
+    LABSTORE_WEB_ADDRESS_HOST=$(yq ".web.address.host" {{config_path}})
+    LABSTORE_WEB_ADDRESS_PORT=$(yq ".web.address.port" {{config_path}})
 
     LABSTORE_SERVER_ADMIN_ADDRESS_HOST=$(yq ".server.admin.address.host" {{config_path}})
     LABSTORE_SERVER_ADMIN_ADDRESS_PORT=$(yq ".server.admin.address.port" {{config_path}})
@@ -85,8 +85,8 @@ print-env:
     BENCHMARK_STORE_REGION=$(yq ".benchmark.store.region" {{config_path}})
 
     cat <<EOF
-    export LABSTORE_WEB_HOST=$LABSTORE_WEB_HOST
-    export LABSTORE_WEB_PORT=$LABSTORE_WEB_PORT
+    export LABSTORE_WEB_ADDRESS_HOST=$LABSTORE_WEB_ADDRESS_HOST
+    export LABSTORE_WEB_ADDRESS_PORT=$LABSTORE_WEB_ADDRESS_PORT
     export LABSTORE_SERVER_ADMIN_ADDRESS_HOST=$LABSTORE_SERVER_ADMIN_ADDRESS_HOST
     export LABSTORE_SERVER_ADMIN_ADDRESS_PORT=$LABSTORE_SERVER_ADMIN_ADDRESS_PORT
     export LABSTORE_SERVER_ADMIN_AUTH_ACCESS_KEY=$LABSTORE_SERVER_ADMIN_AUTH_ACCESS_KEY
