@@ -1,0 +1,47 @@
+# =================
+# Go builder
+# =================
+
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.22 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /labstore
+
+COPY server/go.mod ./server/go.mod
+RUN cd server/ && go mod download
+
+COPY client/go.mod ./client/go.mod
+RUN cd client/ && go mod download
+
+COPY cli/go.mod ./cli/go.mod
+RUN cd cli/ && go mod download
+
+COPY server server
+COPY client client
+COPY cli cli
+RUN go work init ./server ./client ./cli
+
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH cd cli/ && go build -o ../bin/labstore ./cmd/labstore
+
+# ============
+# LabStore CLI
+# ============
+
+FROM alpine:3.22
+
+COPY --from=builder /labstore/bin/labstore /usr/local/bin/labstore
+
+RUN addgroup -S labstore && adduser -S labstore -G labstore
+
+RUN mkdir /data /keys
+RUN chown -R labstore:labstore /data /keys
+RUN chmod 0700 /keys
+
+VOLUME /data
+VOLUME /keys
+
+USER labstore
+
+ENTRYPOINT ["labstore"]
