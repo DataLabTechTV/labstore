@@ -3,6 +3,7 @@ bin/
 data/
 keys/
 output/
+server/pkg/router/assets/
 .zed/
 .vscode/
 __debug*
