@@ -109,7 +109,7 @@ func (store *Store) sqlNamedExecContext(ctx context.Context, query string, arg a
 func (store *Store) open() error {
 	dbPath := filepath.Join(config.App.Server.Storage.MetadataPath, IAMDBFilename)
 
-	f, err := os.OpenFile(dbPath, os.O_CREATE|os.O_WRONLY, 0600)
+	f, err := os.OpenFile(dbPath, os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}

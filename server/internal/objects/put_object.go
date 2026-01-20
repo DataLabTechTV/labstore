@@ -38,7 +38,7 @@ func PutObject(bucket string, key string, reader io.Reader) error {
 		return &errs.ErrNotDirectory{Path: objDir}
 	}
 
-	if err := os.MkdirAll(objDir, 0755); err != nil {
+	if err := os.MkdirAll(objDir, 0o755); err != nil {
 		return err
 	}
 
