@@ -1,16 +1,16 @@
-backend:
+server:
   storage:
     data_dir: ./data
     keys_dir: ./keys
   admin:
-    server:
+    address:
       host: 0.0.0.0
       port: 6787
     auth:
       access_key: admin
       secret_key: adminadmin
   iam:
-    server:
+    address:
       host: 0.0.0.0
       port: 6788
     db:
@@ -21,7 +21,7 @@ backend:
       read_cache_size_kib: 65536
       writer_cache_size_kib: 16384
   s3:
-    server:
+    address:
       host: 0.0.0.0
       port: 6789
     paging:
