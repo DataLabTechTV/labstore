@@ -48,7 +48,7 @@ func (profiler *Profiler) Start() {
 
 	go func() {
 		addr := fmt.Sprintf("%s:%d", profiler.Host, profiler.Port)
-		fmt.Printf("🕵️‍♂️ Profiler listening on http://%s\n", addr)
+		fmt.Printf("🕵️  Profiler listening on http://%s\n", addr)
 		log.Fatal(http.ListenAndServe(addr, nil))
 	}()
 }

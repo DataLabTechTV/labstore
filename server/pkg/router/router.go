@@ -8,11 +8,18 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 )
+
+type ServerDescriptor struct {
+	Name    string
+	Server  *http.Server
+	Healthy atomic.Bool
+}
 
 func Start() {
 	if err := ensureDirectories(); err != nil {

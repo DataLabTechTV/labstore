@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	iamimpl "github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/errs"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
@@ -57,61 +56,61 @@ func loadIAMRoutes(router *http.ServeMux) {
 		switch iam.IAMOp(action) {
 		// --- User: Create ---
 		case iam.OpCreateUser:
-			iamimpl.CreateUserHandler(w, r)
+			iam.CreateUserHandler(w, r)
 		case iam.OpCreateAccessKey:
-			iamimpl.CreateAccessKeyHandler(w, r)
+			iam.CreateAccessKeyHandler(w, r)
 
 		// --- User: Read ---
 		case iam.OpGetUser:
-			iamimpl.GetUserHandler(w, r)
+			iam.GetUserHandler(w, r)
 		case iam.OpListAccessKeys:
-			iamimpl.ListAccessKeysHandler(w, r)
+			iam.ListAccessKeysHandler(w, r)
 		case iam.OpListAttachedUserPolicies:
-			iamimpl.ListAttachedUserPoliciesHandler(w, r)
+			iam.ListAttachedUserPoliciesHandler(w, r)
 
 		// --- User: Delete ---
 		case iam.OpDeleteUser:
-			iamimpl.DeleteUserHandler(w, r)
+			iam.DeleteUserHandler(w, r)
 		case iam.OpDeleteAccessKey:
-			iamimpl.DeleteAccessKeyHandler(w, r)
+			iam.DeleteAccessKeyHandler(w, r)
 
 		// --- Groups: Create ---
 		case iam.OpCreateGroup:
-			iamimpl.CreateGroupHandler(w, r)
+			iam.CreateGroupHandler(w, r)
 		case iam.OpAddUserToGroup:
-			iamimpl.AddUserToGroupHandler(w, r)
+			iam.AddUserToGroupHandler(w, r)
 
 		// --- Groups: Read ---
 		case iam.OpGetGroup:
-			iamimpl.GetGroupHandler(w, r)
+			iam.GetGroupHandler(w, r)
 		case iam.OpListAttachedGroupPolicies:
-			iamimpl.ListAttachedGroupPoliciesHandler(w, r)
+			iam.ListAttachedGroupPoliciesHandler(w, r)
 
 		// --- Groups: Delete ---
 		case iam.OpDeleteGroup:
-			iamimpl.DeleteGroupHandler(w, r)
+			iam.DeleteGroupHandler(w, r)
 		case iam.OpRemoveUserFromGroup:
-			iamimpl.RemoveUserFromGroupHandler(w, r)
+			iam.RemoveUserFromGroupHandler(w, r)
 
 		// --- Policies: Create ---
 		case iam.OpCreatePolicy:
-			iamimpl.CreatePolicyHandler(w, r)
+			iam.CreatePolicyHandler(w, r)
 		case iam.OpAttachUserPolicy:
-			iamimpl.AttachUserPolicyHandler(w, r)
+			iam.AttachUserPolicyHandler(w, r)
 		case iam.OpAttachGroupPolicy:
-			iamimpl.AttachGroupPolicyHandler(w, r)
+			iam.AttachGroupPolicyHandler(w, r)
 
 		// --- Policies: Read ---
 		case iam.OpGetPolicy:
-			iamimpl.GetPolicyHandler(w, r)
+			iam.GetPolicyHandler(w, r)
 
 		// --- Policies: Delete ---
 		case iam.OpDeletePolicy:
-			iamimpl.DeletePolicyHandler(w, r)
+			iam.DeletePolicyHandler(w, r)
 		case iam.OpDetachUserPolicy:
-			iamimpl.DetachUserPolicyHandler(w, r)
+			iam.DetachUserPolicyHandler(w, r)
 		case iam.OpDetachGroupPolicy:
-			iamimpl.DetachGroupPolicyHandler(w, r)
+			iam.DetachGroupPolicyHandler(w, r)
 
 		default:
 			errs.Handle(w, errs.IAMNotImplemented(action))
