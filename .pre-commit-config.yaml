@@ -3,9 +3,9 @@ repos:
     rev: v2.6.2
     hooks:
       - id: golangci-lint
-        name: golangci-lint (backend)
-        files: ^backend/
-        entry: bash -c "cd backend && golangci-lint run"
+        name: golangci-lint (server)
+        files: ^server/
+        entry: bash -c "cd server && golangci-lint run"
         language: system
         types: [go]
       - id: golangci-lint
