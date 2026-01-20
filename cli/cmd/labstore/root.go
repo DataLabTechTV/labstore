@@ -66,6 +66,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewIAMCmd())
 	cmd.AddCommand(NewAdminCmd())
 	cmd.AddCommand(NewTUICmd())
+	AddDaemonCommands(cmd)
 
 	return cmd
 }
