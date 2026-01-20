@@ -12,12 +12,7 @@ import (
 var healthStatus []*atomic.Bool
 
 func NewAdminServerDescriptor(host string, port uint16, monitor []*ServerDescriptor) *ServerDescriptor {
-	slog.Info(
-		"admin api server",
-		"host", host,
-		"port", port,
-		"monitor", len(monitor),
-	)
+	slog.Info("admin api server", "host", host, "port", port, "monitor", len(monitor))
 
 	healthStatus = make([]*atomic.Bool, len(monitor))
 	for i := range monitor {

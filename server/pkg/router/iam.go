@@ -11,11 +11,7 @@ import (
 )
 
 func NewIAMServerDescriptor(host string, port uint16) *ServerDescriptor {
-	slog.Info(
-		"iam server",
-		"host", host,
-		"port", port,
-	)
+	slog.Info("iam server", "host", host, "port", port)
 
 	router := http.NewServeMux()
 	loadIAMRoutes(router)
