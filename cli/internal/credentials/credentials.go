@@ -68,7 +68,7 @@ func (c *Credentials) Save() error {
 	credentialsPath := helper.Must(CredentialsPath())
 	credentialsDir := filepath.Dir(credentialsPath)
 
-	if err := os.MkdirAll(credentialsDir, 0700); err != nil {
+	if err := os.MkdirAll(credentialsDir, 0o700); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func (c *Credentials) Save() error {
 		return err
 	}
 
-	err = os.WriteFile(credentialsPath, data, 0600)
+	err = os.WriteFile(credentialsPath, data, 0o600)
 	if err != nil {
 		return err
 	}
