@@ -16,8 +16,8 @@ func NewIAMCmd() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			client := iam.NewIAMClient(
 				cmd.Context(),
-				config.IAM.Address.Host,
-				config.IAM.Address.Port,
+				config.App.Server.IAM.Address.Host,
+				config.App.Server.IAM.Address.Port,
 			)
 
 			handler := handlers.NewIAMHandler(client)

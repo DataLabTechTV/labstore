@@ -22,7 +22,12 @@ func NewS3Cmd() *cobra.Command {
 			credentials.Init()
 
 			profileName := helper.Must(cmd.Flags().GetString("profile"))
-			slog.Debug("s3", "profile", profileName, "host", config.S3.Address.Host, "port", config.S3.Address.Port)
+			slog.Debug(
+				"s3",
+				"profile", profileName,
+				"host", config.App.Server.S3.Address.Host,
+				"port", config.App.Server.S3.Address.Port,
+			)
 
 			var profile *credentials.Profile
 			var err error
@@ -39,12 +44,12 @@ func NewS3Cmd() *cobra.Command {
 
 			client := s3.NewS3Client(
 				cmd.Context(),
-				config.S3.Address.Host,
-				config.S3.Address.Port,
+				config.App.Server.S3.Address.Host,
+				config.App.Server.S3.Address.Port,
 				profile.AccessKey,
 				profile.SecretKey,
 				false,
-				config.S3.IO.BufferSize,
+				config.App.Server.S3.IO.BufferSize,
 			)
 
 			handler := handlers.NewS3Handler(client)
