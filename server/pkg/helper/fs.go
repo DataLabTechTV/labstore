@@ -31,7 +31,7 @@ func TildePath(path string) string {
 	return path
 }
 
-func MustResolveToRelativePath(path string) string {
+func MustRelPath(path string) string {
 	cwd := Must(os.Getwd())
 	absPath := Must(filepath.Abs(path))
 	relPath := Must(filepath.Rel(cwd, absPath))

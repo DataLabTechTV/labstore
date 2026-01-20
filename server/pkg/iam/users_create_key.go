@@ -27,7 +27,7 @@ func (store *Store) CreateAccessKey(ctx context.Context, user *User) (string, er
 		Valid:  user.Name != "",
 	}
 
-	user.SecretKey, err = security.EncryptAESGCM(secretKey, config.Storage.MasterKeyPath)
+	user.SecretKey, err = security.EncryptAESGCM(secretKey, config.App.Server.Storage.MasterKeyPath)
 	if err != nil {
 		return "", err
 	}

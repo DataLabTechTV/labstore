@@ -44,18 +44,21 @@ func (user *User) Result() *types.UserResult {
 }
 
 func (store *Store) setupAdmin() error {
-	encrypted, err := security.EncryptAESGCM(config.Admin.Auth.SecretKey, config.Storage.MasterKeyPath)
+	encrypted, err := security.EncryptAESGCM(
+		config.App.Server.Admin.Auth.SecretKey,
+		config.App.Server.Storage.MasterKeyPath,
+	)
 	if err != nil {
 		return err
 	}
 
-	store.CachedUsers[config.Admin.Auth.AccessKey] = &CachedUser{
+	store.CachedUsers[config.App.Server.Admin.Auth.AccessKey] = &CachedUser{
 		User: &User{
 			UserID: GenerateUniqueID(IAMUserUniqueID),
 			Name:   defaultAdminUserName,
 			Arn:    toArn(ArnUser, defaultUserPath+defaultAdminUserName),
 
-			AccessKeyID: sql.NullString{String: config.Admin.Auth.AccessKey, Valid: true},
+			AccessKeyID: sql.NullString{String: config.App.Server.Admin.Auth.AccessKey, Valid: true},
 			SecretKey:   encrypted,
 
 			GroupIDs:  []string{},

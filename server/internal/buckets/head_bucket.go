@@ -13,7 +13,7 @@ func HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	bucketPath := core.BucketSystemPath(bucket)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, bucketPath) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, bucketPath) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}

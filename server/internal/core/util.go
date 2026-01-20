@@ -15,12 +15,12 @@ func BucketExists(bucket string) bool {
 }
 
 func BucketSystemPath(bucket string) string {
-	path := filepath.Join(config.Storage.ObjectsPath, bucket)
+	path := filepath.Join(config.App.Server.Storage.ObjectsPath, bucket)
 	return path
 }
 
 func ObjectSystemPath(bucket, key string) string {
-	path := filepath.Join(config.Storage.ObjectsPath, bucket, key)
+	path := filepath.Join(config.App.Server.Storage.ObjectsPath, bucket, key)
 	return path
 }
 

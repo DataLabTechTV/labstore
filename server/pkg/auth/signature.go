@@ -184,7 +184,7 @@ func newSigV4Credential(credential string) (*SigV4Credential, error) {
 
 	slog.Debug("credential", "access_key", accessKey, "scope", scope)
 
-	plainSecretKey, err := security.DecryptAESGCM(user.SecretKey, config.Storage.MasterKeyPath)
+	plainSecretKey, err := security.DecryptAESGCM(user.SecretKey, config.App.Server.Storage.MasterKeyPath)
 	if err != nil {
 		return nil, err
 	}

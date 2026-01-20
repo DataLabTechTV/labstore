@@ -99,11 +99,11 @@ func CheckPolicy(accessKey, bucket, key string, action Action) bool {
 func ensureDirectories() error {
 	slog.Debug("ensuring iam directories")
 
-	if err := os.MkdirAll(config.Storage.MetadataPath, 0750); err != nil {
+	if err := os.MkdirAll(config.App.Server.Storage.MetadataPath, 0750); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(config.Storage.KeysDir, 0700); err != nil {
+	if err := os.MkdirAll(config.App.Server.Storage.KeysDir, 0700); err != nil {
 		return err
 	}
 
@@ -111,7 +111,7 @@ func ensureDirectories() error {
 }
 
 func ensureMasterKey() error {
-	if helper.FileExists(config.Storage.MasterKeyPath) {
+	if helper.FileExists(config.App.Server.Storage.MasterKeyPath) {
 		return nil
 	}
 
@@ -120,7 +120,7 @@ func ensureMasterKey() error {
 		return err
 	}
 
-	if err := os.WriteFile(config.Storage.MasterKeyPath, key, 0600); err != nil {
+	if err := os.WriteFile(config.App.Server.Storage.MasterKeyPath, key, 0600); err != nil {
 		return err
 	}
 

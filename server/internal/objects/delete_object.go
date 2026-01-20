@@ -15,7 +15,7 @@ import (
 func DeleteObject(bucket, key string) error {
 	objPath := core.ObjectSystemPath(bucket, key)
 
-	if !security.IsSubdir(config.Storage.ObjectsPath, objPath) {
+	if !security.IsSubdir(config.App.Server.Storage.ObjectsPath, objPath) {
 		return &errs.ErrForbidden{Type: errs.ErrEntityTypeObject, Resource: core.ObjectPath(bucket, key)}
 	}
 

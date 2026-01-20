@@ -111,14 +111,41 @@ type IOConfig struct {
 	BufferSize int `mapstructure:"buffer_size"`
 }
 
-var Storage *StorageConfig
-var Admin *AdminConfig
-var IAM *IAMConfig
-var S3 *S3Config
+var App *AppConfig
+
+func (config *AppConfig) Debug() {
+	config.Server.Debug()
+}
+
+func (config *ServerConfig) Debug() {
+	config.Storage.Debug()
+	config.Admin.Debug()
+	config.IAM.Debug()
+	config.S3.Debug()
+}
 
 func (config *StorageConfig) Debug() {
 	slog.Debug("config set", "name", "server.storage.data_dir", "value", config.DataDir)
 	slog.Debug("config set", "name", "server.storage.keys_dir", "value", config.KeysDir)
+}
+
+func (config *StorageConfig) PreparePaths() {
+	relStorageDataDir := helper.MustRelPath(config.DataDir)
+	slog.Debug("storage data dir resolved", "from", config.DataDir, "to", relStorageDataDir)
+	config.DataDir = relStorageDataDir
+
+	config.ObjectsPath = filepath.Join(config.DataDir, DefaultStorageObjectsDir)
+	slog.Debug("object storage path set", "path", config.ObjectsPath)
+
+	config.MetadataPath = filepath.Join(config.DataDir, DefaultStorageMetadataDir)
+	slog.Debug("metadata storage path set", "path", config.MetadataPath)
+
+	relStorageKeysDir := helper.MustRelPath(config.KeysDir)
+	slog.Debug("storage keys dir resolved", "from", config.KeysDir, "to", relStorageKeysDir)
+	config.KeysDir = relStorageKeysDir
+
+	config.MasterKeyPath = filepath.Join(config.KeysDir, DefaultMasterKeyFilename)
+	slog.Debug("master key path set", "path", config.MasterKeyPath)
 }
 
 func (config *AdminConfig) Debug() {
@@ -283,46 +310,20 @@ func readConfig() {
 }
 
 func parseConfig() {
-	var config AppConfig
-	if err := viper.Unmarshal(&config); err != nil {
+	App = new(AppConfig)
+	if err := viper.Unmarshal(&App); err != nil {
 		slog.Error("config parsing", "err", err)
 		return
 	}
 
-	Storage = config.Server.Storage
-	Storage.Debug()
+	App.Debug()
+	App.Server.Storage.PreparePaths()
 
-	Admin = config.Server.Admin
-	Admin.Debug()
-
-	IAM = config.Server.IAM
-	IAM.Debug()
-
-	S3 = config.Server.S3
-	S3.Debug()
-
-	relStorageDataDir := helper.MustResolveToRelativePath(Storage.DataDir)
-	slog.Debug("storage data dir resolved", "from", Storage.DataDir, "to", relStorageDataDir)
-	Storage.DataDir = relStorageDataDir
-
-	Storage.ObjectsPath = filepath.Join(Storage.DataDir, DefaultStorageObjectsDir)
-	slog.Debug("object storage path set", "path", Storage.ObjectsPath)
-
-	Storage.MetadataPath = filepath.Join(Storage.DataDir, DefaultStorageMetadataDir)
-	slog.Debug("metadata storage path set", "path", Storage.MetadataPath)
-
-	relStorageKeysDir := helper.MustResolveToRelativePath(Storage.KeysDir)
-	slog.Debug("storage keys dir resolved", "from", Storage.KeysDir, "to", relStorageKeysDir)
-	Storage.KeysDir = relStorageKeysDir
-
-	Storage.MasterKeyPath = filepath.Join(Storage.KeysDir, DefaultMasterKeyFilename)
-	slog.Debug("master key path set", "path", Storage.MasterKeyPath)
-
-	if DisplayDefaultAdminSecretKey && Admin.Auth.SecretKey == DefaultAdminSecretKey {
+	if DisplayDefaultAdminSecretKey && App.Server.Admin.Auth.SecretKey == DefaultAdminSecretKey {
 		slog.Warn("no secret ket set for admin, randomly generating")
 		fmt.Printf(
 			"🔑 Temporary secret key for %s: %s\n",
-			Admin.Auth.AccessKey, DefaultAdminSecretKey,
+			App.Server.Admin.Auth.AccessKey, DefaultAdminSecretKey,
 		)
 	}
 }
