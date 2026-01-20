@@ -5,11 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/buckets"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/middleware"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/objects"
-	"github.com/IllumiKnowLabs/labstore/backend/internal/service"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
+	"github.com/IllumiKnowLabs/labstore/server/internal/buckets"
+	"github.com/IllumiKnowLabs/labstore/server/internal/middleware"
+	"github.com/IllumiKnowLabs/labstore/server/internal/objects"
+	"github.com/IllumiKnowLabs/labstore/server/internal/service"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/iam"
 )
 
 func NewS3ServerDescriptor(host string, port uint16) *ServerDescriptor {

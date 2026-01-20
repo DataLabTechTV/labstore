@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"

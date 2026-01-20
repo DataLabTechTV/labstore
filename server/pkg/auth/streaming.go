@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/security"
 )
 
 type SigV4Chunk struct {

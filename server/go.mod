@@ -1,4 +1,4 @@
-module github.com/IllumiKnowLabs/labstore/backend
+module github.com/IllumiKnowLabs/labstore/server
 
 go 1.25.5
 

@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
 )
 
 type ServerDescriptor struct {
@@ -30,12 +30,12 @@ func Start() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	s3ServerDescriptor := NewS3ServerDescriptor(config.S3.Server.Host, config.S3.Server.Port)
-	iamServerDescriptor := NewIAMServerDescriptor(config.IAM.Server.Host, config.IAM.Server.Port)
+	s3ServerDescriptor := NewS3ServerDescriptor(config.S3.Address.Host, config.S3.Address.Port)
+	iamServerDescriptor := NewIAMServerDescriptor(config.IAM.Address.Host, config.IAM.Address.Port)
 
 	adminServerDescriptor := NewAdminServerDescriptor(
-		config.Admin.Server.Host,
-		config.Admin.Server.Port,
+		config.Admin.Address.Host,
+		config.Admin.Address.Port,
 		[]*ServerDescriptor{s3ServerDescriptor, iamServerDescriptor},
 	)
 
