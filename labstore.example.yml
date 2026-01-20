@@ -34,6 +34,9 @@ web:
     host: 0.0.0.0
     port: 6790
 
+log:
+  dir: ./logs
+
 benchmark:
   host: localhost
   ports:
