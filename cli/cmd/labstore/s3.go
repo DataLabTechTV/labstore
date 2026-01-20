@@ -61,8 +61,8 @@ func NewS3Cmd() *cobra.Command {
 
 	cmd.PersistentFlags().String("profile", "", "Profile used for authentication")
 
-	cmd.PersistentFlags().String("s3-server-host", config.DefaultS3ServerHost, "Listening host for S3-compatible server")
-	cmd.PersistentFlags().Uint16("s3-server-port", config.DefaultS3ServerPort, "Listening port for S3-compatible server")
+	cmd.PersistentFlags().String("s3-address-host", config.DefaultS3AddressHost, "Listening host for S3-compatible server")
+	cmd.PersistentFlags().Uint16("s3-address-port", config.DefaultS3AddressPort, "Listening port for S3-compatible server")
 
 	cmd.AddCommand(NewServiceCmd())
 	cmd.AddCommand(NewBucketsCmd())
