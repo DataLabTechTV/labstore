@@ -13,36 +13,36 @@ services:
       - labstore
       - testing
     environment:
-      - S3_ENDPOINT=labstore-backend:${LABSTORE_BACKEND_S3_SERVER_PORT}
-      - S3_ACCESS_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY}
-      - S3_SECRET_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY}
+      - S3_ENDPOINT=labstore-server:${LABSTORE_SERVER_S3_ADDRESS_PORT}
+      - S3_ACCESS_KEY=${LABSTORE_SERVER_ADMIN_AUTH_ACCESS_KEY}
+      - S3_SECRET_KEY=${LABSTORE_SERVER_ADMIN_AUTH_SECRET_KEY}
       - S3_REGION=eu-west-1
       - S3_USE_SSL=false
       - S3_FORCE_PATH_STYLE=true
     restart: unless-stopped
 
-  backend:
+  server:
     profiles:
       - all
       - labstore
       - testing
     build:
       context: ..
-      dockerfile: infra/Dockerfile.backend
+      dockerfile: infra/Dockerfile.server
     ports:
-      - ${LABSTORE_BACKEND_ADMIN_SERVER_PORT}:${LABSTORE_BACKEND_ADMIN_SERVER_PORT}
-      - ${LABSTORE_BACKEND_IAM_SERVER_PORT}:${LABSTORE_BACKEND_IAM_SERVER_PORT}
-      - ${LABSTORE_BACKEND_S3_SERVER_PORT}:${LABSTORE_BACKEND_S3_SERVER_PORT}
+      - ${LABSTORE_SERVER_ADMIN_ADDRESS_PORT}:${LABSTORE_SERVER_ADMIN_ADDRESS_PORT}
+      - ${LABSTORE_SERVER_IAM_ADDRESS_PORT}:${LABSTORE_SERVER_IAM_ADDRESS_PORT}
+      - ${LABSTORE_SERVER_S3_ADDRESS_PORT}:${LABSTORE_SERVER_S3_ADDRESS_PORT}
     networks:
       - labstore
     volumes:
       - labstore:/data
       - labstore-keys:/keys
     environment:
-      - LABSTORE_BACKEND_S3_SERVER_HOST=${LABSTORE_BACKEND_S3_SERVER_HOST}
-      - LABSTORE_BACKEND_S3_SERVER_PORT=${LABSTORE_BACKEND_S3_SERVER_PORT}
-      - LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY}
-      - LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=${LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY}
+      - LABSTORE_SERVER_S3_ADDRESS_HOST=${LABSTORE_SERVER_S3_ADDRESS_HOST}
+      - LABSTORE_SERVER_S3_ADDRESS_PORT=${LABSTORE_SERVER_S3_ADDRESS_PORT}
+      - LABSTORE_SERVER_ADMIN_AUTH_ACCESS_KEY=${LABSTORE_SERVER_ADMIN_AUTH_ACCESS_KEY}
+      - LABSTORE_SERVER_ADMIN_AUTH_SECRET_KEY=${LABSTORE_SERVER_ADMIN_AUTH_SECRET_KEY}
     command: serve --storage-data-dir /data --storage-keys-dir /keys
     restart: unless-stopped
 
@@ -52,7 +52,7 @@ services:
       - benchmark
     build:
       context: ..
-      dockerfile: infra/Dockerfile.backend
+      dockerfile: infra/Dockerfile.server
     ports:
       - 7787:6787
       - 7788:6788
@@ -63,8 +63,8 @@ services:
       - benchmark-labstore:/data
       - benchmark-labstore-keys:/keys
     environment:
-      - LABSTORE_BACKEND_ADMIN_AUTH_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
-      - LABSTORE_BACKEND_ADMIN_AUTH_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
+      - LABSTORE_SERVER_ADMIN_AUTH_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
+      - LABSTORE_SERVER_ADMIN_AUTH_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
     command: serve --s3-server-host 0.0.0.0 --s3-server-port 6789 --storage-data-dir /data --storage-keys-dir /keys
     restart: unless-stopped
 
