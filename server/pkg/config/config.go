@@ -44,6 +44,8 @@ const (
 
 	DefaultWebAddressHost = "0.0.0.0"
 	DefaultWebAddressPort = 6790
+
+	DefaultLogDir = "./logs"
 )
 
 var (
@@ -54,6 +56,7 @@ var (
 type AppConfig struct {
 	Server *ServerConfig `mapstructure:"server"`
 	Web    *WebConfig    `mapstructure:"web"`
+	Log    *LogConfig    `mapstructure:"log"`
 }
 
 type ServerConfig struct {
@@ -65,6 +68,10 @@ type ServerConfig struct {
 
 type WebConfig struct {
 	Address *AddressConfig `mapstructure:"address"`
+}
+
+type LogConfig struct {
+	Dir string `mapstructure:"dir"`
 }
 
 type StorageConfig struct {
@@ -124,6 +131,7 @@ var App *AppConfig
 func (config *AppConfig) Debug() {
 	config.Server.Debug()
 	config.Web.Debug()
+	config.Log.Debug()
 }
 
 func (config *ServerConfig) Debug() {
@@ -136,6 +144,10 @@ func (config *ServerConfig) Debug() {
 func (config *WebConfig) Debug() {
 	slog.Debug("config set", "name", "web.address.host", "value", config.Address.Host)
 	slog.Debug("config set", "name", "web.address.port", "value", config.Address.Port)
+}
+
+func (config *LogConfig) Debug() {
+	slog.Debug("config set", "name", "logging.path", "value", config.Dir)
 }
 
 func (config *StorageConfig) Debug() {
@@ -261,6 +273,9 @@ func setDefaults() {
 	// web
 	viper.SetDefault("web.address.host", DefaultWebAddressHost)
 	viper.SetDefault("web.address.port", DefaultWebAddressPort)
+
+	// log
+	viper.SetDefault("log.dir", DefaultLogDir)
 }
 
 func setOverrides(rootCmd *cobra.Command) {
@@ -311,6 +326,8 @@ func setOverrides(rootCmd *cobra.Command) {
 	// web
 	bindPFlagIfExists("web.address.host", serverCmd, "web-address-host")
 	bindPFlagIfExists("web.address.port", serverCmd, "web-address-port")
+
+	// log: config file only
 }
 
 func bindPFlagIfExists(configKey string, cmd *cobra.Command, flagName string) {
