@@ -7,7 +7,9 @@ import (
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/constants"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/logger"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/profiler"
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +36,20 @@ func NewRootCmd() *cobra.Command {
 
 			config.DisplayDefaultAdminSecretKey = false
 			config.Load(cmd)
+
+			iam.Init()
+
+			if run_pprof := helper.Must(cmd.Flags().GetBool("pprof")); run_pprof {
+				pprof_host := helper.Must(cmd.Flags().GetString("pprof-host"))
+				pprof_port := helper.Must(cmd.Flags().GetInt("pprof-port"))
+
+				pprof := profiler.NewProfiler(
+					profiler.WithHost(pprof_host),
+					profiler.WithPort(pprof_port),
+				)
+
+				pprof.Start()
+			}
 		},
 	}
 
@@ -41,7 +57,11 @@ func NewRootCmd() *cobra.Command {
 	cmd.SilenceUsage = true
 
 	cmd.PersistentFlags().Bool("debug", false, "Set debug level for logging")
+	cmd.PersistentFlags().Bool("pprof", false, "Enable profiler")
+	cmd.PersistentFlags().String("pprof-host", "localhost", "Profiler host")
+	cmd.PersistentFlags().Int("pprof-port", 6060, "Profiler port")
 
+	cmd.AddCommand(NewServeCmd())
 	cmd.AddCommand(NewS3Cmd())
 	cmd.AddCommand(NewIAMCmd())
 	cmd.AddCommand(NewAdminCmd())
