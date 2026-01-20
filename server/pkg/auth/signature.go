@@ -15,8 +15,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/backend/internal/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/backend/pkg/iam"
 	"github.com/IllumiKnowLabs/labstore/backend/pkg/security"
 )
 
