@@ -16,7 +16,7 @@ repos:
         types: [go]
       - id: golangci-lint
         name: golangci-lint (client)
-        files: ^shared/client/
-        entry: bash -c "cd shared/client && golangci-lint run"
+        files: ^client/
+        entry: bash -c "cd client && golangci-lint run"
         language: system
         types: [go]
