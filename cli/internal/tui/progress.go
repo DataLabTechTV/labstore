@@ -144,7 +144,7 @@ func (m *ProgressBarModel) Run() {
 	wg.Add(2)
 
 	output := &consoleWriter{ctx: m.Ctx, ch: m.Message}
-	revert := logger.Temporary(output, logger.WithDebugFlag(m.Debug))
+	revert := logger.Swap(output, logger.WithDebugFlag(m.Debug))
 
 	go func() {
 		defer wg.Done()
