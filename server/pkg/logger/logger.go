@@ -35,8 +35,8 @@ func InitWithWriter(w io.Writer, opts ...Option) {
 	Level.Set(DefaultLogLevel)
 
 	noColor := true
-	if f, ok := w.(*os.File); ok {
-		noColor = !isatty.IsTerminal(f.Fd())
+	if file, ok := w.(*os.File); ok {
+		noColor = !isatty.IsTerminal(file.Fd())
 	}
 
 	AppLogger = slog.New(
