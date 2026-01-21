@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log/slog"
 	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
@@ -24,6 +26,16 @@ func NewRootCmd() *cobra.Command {
 		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if cmd.Use != "serve" {
+				config.DisplayDefaultAdminSecretKey = false
+			}
+
+			if cmd.Use == "start" || cmd.Use == "stop" || cmd.Use == "restart" || cmd.Use == "status" {
+				slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+				config.Load(cmd)
+				return
+			}
+
 			welcomeMsg := fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author)
 			if helper.SupportsBox() {
 				helper.Box(welcomeMsg)
@@ -34,9 +46,7 @@ func NewRootCmd() *cobra.Command {
 			debug := helper.Must(cmd.Flags().GetBool("debug"))
 			logger.Init(logger.WithDebugFlag(debug))
 
-			config.DisplayDefaultAdminSecretKey = false
 			config.Load(cmd)
-
 			iam.Init()
 
 			if run_pprof := helper.Must(cmd.Flags().GetBool("pprof")); run_pprof {
