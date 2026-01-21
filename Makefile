@@ -1,56 +1,75 @@
 BIN_DIR := bin
 
-BACKEND_DIR := backend
-BACKEND_CMD := $(BIN_DIR)/labstore-server
+SERVER_DIR := server
+CLIENT_DIR := client
+ASSETS_DIR := $(SERVER_DIR)/pkg/router/assets
 
-FRONTEND_DIR := web
-FRONTEND_SRC_DIRS := $(FRONTEND_DIR)/src $(FRONTEND_DIR)/static
-FRONTEND_BUILD_DIR := $(FRONTEND_DIR)/build
+CLI_DIR := cli
+CLI_CMD := $(BIN_DIR)/labstore
 
-.PHONY: all backend frontend build run profile test clean
+WEB_DIR := web
+WEB_SRC_DIRS := $(WEB_DIR)/src $(WEB_DIR)/static
+WEB_BUILD_DIR := $(WEB_DIR)/build
+
+.PHONY: all cli web build run profile test clean-debug clean-cli clean-web clean
 
 all: build
 
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-BACKEND_SRCS := $(shell find $(BACKEND_DIR) -name '*.go')
+CLI_SRCS := $(shell find $(CLI_DIR) $(SERVER_DIR) $(CLIENT_DIR) -name '*.go')
 
-$(BACKEND_CMD): $(BACKEND_SRCS) | $(BIN_DIR)
-	cd $(BACKEND_DIR) && go build -o ../$(BACKEND_CMD) ./cmd/labstore-server
+$(CLI_CMD): $(CLI_SRCS) | $(BIN_DIR)
+	cd $(CLI_DIR) && go build -o ../$(CLI_CMD) ./cmd/labstore
 
-backend: $(BACKEND_CMD)
+WEB_SRCS := $(shell find $(WEB_SRC_DIRS) -type f)
 
-FRONTEND_SRCS := $(shell find $(FRONTEND_SRC_DIRS) -type f)
+$(WEB_BUILD_DIR): $(WEB_SRCS)
+	cd $(WEB_DIR) && npm ci
+	cd $(WEB_DIR) && npm run build
 
-$(FRONTEND_BUILD_DIR): $(FRONTEND_SRCS)
-	cd $(FRONTEND_DIR) && npm ci
-	cd $(FRONTEND_DIR) && npm run build
+assets: web
+	rsync -a --delete web/build/ $(ASSETS_DIR)/
 
-frontend: $(FRONTEND_BUILD_DIR)
+cli: assets $(CLI_CMD)
 
-build: backend frontend
+web: $(WEB_BUILD_DIR)
+
+build: cli
 
 run: build
 	npx concurrently \
-		-n backend,web \
+		-n server,web \
 		-c blue,green \
-		"$(BACKEND_CMD) serve" \
-		"cd $(FRONTEND_DIR) && npm run preview -- --port 5123"
+		"$(CLI_CMD) serve" \
+		"cd $(WEB_DIR) && npm run preview -- --port 5123"
 
-profile: backend
+profile: cli
 	npx concurrently \
-		-n backend,pprof \
-		-c blue,red \
-		"$(BACKEND_CMD) --pprof serve" \
+		-n server,pprof \
+		-c blue,yellow \
+		"$(CLI_CMD) --pprof serve" \
 		"go tool pprof \
-			-focus=github.com/IllumiKnowLabs/labstore/backend \
+			-focus=github.com/IllumiKnowLabs/labstore/server \
 			-http=:8081 \
 			http://localhost:6060/debug/pprof/profile?seconds=60"
 
-test: $(BACKEND_TEST_SRCS)
-	cd $(BACKEND_DIR) && go test ./... | grep -v '\[no test files\]'
+SERVER_TEST_SRCS := $(shell find $(SERVER_DIR) -name '*.go')
 
-clean:
-	rm -rf $(BIN_DIR)
-	rm -rf $(FRONTEND_DIR)/node_modules $(FRONTEND_DIR)/.svelte-kit $(FRONTEND_BUILD_DIR)
+test: $(SERVER_TEST_SRCS)
+	cd $(SERVER_DIR) && go test ./... | grep -v '\[no test files\]'
+
+clean-assets:
+	rm -rf $(ASSETS_DIR)/
+
+clean-debug:
+	find . -type f -name '__debug_bin*' -delete
+
+clean-cli: clean-assets clean-debug
+	rm -rf $(BIN_DIR)/
+
+clean-web:
+	rm -rf $(WEB_DIR)/node_modules $(WEB_DIR)/.svelte-kit $(WEB_BUILD_DIR)
+
+clean: clean-cli clean-web

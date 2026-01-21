@@ -1,0 +1,364 @@
+set shell := ["bash", "-uc"]
+
+config_path := "../labstore.yml"
+
+test_bucket := "test-bucket"
+test_user := "test_user"
+test_group := "test_group"
+test_policy_name := "test-policy"
+test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
+    '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
+    '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
+    '"Resource":["arn:aws:s3:::' + test_bucket + '","arn:aws:s3:::' + test_bucket + '/*"]}]}'
+test_policy_arn := "arn:aws:iam::000000000001:policy/" + test_policy_name
+
+default:
+    just -l
+
+[working-directory: ".."]
+check-deps:
+    @echo "Checking system binary dependencies for server..."
+    @just check yq
+    @just check mc
+    @just check rclone
+    @just check s5cmd
+    @just check http
+    @just check sqlite3
+
+[group("helpers")]
+print-mc-host:
+    #!/bin/bash
+
+    host=$(yq ".server.s3.address.host" {{config_path}})
+    port=$(yq ".server.s3.address.port" {{config_path}})
+    access_key=$(yq ".server.admin.auth.access_key" {{config_path}})
+    secret_key=$(yq ".server.admin.auth.secret_key" {{config_path}})
+
+    mc_host="http://${access_key}:${secret_key}@${host}:${port}"
+    echo $mc_host
+
+[group("helpers")]
+print-rclone-config:
+    #!/bin/bash
+
+    HOST=$(yq ".server.s3.address.host" {{config_path}})
+    PORT=$(yq ".server.s3.address.port" {{config_path}})
+    ACCESS_KEY=$(yq ".server.admin.auth.access_key" {{config_path}})
+    SECRET_KEY=$(yq ".server.admin.auth.secret_key" {{config_path}})
+
+    cat <<EOF
+    [local]
+    type = s3
+    provider = Other
+    access_key_id = ${ACCESS_KEY}
+    secret_access_key = ${SECRET_KEY}
+    endpoint = http://${HOST}:${PORT}
+    acl = private
+    EOF
+
+[group("helpers")]
+create-bucket bucket: check-deps
+    #!/bin/bash
+    export MC_HOST_local=$(just print-mc-host)
+    mc mb -p local/{{bucket}}
+
+[group("helpers")]
+test-bucket:
+    just create-bucket {{test_bucket}}
+
+[group("test-put")]
+test-put-obj-mc: check-deps test-bucket
+    #!/bin/bash
+
+    tmpfile=$(mktemp)
+    export MC_HOST_local=$(just print-mc-host)
+
+    echo "==> Generating temporary file with 10 MiB: $tmpfile"
+    dd if=/dev/urandom of=$tmpfile bs=1M count=10
+
+    echo "==> Sending temporary file: $tmpfile"
+    mc cp --disable-multipart $tmpfile local/{{test_bucket}}/$(basename $tmpfile).mc
+
+    echo "==> Cleaning up temporary file: $tmpfile"
+    rm -f $tmpfile
+
+[group("test-put")]
+test-put-obj-rclone: check-deps test-bucket
+    #!/bin/bash
+
+    tmpfile=$(mktemp)
+
+    echo "==> Generating temporary file with 10 MiB: $tmpfile"
+    dd if=/dev/urandom of=$tmpfile bs=1M count=10
+    tmpconfig=$(mktemp)
+
+    echo "==> Creating temporary rclone config: $tmpconfig"
+    just print-rclone-config >$tmpconfig
+
+    echo "==> Sending temporary file: $tmpfile"
+    rclone copyto $tmpfile local:/{{test_bucket}}/$(basename $tmpfile).rclone --config $tmpconfig
+
+    echo "==> Cleaning up temporary files: $tmpfile, $tmpconfig"
+    rm -f $tmpfile $tmpconfig
+
+[group("test-put")]
+test-put-obj-s5cmd: check-deps test-bucket
+    #!/bin/bash
+
+    tmpfile=$(mktemp)
+
+    endpoint_url=$(just print-mc-host)
+
+    export AWS_ACCESS_KEY_ID=$(yq ".server.admin.auth.access_key" {{config_path}})
+    export AWS_SECRET_ACCESS_KEY=$(yq ".server.admin.auth.secret_key" {{config_path}})
+
+    echo "==> Generating temporary file with 10 MiB: $tmpfile"
+    dd if=/dev/urandom of=$tmpfile bs=1M count=10
+
+    echo "==> Sending temporary file: $tmpfile"
+    s5cmd --endpoint-url $endpoint_url cp $tmpfile s3://{{test_bucket}}/$(basename $tmpfile).s5cmd
+
+    echo "==> Cleaning up temporary file: $tmpfile"
+    rm -f $tmpfile
+
+[group("test-list")]
+test-list-obj-mc: check-deps test-bucket
+    #!/bin/bash
+    export MC_HOST_local=$(just print-mc-host)
+    echo "==> Listing keys in {{test_bucket}}"
+    mc ls local/{{test_bucket}}/
+
+[group("test-list")]
+test-list-obj-rclone: check-deps test-bucket
+    #!/bin/bash
+
+    tmpconfig=$(mktemp)
+
+    echo "==> Creating temporary rclone config: $tmpconfig"
+    just print-rclone-config >$tmpconfig
+
+    echo "==> Listing keys in {{test_bucket}}"
+    rclone lsf local:/{{test_bucket}}/ --config $tmpconfig
+
+    echo "==> Cleaning up temporary config: $tmpconfig"
+    rm -f $tmpconfig
+
+[group("test-list")]
+test-list-obj-s5cmd: check-deps test-bucket
+    #!/bin/bash
+    endpoint_url=$(just print-mc-host)
+
+    export AWS_ACCESS_KEY_ID=$(yq ".server.admin.auth.access_key" {{config_path}})
+    export AWS_SECRET_ACCESS_KEY=$(yq ".server.admin.auth.secret_key" {{config_path}})
+
+    echo "==> Listing keys in {{test_bucket}}"
+    s5cmd --endpoint-url $endpoint_url ls s3://{{test_bucket}}/
+
+# ======================
+# USERS
+# ======================
+
+[group("test-iam")]
+test-iam-create-user: check-deps
+    #!/bin/bash
+    echo "Creating IAM user: {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=CreateUser" "UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-create-access-key: check-deps
+    #!/bin/bash
+    echo "Creating IAM access key for user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=CreateAccessKey" "UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-get-user: check-deps
+    #!/bin/bash
+    echo "Getting IAM user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=GetUser" "UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-list-access-keys: check-deps
+    #!/bin/bash
+    echo "Getting IAM access keys for user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=ListAccessKeys" "UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-delete-user: check-deps
+    #!/bin/bash
+    echo "Deleting IAM user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=DeleteUser" "UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-delete-access-key: check-deps
+    #!/bin/bash
+    echo "Deleting IAM access keys for user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=DeleteAccessKey" \
+        "UserName={{test_user}}" \
+        "AccessKeyId={{test_user}}"
+
+# ======================
+# GROUPS
+# ======================
+
+[group("test-iam")]
+test-iam-create-group: check-deps
+    #!/bin/bash
+    echo "Creating IAM group: {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=CreateGroup" "GroupName={{test_group}}"
+
+[group("test-iam")]
+test-iam-add-user-to-group: check-deps
+    #!/bin/bash
+    echo "Adding IAM user {{test_user}} to group {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=AddUserToGroup" \
+        'GroupName={{test_group}}' \
+        'UserName={{test_user}}'
+
+[group("test-iam")]
+test-iam-get-group: check-deps
+    #!/bin/bash
+    echo "Getting IAM group: {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=GetGroup" "GroupName={{test_group}}"
+
+[group("test-iam")]
+test-iam-delete-group: check-deps
+    #!/bin/bash
+    echo "Deleting IAM group: {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=DeleteGroup" "GroupName={{test_group}}"
+
+[group("test-iam")]
+test-iam-remove-user-from-group: check-deps
+    #!/bin/bash
+    echo "Deleting IAM user {{test_user}} from group {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=RemoveUserFromGroup" \
+        "UserName={{test_user}}" \
+        "GroupName={{test_group}}"
+
+# ======================
+# POLICIES
+# ======================
+
+[group("test-iam")]
+test-iam-create-policy: check-deps test-bucket
+    #!/bin/bash
+    echo "Creating IAM policy {{test_policy_name}}"
+
+    echo "Using policy document:"
+    echo '{{test_policy_document}}' | jq
+
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=CreatePolicy" \
+        'PolicyName={{test_policy_name}}' \
+        'PolicyDocument={{test_policy_document}}'
+
+[group("test-iam")]
+test-iam-attach-user-policy: check-deps
+    #!/bin/bash
+    echo "Attaching IAM policy {{test_policy_name}} to user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=AttachUserPolicy" \
+        'PolicyArn={{test_policy_arn}}' \
+        'UserName={{test_user}}'
+
+[group("test-iam")]
+test-iam-attach-group-policy: check-deps
+    #!/bin/bash
+    echo "Attaching IAM policy {{test_policy_name}} to group {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=AttachGroupPolicy" \
+        'PolicyArn={{test_policy_arn}}' \
+        'GroupName={{test_group}}'
+
+[group("test-iam")]
+test-iam-get-policy: check-deps
+    #!/bin/bash
+    echo "Getting IAM policy: {{test_policy_name}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=GetPolicy" "PolicyArn={{test_policy_arn}}"
+
+[group("test-iam")]
+test-iam-list-attached-user-policies: check-deps
+    #!/bin/bash
+    echo "Listing IAM attached policies to user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=ListAttachedUserPolicies" "UserName={{test_user}}"
+
+[group("test-iam")]
+test-iam-list-attached-group-policies: check-deps
+    #!/bin/bash
+    echo "Listing IAM attached policies to group {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=ListAttachedGroupPolicies" "GroupName={{test_group}}"
+
+[group("test-iam")]
+test-iam-delete-policy: check-deps
+    #!/bin/bash
+    echo "Deleting IAM policy: {{test_policy_name}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" "Action=DeletePolicy" "PolicyArn={{test_policy_arn}}"
+
+[group("test-iam")]
+test-iam-detach-user-policy: check-deps
+    #!/bin/bash
+    echo "Detaching IAM policy {{test_policy_name}} from user {{test_user}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=DetachUserPolicy" \
+        "UserName={{test_user}}" \
+        "PolicyArn={{test_policy_arn}}"
+
+[group("test-iam")]
+test-iam-detach-group-policy: check-deps
+    #!/bin/bash
+    echo "Detaching IAM policy {{test_policy_name}} from group {{test_group}}"
+    host=$(yq ".server.iam.address.host" {{config_path}})
+    port=$(yq ".server.iam.address.port" {{config_path}})
+    http --form POST "http://${host}:${port}" \
+        "Action=DetachGroupPolicy" \
+        "GroupName={{test_group}}" \
+        "PolicyArn={{test_policy_arn}}"
+
+[group("test-iam")]
+test-iam-user-policy: test-iam-create-user test-iam-create-access-key \
+    test-iam-create-policy test-iam-attach-user-policy
+
+[group("test-iam")]
+test-iam-group-policy: test-iam-create-user test-iam-create-access-key \
+    test-iam-create-group test-iam-add-user-to-group \
+    test-iam-create-policy test-iam-attach-group-policy

@@ -1,0 +1,162 @@
+package iam
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/IllumiKnowLabs/labstore/server/internal/core"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/errs"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/types"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
+)
+
+func (store *Store) AttachPolicy(ctx context.Context, arnType ArnType, policyArn, entityName string) error {
+	var entity any
+
+	policy, err := store.GetPolicyByArn(ctx, policyArn)
+	if err != nil {
+		slog.Error("get policy by arn", "err", err)
+		return &errs.ErrNotFound{Type: errs.ErrEntityTypePolicy, Resource: policyArn}
+	}
+
+	var tableName string
+	var idFieldName string
+	var idFieldValue string
+
+	switch arnType {
+	case ArnUser:
+		user, err := store.GetUserByName(ctx, entityName)
+		if err != nil {
+			slog.Error("get user by name", "err", err)
+			return &errs.ErrNotFound{Type: errs.ErrEntityTypeUser, Resource: entityName}
+		}
+
+		tableName = "user_policies"
+		idFieldName = "user_id"
+		idFieldValue = user.UserID
+		entity = user
+	case ArnGroup:
+		group, err := store.GetGroupByName(ctx, entityName)
+		if err != nil {
+			slog.Error("get group by name", "err", err)
+			return &errs.ErrNotFound{Type: errs.ErrEntityTypeGroup, Resource: entityName}
+		}
+
+		tableName = "group_policies"
+		idFieldName = "group_id"
+		idFieldValue = group.GroupID
+		entity = group
+	default:
+		return errors.New("unsupported arn type")
+	}
+
+	query_tmpl := `
+		INSERT INTO %s (%s, policy_id)
+		VALUES ($1, $2)
+	`
+	query := fmt.Sprintf(query_tmpl, tableName, idFieldName)
+
+	_, err = store.sqlExecContext(ctx, query, idFieldValue, policy.PolicyID)
+	if err != nil {
+		var sqliteErr *sqlite.Error
+		if errors.As(err, &sqliteErr) {
+			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
+				slog.Warn("attach policy", "arnType", arnType, "err", sqliteErr)
+				return nil
+			}
+		}
+
+		slog.Error("attach policy", "arnType", arnType, "err", err)
+		return err
+	}
+
+	switch e := entity.(type) {
+	case *User:
+		if e.AccessKeyID.Valid {
+			if _, ok := store.CachedUsers[e.AccessKeyID.String]; ok {
+				store.CachedUsers[e.AccessKeyID.String].User.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+			}
+		}
+	case *Group:
+		if _, ok := store.CachedGroups[e.GroupID]; ok {
+			store.CachedGroups[e.GroupID].Group.PolicyIDs = append(e.PolicyIDs, policy.PolicyID)
+		}
+	}
+
+	return nil
+}
+
+func AttachUserPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	userName := r.Form.Get("UserName")
+	if userName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("UserName"))
+		return
+	}
+
+	policyArn := r.Form.Get("PolicyArn")
+	if policyArn == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
+		return
+	}
+
+	ctx := r.Context()
+
+	if err := store.AttachPolicy(ctx, ArnUser, policyArn, userName); err != nil {
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
+			return
+		}
+
+		errs.Handle(w, errs.IAMServiceFailure())
+		return
+	}
+
+	response := &types.AttachUserPolicyResponse{
+		ResponseMetadata: &types.ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	helper.WriteXMLResponse(w, http.StatusOK, response)
+}
+
+func AttachGroupPolicyHandler(w http.ResponseWriter, r *http.Request) {
+	groupName := r.Form.Get("GroupName")
+	if groupName == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("GroupName"))
+		return
+	}
+
+	policyArn := r.Form.Get("PolicyArn")
+	if policyArn == "" {
+		errs.Handle(w, errs.HTTPMissingQueryParam("PolicyArn"))
+		return
+	}
+
+	ctx := r.Context()
+
+	if err := store.AttachPolicy(ctx, ArnGroup, policyArn, groupName); err != nil {
+		var errNotFound *errs.ErrNotFound
+		if errors.As(err, &errNotFound) {
+			errs.Handle(w, errs.IAMNoSuchEntity(string(errNotFound.Type), errNotFound.Resource))
+			return
+		}
+
+		errs.Handle(w, errs.IAMServiceFailure())
+		return
+	}
+
+	response := &types.AttachUserPolicyResponse{
+		ResponseMetadata: &types.ResponseMetadata{
+			RequestId: core.NewRequestID(),
+		},
+	}
+
+	helper.WriteXMLResponse(w, http.StatusOK, response)
+}

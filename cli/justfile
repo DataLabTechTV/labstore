@@ -1,0 +1,109 @@
+set shell := ["bash", "-uc"]
+
+cli := "bin/labstore"
+s3 := cli + " s3"
+iam := cli + " iam"
+
+test_bucket := "test-cli"
+test_user := "test-user-cli"
+test_group := "test-group-cli"
+test_policy := "test-policy-cli"
+test_policy_document := '{"Version":"2012-10-17", "Statement":[' + \
+    '{"Effect":"Allow","Action":"s3:ListAllMyBuckets","Resource":"*"},' + \
+    '{"Effect":"Allow","Action":["s3:Get*","s3:List*"],' + \
+    '"Resource":["arn:aws:s3:::' + test_bucket + '","arn:aws:s3:::' + test_bucket + '/*"]}]}'
+test_policy_arn := "arn:aws:iam::000000000001:policy/" + test_policy
+
+default:
+    just -l
+
+[working-directory: ".."]
+check-deps:
+    @echo "Checking system binary dependencies for cli..."
+    @just check {{cli}} || make cli
+    @just check jq
+
+[working-directory: ".."]
+_test_s3 random:
+    {{s3}} buckets create {{test_bucket}}
+    {{s3}} service list-buckets
+    {{s3}} buckets head {{test_bucket}}
+    {{s3}} objects put {{test_bucket}} random.data {{random}}
+    {{s3}} objects head {{test_bucket}} random.data
+    {{s3}} objects get {{test_bucket}} random.data "{{random}}.download"
+    {{s3}} buckets list-objects {{test_bucket}}
+    {{s3}} objects delete {{test_bucket}} random.data
+    {{s3}} objects put {{test_bucket}} random2.data {{random}}
+    {{s3}} objects put {{test_bucket}} random3.data {{random}}
+    {{s3}} buckets list-objects {{test_bucket}} 'rand*'
+    {{s3}} objects delete {{test_bucket}} random2.data random3.data
+    {{s3}} buckets list-objects {{test_bucket}} 'rand*'
+    {{s3}} buckets delete {{test_bucket}}
+    rm -f "{{random}}.download"
+
+test-s3: check-deps
+    #!/bin/bash
+    echo "Creating a random data file for testing..."
+    tmpfile=$(mktemp /tmp/randomXXXX.data)
+    dd if=/dev/random of=$tmpfile bs=1M count=100
+    echo "Running S3 tests..."
+    just _test_s3 $tmpfile
+    echo "Cleaning up..."
+    rm -f $tmpfile
+
+[working-directory: ".."]
+_test_iam_users:
+    {{iam}} users get {{test_user}} || ( \
+        {{iam}} users create {{test_user}}; \
+        {{iam}} users get {{test_user}} \
+    )
+    {{iam}} users access-keys create {{test_user}}
+    {{iam}} users access-keys list {{test_user}}
+    {{iam}} users access-keys delete {{test_user}} {{test_user}}
+    {{iam}} users delete {{test_user}}
+
+[working-directory: ".."]
+_test_iam_groups:
+    {{iam}} groups get {{test_group}} || ( \
+        {{iam}} groups create {{test_group}}; \
+        {{iam}} groups get {{test_group}} \
+    )
+    {{iam}} users get {{test_user}} || {{iam}} users create {{test_user}}
+    {{iam}} groups add-user {{test_user}} {{test_group}}
+    {{iam}} groups remove-user {{test_user}} {{test_group}}
+    {{iam}} users delete {{test_user}}
+    {{iam}} groups delete {{test_group}}
+
+[working-directory: ".."]
+_test_iam_policies policy_document_path:
+    {{iam}} policies get {{test_policy_arn}} || ({{iam}} policies create {{test_policy}} {{policy_document_path}})
+    {{iam}} users get {{test_user}} || {{iam}} users create {{test_user}}
+    {{iam}} policies attach-user {{test_user}} {{test_policy_arn}}
+    {{iam}} groups get {{test_group}} || {{iam}} groups create {{test_group}}
+    {{iam}} policies attach-group {{test_group}} {{test_policy_arn}}
+    {{iam}} policies get {{test_policy_arn}}
+    {{iam}} policies list-user-attached {{test_user}}
+    {{iam}} policies list-group-attached {{test_group}}
+    {{iam}} policies detach-user {{test_user}} {{test_policy_arn}}
+    {{iam}} policies detach-group {{test_group}} {{test_policy_arn}}
+    {{iam}} users delete {{test_user}}
+    {{iam}} groups delete {{test_group}}
+    {{iam}} policies delete {{test_policy_arn}}
+
+test-iam: check-deps
+    #!/bin/bash
+    echo "Creating temporary policy document file..."
+    tmpfile=$(mktemp /tmp/policyXXXX.json)
+    echo '{{test_policy_document}}' | jq > $tmpfile
+
+    echo "Testing IAM user operations..."
+    just _test_iam_users
+
+    echo "Testing IAM group operations..."
+    just _test_iam_groups
+
+    echo "Testing IAM policy operations..."
+    just _test_iam_policies $tmpfile
+
+    echo "Cleaning up..."
+    rm -f $tmpfile

@@ -3,7 +3,17 @@ repos:
     rev: v2.6.2
     hooks:
       - id: golangci-lint
-        name: golangci-lint (backend)
-        entry: bash -c "cd backend && golangci-lint run"
+        name: golangci-lint (server)
+        entry: bash -c 'golangci-lint run ./server/...'
         language: system
-        types: [go]
+        pass_filenames: false
+      - id: golangci-lint
+        name: golangci-lint (client)
+        entry: bash -c 'golangci-lint run ./client/...'
+        language: system
+        pass_filenames: false
+      - id: golangci-lint
+        name: golangci-lint (cli)
+        entry: bash -c 'golangci-lint run ./cli/...'
+        language: system
+        pass_filenames: false
