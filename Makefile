@@ -11,17 +11,12 @@ WEB_DIR := web
 WEB_SRC_DIRS := $(WEB_DIR)/src $(WEB_DIR)/static
 WEB_BUILD_DIR := $(WEB_DIR)/build
 
-.PHONY: all cli web build run profile test clean-debug clean-cli clean-web clean
+.PHONY: all web assets cli build run profile test clean-debug clean-cli clean-web clean
 
 all: build
 
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
-
-CLI_SRCS := $(shell find $(CLI_DIR) $(SERVER_DIR) $(CLIENT_DIR) -name '*.go')
-
-$(CLI_CMD): $(CLI_SRCS) | $(BIN_DIR)
-	cd $(CLI_DIR) && go build -o ../$(CLI_CMD) ./cmd/labstore
 
 WEB_SRCS := $(shell find $(WEB_SRC_DIRS) -type f)
 
@@ -29,10 +24,15 @@ $(WEB_BUILD_DIR): $(WEB_SRCS)
 	cd $(WEB_DIR) && npm ci
 	cd $(WEB_DIR) && npm run build
 
-ASSETS_SRCS := $(shell [ -d $(ASSETS_DIR) ] && find $(ASSETS_DIR) -type f)
+ASSETS_SRCS := $(shell find $(WEB_BUILD_DIR) -type f)
 
 $(ASSETS_DIR): $(ASSETS_SRCS)
 	rsync -a --delete web/build/ $(ASSETS_DIR)/
+
+CLI_SRCS = $(shell find $(CLI_DIR) $(SERVER_DIR) $(CLIENT_DIR) -name '*.go')
+
+$(CLI_CMD): $(CLI_SRCS) | $(BIN_DIR)
+	cd $(CLI_DIR) && go build -o ../$(CLI_CMD) ./cmd/labstore
 
 assets: web $(ASSETS_DIR)
 
