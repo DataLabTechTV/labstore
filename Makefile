@@ -29,8 +29,12 @@ $(WEB_BUILD_DIR): $(WEB_SRCS)
 	cd $(WEB_DIR) && npm ci
 	cd $(WEB_DIR) && npm run build
 
-assets: web
+ASSETS_SRCS := $(shell [ -d $(ASSETS_DIR) ] && find $(ASSETS_DIR) -type f)
+
+$(ASSETS_DIR): $(ASSETS_SRCS)
 	rsync -a --delete web/build/ $(ASSETS_DIR)/
+
+assets: web $(ASSETS_DIR)
 
 cli: assets $(CLI_CMD)
 
