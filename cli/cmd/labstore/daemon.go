@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -50,65 +51,92 @@ func AddDaemonCommands(cmd *cobra.Command) {
 func start(cmd *cobra.Command, args []string) {
 	w, err := logger.NewDailyWriter(config.App.Log.Dir, strings.ToLower(constants.Name))
 	if err != nil {
-		slog.Error("could not open log file", "err", err)
+		fmt.Println("error: could not open log file")
 		return
 	}
 	logger.InitWithWriter(w)
 
+	slog.Info("labstore starting")
+
 	if pid, running := readPID(); running {
 		slog.Error("labstore already running", "pid", pid)
+		fmt.Printf("LabStore already running (PID=%d)\n", pid)
 		return
 	}
 
 	c := exec.Command(os.Args[0], "serve")
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
+	c.Stdout = w
+	c.Stderr = w
 	c.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 
 	if err := c.Start(); err != nil {
 		slog.Error("failed to start", "err", err)
+		fmt.Println("error: failed to start")
 		return
 	}
 
 	pid := c.Process.Pid
 	if err := os.WriteFile(pidFilePath, []byte(strconv.Itoa(pid)), 0o644); err != nil {
-		slog.Error("failed to write pid file", "pid", pid, "err", err)
+		slog.Error("failed to write pid file", "pid", pid, "path", pidFilePath, "err", err)
+		fmt.Println("error: failed to write PID file")
 		return
 	}
 
 	slog.Info("labstore started", "pid", pid)
+	fmt.Printf("LabStore started (PID=%d)\n", pid)
 }
 
 func stop(cmd *cobra.Command, args []string) {
+	w, err := logger.NewDailyWriter(config.App.Log.Dir, strings.ToLower(constants.Name))
+	if err != nil {
+		fmt.Println("error: could not open log file")
+		return
+	}
+	logger.InitWithWriter(w)
+
+	slog.Info("labstore stopping")
+
 	pid, running := readPID()
 	if !running {
 		slog.Error("labstore not running")
+		fmt.Println("LabStore not running")
 		return
 	}
 
 	proc, err := os.FindProcess(pid)
 	if err != nil {
 		slog.Error("process not found", "pid", pid, "err", err)
+		fmt.Printf("error: process not found (PID=%d)\n", pid)
 		return
 	}
 
 	if err := proc.Kill(); err != nil {
 		slog.Error("failed to stop process", "pid", pid, "err", err)
+		fmt.Printf("error: failed to stop process (PID=%d)\n", pid)
 		return
 	}
 
 	if err := os.Remove(pidFilePath); err != nil {
 		slog.Warn("could not delete pid file", "path", pidFilePath, "err", err)
+		fmt.Println("Warning: could not delete PID file:", pidFilePath)
 	}
 	slog.Info("labstore stopped", "pid", pid)
+	fmt.Printf("LabStore stopped (PID=%d)\n", pid)
 }
 
 func status(cmd *cobra.Command, args []string) {
+	w, err := logger.NewDailyWriter(config.App.Log.Dir, strings.ToLower(constants.Name))
+	if err != nil {
+		fmt.Println("error: could not open log file")
+		return
+	}
+	logger.InitWithWriter(w)
+
 	pid, running := readPID()
 	if running {
-		slog.Info("labstore running", "pid", pid)
+		fmt.Printf("LabStore running (PID=%d)\n", pid)
 	} else {
-		slog.Info("labstore not running")
+		fmt.Println("LabStore not running")
 	}
 }
 
