@@ -17,25 +17,31 @@ import (
 )
 
 var (
-	pidFilePath = filepath.Join(os.TempDir(), "labstore.pid")
+	pidFilePath       = filepath.Join(os.TempDir(), "labstore.pid")
+	daemonAnnotations = map[string]string{
+		"mode": "daemon",
+	}
 )
 
 func AddDaemonCommands(cmd *cobra.Command) {
 	cmd.AddCommand(
 		&cobra.Command{
-			Use:   "start",
-			Short: "Start LabStore server",
-			Run:   start,
+			Use:         "start",
+			Short:       "Start LabStore server",
+			Run:         start,
+			Annotations: daemonAnnotations,
 		},
 		&cobra.Command{
-			Use:   "stop",
-			Short: "Stop LabStore server",
-			Run:   stop,
+			Use:         "stop",
+			Short:       "Stop LabStore server",
+			Run:         stop,
+			Annotations: daemonAnnotations,
 		},
 		&cobra.Command{
-			Use:   "status",
-			Short: "Check if LabStore server is running",
-			Run:   status,
+			Use:         "status",
+			Short:       "Check if LabStore server is running",
+			Run:         status,
+			Annotations: daemonAnnotations,
 		},
 		&cobra.Command{
 			Use:   "restart",
@@ -44,6 +50,7 @@ func AddDaemonCommands(cmd *cobra.Command) {
 				stop(cmd, args)
 				start(cmd, args)
 			},
+			Annotations: daemonAnnotations,
 		},
 	)
 }

@@ -21,6 +21,9 @@ func NewServeCmd() *cobra.Command {
 
 			router.Start()
 		},
+		Annotations: map[string]string{
+			"show-default-secret": "yes",
+		},
 	}
 
 	cmd.Flags().String("storage-data-dir", config.DefaultStorageDataDir, "Storage root path for objects and metadata")

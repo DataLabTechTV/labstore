@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"strings"
 
+	"github.com/IllumiKnowLabs/labstore/cli/internal/render"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
@@ -26,40 +28,21 @@ func NewRootCmd() *cobra.Command {
 		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if cmd.Use != "serve" {
-				config.DisplayDefaultAdminSecretKey = false
+			if baseCmd := topLevelCommand(cmd); baseCmd.Name() == "completion" {
+				return
 			}
 
-			if cmd.Use == "start" || cmd.Use == "stop" || cmd.Use == "restart" || cmd.Use == "status" {
+			if cmd.Annotations["show-default-secret"] == "yes" {
+				config.DisplayDefaultAdminSecretKey = true
+			}
+
+			if cmd.Annotations["mode"] == "daemon" {
 				slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
 				config.Load(cmd)
 				return
 			}
 
-			welcomeMsg := fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author)
-			if helper.SupportsBox() {
-				helper.Box(welcomeMsg)
-			} else {
-				fmt.Println(welcomeMsg)
-			}
-
-			debug := helper.Must(cmd.Flags().GetBool("debug"))
-			logger.Init(logger.WithDebugFlag(debug))
-
-			config.Load(cmd)
-			iam.Init()
-
-			if run_pprof := helper.Must(cmd.Flags().GetBool("pprof")); run_pprof {
-				pprof_host := helper.Must(cmd.Flags().GetString("pprof-host"))
-				pprof_port := helper.Must(cmd.Flags().GetInt("pprof-port"))
-
-				pprof := profiler.NewProfiler(
-					profiler.WithHost(pprof_host),
-					profiler.WithPort(pprof_port),
-				)
-
-				pprof.Start()
-			}
+			bootstrap(cmd)
 		},
 	}
 
@@ -79,4 +62,38 @@ func NewRootCmd() *cobra.Command {
 	AddDaemonCommands(cmd)
 
 	return cmd
+}
+
+func topLevelCommand(cmd *cobra.Command) *cobra.Command {
+	for cmd.Parent().HasParent() {
+		cmd = cmd.Parent()
+	}
+	return cmd
+}
+
+func bootstrap(cmd *cobra.Command) {
+	welcomeMsg := fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author)
+	if render.SupportsBox() {
+		fmt.Fprintln(os.Stderr, render.Box(welcomeMsg))
+	} else {
+		fmt.Fprintln(os.Stderr, welcomeMsg)
+	}
+
+	debug := helper.Must(cmd.Flags().GetBool("debug"))
+	logger.Init(logger.WithDebugFlag(debug))
+
+	config.Load(cmd)
+	iam.Init()
+
+	if run_pprof := helper.Must(cmd.Flags().GetBool("pprof")); run_pprof {
+		pprof_host := helper.Must(cmd.Flags().GetString("pprof-host"))
+		pprof_port := helper.Must(cmd.Flags().GetInt("pprof-port"))
+
+		pprof := profiler.NewProfiler(
+			profiler.WithHost(pprof_host),
+			profiler.WithPort(pprof_port),
+		)
+
+		pprof.Start()
+	}
 }
