@@ -16,7 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup
+      - name: setup
+        uses: ./.github/actions/setup
 
       - name: install dependencies (server)
         working-directory: ./server
