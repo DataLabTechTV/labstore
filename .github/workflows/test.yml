@@ -23,10 +23,12 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: install dependencies (web)
-        run: cd web/ && npm ci
+        working-directory: ./web
+        run: npm ci
 
       - name: build (web)
-        run: cd web/ && npm run build
+        working-directory: ./web
+        run: npm run build
 
       - name: rsync assets (web -> server)
         run: rsync -a --delete web/build/ server/pkg/router/assets/
@@ -37,10 +39,11 @@ jobs:
           go-version-file: "go.work"
           cache-dependency-path: "**/*.sum"
 
-      - name: install dependencies (server)
-        working-directory: ./server
-        run: go mod download
-
       - name: go test (server)
-        working-directory: ./server
-        run: go test -v ./...
+        run: go test -v ./server/...
+
+      - name: go test (client)
+        run: go test -v ./client/...
+
+      - name: go test (cli)
+        run: go test -v ./cli/...
