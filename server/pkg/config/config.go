@@ -50,7 +50,7 @@ const (
 
 var (
 	DefaultAdminSecretKey        string = DefaultAdminAuthAccessKey
-	DisplayDefaultAdminSecretKey bool   = true
+	DisplayDefaultAdminSecretKey bool   = false
 )
 
 type AppConfig struct {
