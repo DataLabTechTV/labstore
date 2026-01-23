@@ -16,26 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 25.2.1
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-
-      - name: install dependencies (web)
-        run: cd web/ && npm ci
-
-      - name: build (web)
-        run: cd web/ && npm run build
-
-      - name: rsync assets (web -> server)
-        run: rsync -a --delete web/build/ server/pkg/router/assets/
-
-      - name: setup go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: "go.work"
-          cache-dependency-path: "**/*.sum"
+      - name: setup
+        uses: ./.github/actions/setup
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
