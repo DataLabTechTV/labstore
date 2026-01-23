@@ -48,7 +48,7 @@ func Start() {
 	adminServerDescriptor := NewAdminServerDescriptor(
 		config.App.Server.Admin.Address.Host,
 		config.App.Server.Admin.Address.Port,
-		[]*ServerDescriptor{s3ServerDescriptor, iamServerDescriptor},
+		[]*ServerDescriptor{webServerDescriptor, s3ServerDescriptor, iamServerDescriptor},
 	)
 
 	serverDescriptors := []*ServerDescriptor{
