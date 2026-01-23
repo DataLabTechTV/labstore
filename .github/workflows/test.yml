@@ -19,18 +19,6 @@ jobs:
       - name: setup
         uses: ./.github/actions/setup
 
-      - name: install dependencies (server)
-        working-directory: ./server
-        run: go mod download
-
-      - name: install dependencies (client)
-        working-directory: ./server
-        run: go mod download
-
-      - name: install dependencies (cli)
-        working-directory: ./cli
-        run: go mod download
-
       - name: go test (server)
         run: go test -v ./server/...
 
