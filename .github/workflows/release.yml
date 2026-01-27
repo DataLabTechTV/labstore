@@ -82,9 +82,9 @@ jobs:
       - name: create github release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.ref_name }}
-          name: Release ${{ github.event.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.changes }}
-          files: dist/*
+          files: dist/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
