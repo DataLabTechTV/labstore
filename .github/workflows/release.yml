@@ -52,6 +52,7 @@ jobs:
         uses: requarks/changelog-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
 
       - name: create github release
         uses: softprops/action-gh-release@v2
