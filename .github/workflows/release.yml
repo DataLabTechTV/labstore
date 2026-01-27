@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  issues: read
 
 jobs:
   build:
@@ -37,6 +36,7 @@ jobs:
           BIN="labstore-${{ github.ref_name }}"
           BIN="${BIN}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm && format('v{0}', matrix.goarm) }}"
           [[ "${{ matrix.goos }}" == "windows" ]] && BIN="${BIN}.exe"
+          echo "Binary: $BIN"
           echo "name=$BIN" >> $GITHUB_OUTPUT
 
       - name: build
@@ -76,7 +76,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
-          includeRefIssues: true
+          includeRefIssues: false
           writeToFile: false
 
       - name: create github release
