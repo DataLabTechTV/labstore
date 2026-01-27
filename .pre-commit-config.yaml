@@ -4,16 +4,19 @@ repos:
     hooks:
       - id: golangci-lint
         name: golangci-lint (server)
+        files: ^server/
         entry: bash -c 'golangci-lint run ./server/...'
         language: system
         pass_filenames: false
       - id: golangci-lint
         name: golangci-lint (client)
+        files: ^client/
         entry: bash -c 'golangci-lint run ./client/...'
         language: system
         pass_filenames: false
       - id: golangci-lint
         name: golangci-lint (cli)
+        files: ^cli/
         entry: bash -c 'golangci-lint run ./cli/...'
         language: system
         pass_filenames: false
