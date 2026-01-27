@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   release:
-    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
 
     strategy:
@@ -42,9 +41,13 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          GOARM: ${{ matrix.goarm }}
         run: |
           mkdir -p dist
+
+          if [ -n "${{ matrix.goarm }}" ]; then
+            export GOARM=${{ matrix.goarm }}
+          fi
+
           go build -o dist/${{ steps.binary.outputs.name }} ./cli/cmd/labstore
 
       - name: generate changelog
