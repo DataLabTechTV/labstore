@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/IllumiKnowLabs/labstore/cli/internal/system"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/logger"
@@ -74,7 +75,7 @@ func start(cmd *cobra.Command, args []string) {
 	c := exec.Command(os.Args[0], "serve")
 	c.Stdout = w
 	c.Stderr = w
-	c.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	c.SysProcAttr = system.NewDaemonSysProcAttr()
 
 	if err := c.Start(); err != nil {
 		slog.Error("failed to start", "err", err)
