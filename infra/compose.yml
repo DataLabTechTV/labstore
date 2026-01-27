@@ -29,6 +29,10 @@ services:
       - LABSTORE_WEB_ADDRESS_HOST=${LABSTORE_WEB_ADDRESS_HOST}
       - LABSTORE_WEB_ADDRESS_PORT=${LABSTORE_WEB_ADDRESS_PORT}
     command: serve --storage-data-dir /data --storage-keys-dir /keys
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${LABSTORE_SERVER_ADMIN_ADDRESS_PORT}/health"]
+      interval: 10s
+      retries: 5
     restart: unless-stopped
 
   benchmark-labstore:
@@ -49,6 +53,10 @@ services:
       - LABSTORE_SERVER_ADMIN_AUTH_ACCESS_KEY=${BENCHMARK_STORE_ACCESS_KEY}
       - LABSTORE_SERVER_ADMIN_AUTH_SECRET_KEY=${BENCHMARK_STORE_SECRET_KEY}
     command: serve --s3-address-host 0.0.0.0 --s3-address-port 6789 --storage-data-dir /data --storage-keys-dir /keys
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${LABSTORE_SERVER_ADMIN_ADDRESS_PORT}/health"]
+      interval: 10s
+      retries: 5
     restart: unless-stopped
 
   benchmark-minio:

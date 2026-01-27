@@ -50,6 +50,8 @@ FROM alpine:3.22
 
 COPY --from=go_builder /labstore/bin/labstore /usr/local/bin/labstore
 
+RUN apk add --no-cache curl
+
 RUN addgroup -S labstore && adduser -S labstore -G labstore
 
 RUN mkdir /data /keys
