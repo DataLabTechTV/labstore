@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/IllumiKnowLabs/labstore/server/internal/middleware"
+	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
 )
 
 var healthStatus []*atomic.Bool
@@ -48,14 +49,16 @@ func loadAdminRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /health", http.HandlerFunc(healthCheckHandler))
 }
 
-// healthCheckHandler: GET /labstore/health
+// healthCheckHandler: GET /health
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	for _, hs := range healthStatus {
 		if healthy := hs.Load(); !healthy {
+			helper.Must(w.Write([]byte("LabStore is not running")))
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 	}
 
+	helper.Must(w.Write([]byte("LabStore is running")))
 	w.WriteHeader(http.StatusOK)
 }
