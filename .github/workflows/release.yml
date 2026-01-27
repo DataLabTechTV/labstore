@@ -49,14 +49,14 @@ jobs:
 
       - name: generate changelog
         id: changelog
-        uses: mikeal/git-changelog-action@v1
+        uses: requarks/changelog-action@v1
 
       - name: create github release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.ref_name }}
           name: Release ${{ github.event.ref_name }}
-          body: ${{ steps.changelog.outputs.changelog }}
+          body: ${{ steps.changelog.outputs.changes }}
           files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
