@@ -17,13 +17,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7
+
     steps:
       - uses: actions/checkout@v6
 
       - name: setup qemu
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: ${{ env.PLATFORMS }}
 
       - name: setup buildx
         uses: docker/setup-buildx-action@v3
@@ -35,7 +38,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image tags
+      - name: set image tags
         id: image_tag
         run: |
           repo_lower=$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
@@ -58,5 +61,6 @@ jobs:
           tags: |
             ${{ steps.image_tag.outputs.tag }}
             ${{ steps.image_tag.outputs.sha_tag }}
+          platforms: ${{ env.PLATFORMS }}
           cache-from: type=registry,ref=${{ steps.image_tag.outputs.cache_ref }}
           cache-to: type=registry,ref=${{ steps.image_tag.outputs.cache_ref }},mode=max
