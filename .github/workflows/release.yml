@@ -50,6 +50,8 @@ jobs:
       - name: generate changelog
         id: changelog
         uses: requarks/changelog-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: create github release
         uses: softprops/action-gh-release@v2
