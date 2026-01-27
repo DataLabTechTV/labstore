@@ -34,7 +34,8 @@ jobs:
       - name: set binary name
         id: binary
         run: |
-          BIN="labstore-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm && format('v{0}', matrix.goarm) }}"
+          BIN="labstore-${{ github.ref_name }}"
+          BIN="${BIN}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm && format('v{0}', matrix.goarm) }}"
           [[ "${{ matrix.goos }}" == "windows" ]] && BIN="${BIN}.exe"
           echo "name=$BIN" >> $GITHUB_OUTPUT
 
