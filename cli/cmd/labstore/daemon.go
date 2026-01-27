@@ -6,11 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 
-	"github.com/IllumiKnowLabs/labstore/cli/internal/system"
+	"github.com/IllumiKnowLabs/labstore/cli/internal/process"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
 	"github.com/IllumiKnowLabs/labstore/server/pkg/logger"
@@ -45,18 +45,20 @@ func AddDaemonCommands(cmd *cobra.Command) {
 			Annotations: daemonAnnotations,
 		},
 		&cobra.Command{
-			Use:   "restart",
-			Short: "Restart LabStore server",
-			Run: func(cmd *cobra.Command, args []string) {
-				stop(cmd, args)
-				start(cmd, args)
-			},
+			Use:         "restart",
+			Short:       "Restart LabStore server",
+			Run:         restart,
 			Annotations: daemonAnnotations,
 		},
 	)
 }
 
 func start(cmd *cobra.Command, args []string) {
+	if runtime.GOOS == "windows" {
+		fmt.Println("error: unsupported in windows, use the serve command instead (ctrl+c to interrupt)")
+		return
+	}
+
 	w, err := logger.NewDailyWriter(config.App.Log.Dir, strings.ToLower(constants.Name))
 	if err != nil {
 		fmt.Println("error: could not open log file")
@@ -75,7 +77,7 @@ func start(cmd *cobra.Command, args []string) {
 	c := exec.Command(os.Args[0], "serve")
 	c.Stdout = w
 	c.Stderr = w
-	c.SysProcAttr = system.NewDaemonSysProcAttr()
+	c.SysProcAttr = process.NewDaemonSysAttr()
 
 	if err := c.Start(); err != nil {
 		slog.Error("failed to start", "err", err)
@@ -95,6 +97,11 @@ func start(cmd *cobra.Command, args []string) {
 }
 
 func stop(cmd *cobra.Command, args []string) {
+	if runtime.GOOS == "windows" {
+		fmt.Println("error: unsupported in windows, use the serve command instead (ctrl+c to interrupt)")
+		return
+	}
+
 	w, err := logger.NewDailyWriter(config.App.Log.Dir, strings.ToLower(constants.Name))
 	if err != nil {
 		fmt.Println("error: could not open log file")
@@ -118,7 +125,7 @@ func stop(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if err := proc.Kill(); err != nil {
+	if err := process.Kill(proc); err != nil {
 		slog.Error("failed to stop process", "pid", pid, "err", err)
 		fmt.Printf("error: failed to stop process (PID=%d)\n", pid)
 		return
@@ -132,7 +139,22 @@ func stop(cmd *cobra.Command, args []string) {
 	fmt.Printf("LabStore stopped (PID=%d)\n", pid)
 }
 
+func restart(cmd *cobra.Command, args []string) {
+	if runtime.GOOS == "windows" {
+		fmt.Println("error: unsupported in windows, use the serve command instead (ctrl+c to interrupt)")
+		return
+	}
+
+	stop(cmd, args)
+	start(cmd, args)
+}
+
 func status(cmd *cobra.Command, args []string) {
+	if runtime.GOOS == "windows" {
+		fmt.Println("error: unsupported in windows, use the serve command instead (ctrl+c to interrupt)")
+		return
+	}
+
 	w, err := logger.NewDailyWriter(config.App.Log.Dir, strings.ToLower(constants.Name))
 	if err != nil {
 		fmt.Println("error: could not open log file")
@@ -140,8 +162,7 @@ func status(cmd *cobra.Command, args []string) {
 	}
 	logger.InitWithWriter(w)
 
-	pid, running := readPID()
-	if running {
+	if pid, running := readPID(); running {
 		fmt.Printf("LabStore running (PID=%d)\n", pid)
 	} else {
 		fmt.Println("LabStore not running")
@@ -159,7 +180,11 @@ func readPID() (int, bool) {
 		return 0, false
 	}
 
-	if err := syscall.Kill(pid, 0); err != nil {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return 0, false
+	}
+	if err := proc.Kill(); err != nil {
 		return 0, false
 	}
 
