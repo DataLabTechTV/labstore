@@ -1,0 +1,62 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'testing-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  release:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        include:
+          - goos: linux
+            goarch: arm
+            goarm: 7
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: setup
+        uses: ./.github/actions/setup
+
+      - name: set binary name
+        id: binary
+        run: |
+          BIN="labstore-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm && format('v{0}', matrix.goarm) }}"
+          [[ "${{ matrix.goos }}" == "windows" ]] && BIN="${BIN}.exe"
+          echo "name=$BIN" >> $GITHUB_OUTPUT
+
+      - name: build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          mkdir -p dist
+          go build -o dist/${{ steps.binary.outputs.name }} ./cli/cmd/labstore
+
+      - name: generate changelog
+        id: changelog
+        uses: mikeal/git-changelog-action@v1
+
+      - name: create github release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.ref_name }}
+          name: Release ${{ github.event.ref_name }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
