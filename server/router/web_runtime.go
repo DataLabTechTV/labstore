@@ -16,7 +16,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
-var assetsDir string
+var cacheDir string
 
 func init() {
 	cacheDir, err := os.UserCacheDir()
@@ -24,9 +24,7 @@ func init() {
 		cacheDir = ".labstore"
 		slog.Warn("could not find user cache dir")
 	}
-
-	assetsDir = filepath.Join(cacheDir, "assets")
-	slog.Debug("assets dir", "path", assetsDir)
+	slog.Debug("assets dir", "path", cacheDir)
 }
 
 func NewWebServerDescriptor(host string, port uint16) (*ServerDescriptor, error) {
@@ -58,6 +56,8 @@ func NewWebServerDescriptor(host string, port uint16) (*ServerDescriptor, error)
 }
 
 func loadAssets() (fs.FS, error) {
+	assetsDir := filepath.Join(cacheDir, "assets")
+
 	if helper.FileExists(assetsDir) {
 		if !helper.IsDir(assetsDir) {
 			return nil, fmt.Errorf("not a directory: %s", assetsDir)
@@ -100,7 +100,7 @@ func fetchAssets() error {
 	defer helper.CloseWithErr(zipReader, &err)
 
 	for _, file := range zipReader.File {
-		outPath := filepath.Join(assetsDir, file.Name)
+		outPath := filepath.Join(cacheDir, file.Name)
 
 		if file.FileInfo().IsDir() {
 			if err := os.MkdirAll(outPath, 0755); err != nil {
