@@ -30,33 +30,40 @@ func Start() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	webServerDescriptor := NewWebServerDescriptor(
+	serverDescriptors := []*ServerDescriptor{}
+	monitorServerDescriptors := []*ServerDescriptor{}
+
+	webServerDescriptor, err := NewWebServerDescriptor(
 		config.App.Web.Address.Host,
 		config.App.Web.Address.Port,
 	)
+	if err != nil {
+		slog.Warn("could not start web ui service", "err", err)
+	} else {
+		serverDescriptors = append(serverDescriptors, webServerDescriptor)
+		monitorServerDescriptors = append(monitorServerDescriptors, webServerDescriptor)
+	}
 
 	s3ServerDescriptor := NewS3ServerDescriptor(
 		config.App.Server.S3.Address.Host,
 		config.App.Server.S3.Address.Port,
 	)
+	serverDescriptors = append(serverDescriptors, s3ServerDescriptor)
+	monitorServerDescriptors = append(monitorServerDescriptors, s3ServerDescriptor)
 
 	iamServerDescriptor := NewIAMServerDescriptor(
 		config.App.Server.IAM.Address.Host,
 		config.App.Server.IAM.Address.Port,
 	)
+	serverDescriptors = append(serverDescriptors, iamServerDescriptor)
+	monitorServerDescriptors = append(monitorServerDescriptors, iamServerDescriptor)
 
 	adminServerDescriptor := NewAdminServerDescriptor(
 		config.App.Server.Admin.Address.Host,
 		config.App.Server.Admin.Address.Port,
-		[]*ServerDescriptor{webServerDescriptor, s3ServerDescriptor, iamServerDescriptor},
+		monitorServerDescriptors,
 	)
-
-	serverDescriptors := []*ServerDescriptor{
-		adminServerDescriptor,
-		iamServerDescriptor,
-		s3ServerDescriptor,
-		webServerDescriptor,
-	}
+	serverDescriptors = append(serverDescriptors, adminServerDescriptor)
 
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(serverDescriptors))

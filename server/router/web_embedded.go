@@ -1,3 +1,5 @@
+//go:build embedassets
+
 package router
 
 import (
@@ -11,14 +13,15 @@ import (
 )
 
 //go:embed assets/**
-var frontendFiles embed.FS
+var assetsFS embed.FS
 
-func NewWebServerDescriptor(host string, port uint16) *ServerDescriptor {
+func NewWebServerDescriptor(host string, port uint16) (*ServerDescriptor, error) {
 	slog.Info("web ui server", "host", host, "port", port)
+	slog.Debug("using embedded web ui assets")
 
 	addr := fmt.Sprintf("%s:%d", host, port)
 
-	contentFS := helper.Must(fs.Sub(frontendFiles, "assets"))
+	contentFS := helper.Must(fs.Sub(assetsFS, "assets"))
 	httpFS := http.FS(contentFS)
 	handler := http.FileServer(httpFS)
 
@@ -32,5 +35,5 @@ func NewWebServerDescriptor(host string, port uint16) *ServerDescriptor {
 		Server: &server,
 	}
 
-	return serverDescriptor
+	return serverDescriptor, nil
 }
