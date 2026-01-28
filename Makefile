@@ -20,6 +20,29 @@ GOOS ?= $(HOST_GOOS)
 GOARCH ?= $(HOST_GOARCH)
 GOARM ?= $(HOST_GOARM)
 
+GO_CONSTANTS := github.com/IllumiKnowLabs/labstore/server/constants
+GIT_TAG := $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+BUILD_TIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+BUILDER := make
+
+GO_LDFLAGS ?= \
+	-X $(GO_CONSTANTS).GitTag=$(GIT_TAG) \
+	-X $(GO_CONSTANTS).GitCommit=$(GIT_COMMIT) \
+	-X $(GO_CONSTANTS).BuildTime=$(BUILD_TIME)
+	-X $(GO_CONSTANTS).Builder=$(BUILDER)
+
+GO_BUILD_TAGS ?= embedassets
+
+GO_BUILD_FLAGS:=
+ifneq ($(GO_BUILD_TAGS),)
+	GO_BUILD_FLAGS := $(GO_BUILD_FLAGS) -tags "$(GO_BUILD_TAGS)"
+endif
+
+ifneq ($(GO_LDFLAGS),)
+	GO_BUILD_FLAGS := $(GO_BUILD_FLAGS) -ldflags "$(GO_LDFLAGS)"
+endif
+
 ifeq ($(GOOS),windows)
     LABSTORE_CMD := $(LABSTORE_CMD).exe
 endif
@@ -62,7 +85,7 @@ LABSTORE_SRCS = $(shell find $(CMD_DIR) $(CLI_DIR) $(SERVER_DIR) $(CLIENT_DIR) -
 
 $(LABSTORE_CMD): $(LABSTORE_SRCS) | $(BIN_DIR)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -o $(LABSTORE_CMD)$(BIN_SUFFIX) ./cmd/labstore
+	go build$(if $(GO_BUILD_FLAGS),$(GO_BUILD_FLAGS)) -o $(LABSTORE_CMD)$(BIN_SUFFIX) ./cmd/labstore
 
 .PHONY: assets
 assets: web $(ASSETS_DIR)
