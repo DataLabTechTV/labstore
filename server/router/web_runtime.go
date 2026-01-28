@@ -16,15 +16,18 @@ import (
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
+const basename = "labstore"
+
 var cacheDir string
 
 func init() {
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
+	var err error
+	cacheDir, err = os.UserCacheDir()
+	if err == nil {
+		cacheDir = filepath.Join(cacheDir, basename)
+	} else {
 		cacheDir = ".labstore"
-		slog.Warn("could not find user cache dir")
 	}
-	slog.Debug("assets dir", "path", cacheDir)
 }
 
 func NewWebServerDescriptor(host string, port uint16) (*ServerDescriptor, error) {
@@ -33,12 +36,11 @@ func NewWebServerDescriptor(host string, port uint16) (*ServerDescriptor, error)
 
 	addr := fmt.Sprintf("%s:%d", host, port)
 
-	assetsFS, err := loadAssets()
+	contentFS, err := loadAssets()
 	if err != nil {
 		return nil, fmt.Errorf("web server descriptor: %w", err)
 	}
 
-	contentFS := helper.Must(fs.Sub(assetsFS, "assets"))
 	httpFS := http.FS(contentFS)
 	handler := http.FileServer(httpFS)
 
@@ -57,16 +59,18 @@ func NewWebServerDescriptor(host string, port uint16) (*ServerDescriptor, error)
 
 func loadAssets() (fs.FS, error) {
 	assetsDir := filepath.Join(cacheDir, "assets")
+	slog.Debug("load assets", "assetsDir", assetsDir)
 
 	if helper.FileExists(assetsDir) {
 		if !helper.IsDir(assetsDir) {
 			return nil, fmt.Errorf("not a directory: %s", assetsDir)
 		}
 	} else {
-		slog.Info("downloading web ui assets from github release")
+		slog.Info("downloading web ui assets from github release", "assetsDir", assetsDir)
 		if err := fetchAssets(); err != nil {
 			return nil, err
 		}
+		slog.Info("finished downloading web ui assets from github release", "assetsDir", assetsDir)
 	}
 
 	return os.DirFS(assetsDir), nil
