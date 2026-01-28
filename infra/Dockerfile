@@ -21,26 +21,20 @@ FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.22 AS go_builder
 
 ARG TARGETOS
 ARG TARGETARCH
+ARG TARGETVARIANT
 
 WORKDIR /labstore
 
-COPY server/go.mod ./server/go.mod
-RUN cd server/ && go mod download
-
-COPY client/go.mod ./client/go.mod
-RUN cd client/ && go mod download
-
-COPY cli/go.mod ./cli/go.mod
-RUN cd cli/ && go mod download
-
-COPY go.work go.work
-RUN go work sync
+COPY go.mod go.sum ./
+RUN go mod download
 
 COPY . .
 COPY --from=node_builder /web/build ./server/pkg/router/assets
 
 
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH cd cli/ && go build -o ../bin/labstore ./cmd/labstore
+ARG GOARM=7
+RUN if [ "$TARGETARCH" = "arm" ]; then GOARM="${TARGETVARIANT#v}"; fi && \
+    GOOS=$TARGETOS GOARCH=$TARGETARCH GOARM=$GOARM go build -o bin/labstore ./cmd/labstore
 
 # =================
 # LabStore CLI
