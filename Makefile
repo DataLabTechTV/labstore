@@ -62,7 +62,7 @@ LABSTORE_SRCS = $(shell find $(CMD_DIR) $(CLI_DIR) $(SERVER_DIR) $(CLIENT_DIR) -
 
 $(LABSTORE_CMD): $(LABSTORE_SRCS) | $(BIN_DIR)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -o ../$(LABSTORE_CMD)$(BIN_SUFFIX) ./cmd/labstore
+	go build -o $(LABSTORE_CMD)$(BIN_SUFFIX) ./cmd/labstore
 
 .PHONY: assets
 assets: web $(ASSETS_DIR)
