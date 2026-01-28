@@ -29,5 +29,5 @@ runs:
     - name: setup go
       uses: actions/setup-go@v6
       with:
-        go-version-file: "go.work"
-        cache-dependency-path: "**/*.sum"
+        go-version-file: go.mod
+        cache-dependency-path: go.sum

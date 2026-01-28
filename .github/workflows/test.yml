@@ -29,3 +29,6 @@ jobs:
 
       - name: go test (cli)
         run: go test -v ./cli/...
+
+      - name: go test (cmd)
+        run: go test -v ./cmd/...
