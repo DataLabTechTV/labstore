@@ -53,12 +53,12 @@ func loadAdminRoutes(router *http.ServeMux) {
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	for _, hs := range healthStatus {
 		if healthy := hs.Load(); !healthy {
-			helper.Must(w.Write([]byte("LabStore is not running")))
 			w.WriteHeader(http.StatusServiceUnavailable)
+			helper.Must(w.Write([]byte("LabStore is not running")))
 			return
 		}
 	}
 
-	helper.Must(w.Write([]byte("LabStore is running")))
 	w.WriteHeader(http.StatusOK)
+	helper.Must(w.Write([]byte("LabStore is running")))
 }
