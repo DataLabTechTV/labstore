@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/render"
+	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/spf13/cobra"
 )
 

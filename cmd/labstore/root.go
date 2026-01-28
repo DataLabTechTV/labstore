@@ -7,13 +7,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/render"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/iam"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/logger"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/profiler"
+	"github.com/IllumiKnowLabs/labstore/cli/render"
+	"github.com/IllumiKnowLabs/labstore/server/config"
+	"github.com/IllumiKnowLabs/labstore/server/constants"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
+	"github.com/IllumiKnowLabs/labstore/server/iam"
+	"github.com/IllumiKnowLabs/labstore/server/logger"
+	"github.com/IllumiKnowLabs/labstore/server/profiler"
 	"github.com/spf13/cobra"
 )
 

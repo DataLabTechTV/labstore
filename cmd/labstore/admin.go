@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/IllumiKnowLabs/labstore/client/pkg/admin"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/client/admin"
+	"github.com/IllumiKnowLabs/labstore/server/config"
 	"github.com/spf13/cobra"
 )
 

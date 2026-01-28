@@ -29,7 +29,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-COPY --from=node_builder /web/build ./server/pkg/router/assets
+COPY --from=node_builder /web/build ./server/router/assets
 
 
 ARG GOARM=7

@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/errs"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/cli/errs"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 	"github.com/spf13/cobra"
 )
 

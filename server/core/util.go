@@ -1,0 +1,30 @@
+package core
+
+import (
+	"path/filepath"
+	"strings"
+
+	"github.com/IllumiKnowLabs/labstore/server/config"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
+)
+
+func BucketExists(bucket string) bool {
+	path := BucketSystemPath(bucket)
+	exists := helper.FileExists(path)
+	return exists
+}
+
+func BucketSystemPath(bucket string) string {
+	path := filepath.Join(config.App.Server.Storage.ObjectsPath, bucket)
+	return path
+}
+
+func ObjectSystemPath(bucket, key string) string {
+	path := filepath.Join(config.App.Server.Storage.ObjectsPath, bucket, key)
+	return path
+}
+
+func ObjectPath(bucket, key string) string {
+	path := strings.TrimSuffix(bucket, "/") + "/" + strings.TrimPrefix(key, "/")
+	return path
+}
