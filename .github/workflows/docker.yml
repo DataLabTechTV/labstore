@@ -41,7 +41,6 @@ jobs:
             echo "tag=ghcr.io/${repo_lower}:${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           fi
 
-          echo "sha_tag=ghcr.io/${repo_lower}:${GITHUB_SHA}" >> $GITHUB_OUTPUT
           echo "cache_ref=ghcr.io/${repo_lower}:cache" >> $GITHUB_OUTPUT
 
       - name: build and push image
@@ -50,9 +49,7 @@ jobs:
           context: .
           file: infra/Dockerfile
           push: true
-          tags: |
-            ${{ steps.image_tag.outputs.tag }}
-            ${{ steps.image_tag.outputs.sha_tag }}
+          tags: ${{ steps.image_tag.outputs.tag }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           cache-from: type=registry,ref=${{ steps.image_tag.outputs.cache_ref }}
           cache-to: type=registry,ref=${{ steps.image_tag.outputs.cache_ref }},mode=max
