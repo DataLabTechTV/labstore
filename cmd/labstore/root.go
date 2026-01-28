@@ -28,7 +28,7 @@ func NewRootCmd() *cobra.Command {
 		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if baseCmd := topLevelCommand(cmd); baseCmd.Name() == "completion" {
+			if baseCmd := topLevelCommand(cmd); baseCmd.Name() == "completion" || baseCmd.Name() == "version" {
 				return
 			}
 
@@ -60,6 +60,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewAdminCmd())
 	cmd.AddCommand(NewTUICmd())
 	AddDaemonCommands(cmd)
+	cmd.AddCommand(NewVersionCmd())
 
 	return cmd
 }
@@ -72,12 +73,7 @@ func topLevelCommand(cmd *cobra.Command) *cobra.Command {
 }
 
 func bootstrap(cmd *cobra.Command) {
-	welcomeMsg := fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author)
-	if render.SupportsBox() {
-		fmt.Fprintln(os.Stderr, render.Box(welcomeMsg))
-	} else {
-		fmt.Fprintln(os.Stderr, welcomeMsg)
-	}
+	printWelcome()
 
 	debug := helper.Must(cmd.Flags().GetBool("debug"))
 	logger.Init(logger.WithDebugFlag(debug))
@@ -95,5 +91,14 @@ func bootstrap(cmd *cobra.Command) {
 		)
 
 		pprof.Start()
+	}
+}
+
+func printWelcome() {
+	welcomeMsg := fmt.Sprintf("🚀 Welcome to %s, by %s", constants.Name, constants.Author)
+	if render.SupportsBox() {
+		fmt.Fprintln(os.Stderr, render.Box(welcomeMsg))
+	} else {
+		fmt.Fprintln(os.Stderr, welcomeMsg)
 	}
 }
