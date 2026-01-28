@@ -5,11 +5,11 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/credentials"
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/handlers"
-	"github.com/IllumiKnowLabs/labstore/client/pkg/s3"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/cli/credentials"
+	"github.com/IllumiKnowLabs/labstore/cli/handlers"
+	"github.com/IllumiKnowLabs/labstore/client/s3"
+	"github.com/IllumiKnowLabs/labstore/server/config"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 	"github.com/spf13/cobra"
 )
 

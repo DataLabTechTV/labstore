@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/handlers"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/helper"
+	"github.com/IllumiKnowLabs/labstore/cli/handlers"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 	"github.com/spf13/cobra"
 )
 

@@ -6,7 +6,7 @@ CMD_DIR := cmd
 CLI_DIR := cli
 CLIENT_DIR := client
 SERVER_DIR := server
-ASSETS_DIR := $(SERVER_DIR)/pkg/router/assets
+ASSETS_DIR := $(SERVER_DIR)/router/assets
 
 WEB_DIR := web
 WEB_SRC_DIRS := $(WEB_DIR)/src $(WEB_DIR)/static

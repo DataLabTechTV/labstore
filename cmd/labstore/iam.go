@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/handlers"
-	"github.com/IllumiKnowLabs/labstore/client/pkg/iam"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
+	"github.com/IllumiKnowLabs/labstore/cli/handlers"
+	"github.com/IllumiKnowLabs/labstore/client/iam"
+	"github.com/IllumiKnowLabs/labstore/server/config"
 	"github.com/spf13/cobra"
 )
 

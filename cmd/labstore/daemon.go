@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/IllumiKnowLabs/labstore/cli/pkg/process"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/config"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/constants"
-	"github.com/IllumiKnowLabs/labstore/server/pkg/logger"
+	"github.com/IllumiKnowLabs/labstore/cli/process"
+	"github.com/IllumiKnowLabs/labstore/server/config"
+	"github.com/IllumiKnowLabs/labstore/server/constants"
+	"github.com/IllumiKnowLabs/labstore/server/logger"
 	"github.com/spf13/cobra"
 )
 

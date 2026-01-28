@@ -23,7 +23,7 @@ runs:
       shell: bash
 
     - name: rsync assets (web -> server)
-      run: rsync -a --delete web/build/ server/pkg/router/assets/
+      run: rsync -a --delete web/build/ server/router/assets/
       shell: bash
 
     - name: setup go
