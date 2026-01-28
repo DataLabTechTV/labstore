@@ -53,8 +53,8 @@ jobs:
             -X ${GO_CONSTANTS}.Builder=release-gha"
           go build -tags embedassets -ldflags "$LDFLAGS" -o dist/${{ steps.binary.outputs.name }} ./cmd/labstore
 
-      - name: upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: upload artifacts (binaries)
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.binary.outputs.name }}
           path: dist/*
@@ -66,10 +66,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: download artifacts
-        uses: actions/download-artifact@v4
+      - name: setup
+        uses: ./.github/actions/setup
+
+      - name: download artifacts (binaries)
+        uses: actions/download-artifact@v7
         with:
           path: dist/
+
+      - name: zip assets (web)
+        run: |
+          mkdir -p assets dist
+          cp -R web/build/* assets/
+          zip -r dist/assets.zip assets/
 
       - name: generate changelog
         id: changelog
