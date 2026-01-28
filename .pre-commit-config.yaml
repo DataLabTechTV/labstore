@@ -20,3 +20,9 @@ repos:
         entry: bash -c 'golangci-lint run ./cli/...'
         language: system
         pass_filenames: false
+      - id: golangci-lint
+        name: golangci-lint (cmd)
+        files: ^cmd/
+        entry: bash -c 'golangci-lint run ./cmd/...'
+        language: system
+        pass_filenames: false
