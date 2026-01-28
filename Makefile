@@ -29,7 +29,7 @@ BUILDER := make
 GO_LDFLAGS ?= \
 	-X $(GO_CONSTANTS).GitTag=$(GIT_TAG) \
 	-X $(GO_CONSTANTS).GitCommit=$(GIT_COMMIT) \
-	-X $(GO_CONSTANTS).BuildTime=$(BUILD_TIME)
+	-X $(GO_CONSTANTS).BuildTime=$(BUILD_TIME) \
 	-X $(GO_CONSTANTS).Builder=$(BUILDER)
 
 GO_BUILD_TAGS ?= embedassets
@@ -124,13 +124,17 @@ build-windows-amd64:
 build-windows-arm64:
 	$(MAKE) build GOOS=windows GOARCH=arm64 LABSTORE_CMD=$(LABSTORE_CMD)-windows-arm64.exe
 
-.PHONY: cli
+.PHONY: build
 build: cli
 
 .PHONY: build-all
 build-all: build-linux-amd64 build-linux-arm64 build-linux-armv7 \
 	build-darwin-amd64 build-darwin-arm64 \
 	build-windows-amd64 build-windows-arm64
+
+.PHONY: build-runtime
+build-runtime:
+	$(MAKE) build GO_BUILD_TAGS=
 
 .PHONY: run
 run: build
