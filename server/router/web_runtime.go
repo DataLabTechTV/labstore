@@ -16,6 +16,8 @@ import (
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
+const EmbedAssets = false
+
 const basename = "labstore"
 
 var cacheDir string

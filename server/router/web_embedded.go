@@ -12,6 +12,8 @@ import (
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
+const EmbedAssets = true
+
 //go:embed assets/**
 var assetsFS embed.FS
 
