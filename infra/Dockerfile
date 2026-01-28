@@ -34,7 +34,13 @@ COPY --from=node_builder /web/build ./server/router/assets
 
 ARG GOARM=7
 RUN if [ "$TARGETARCH" = "arm" ]; then GOARM="${TARGETVARIANT#v}"; fi && \
-    GOOS=$TARGETOS GOARCH=$TARGETARCH GOARM=$GOARM go build -o bin/labstore ./cmd/labstore
+    GOOS=$TARGETOS GOARCH=$TARGETARCH GOARM=$GOARM \
+    GO_CONSTANTS="github.com/IllumiKnowLabs/labstore/server/constants" \
+    LDFLAGS="-X ${GO_CONSTANTS}.GitTag=$(git describe --tags --abbrev=0 2>/dev/null) \
+        -X ${GO_CONSTANTS}.GitCommit=$(git rev-parse --short HEAD) \
+        -X ${GO_CONSTANTS}.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+        -X ${GO_CONSTANTS}.Builder=docker" \
+    go build -tags embedassets -ldflags "$LDFLAGS" -o bin/labstore ./cmd/labstore
 
 # =================
 # LabStore CLI
