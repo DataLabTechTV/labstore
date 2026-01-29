@@ -41,7 +41,7 @@ RUN set -eux; \
         export GOARM="${TARGETVARIANT#v}"; \
     fi; \
     GO_CONSTANTS="github.com/IllumiKnowLabs/labstore/server/constants"; \
-    LDFLAGS="-X ${GO_CONSTANTS}.GitTag=${GIT_TAG}} \
+    LDFLAGS="-X ${GO_CONSTANTS}.GitTag=${GIT_TAG} \
         -X ${GO_CONSTANTS}.GitCommit=${GIT_COMMIT} \
         -X ${GO_CONSTANTS}.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
         -X ${GO_CONSTANTS}.Builder=docker"; \
