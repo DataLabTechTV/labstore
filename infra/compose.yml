@@ -1,3 +1,7 @@
+x-labstore-build-args: &labstore_build_args
+  GIT_TAG: ${GIT_TAG}
+  GIT_COMMIT: ${GIT_COMMIT}
+
 services:
   labstore:
     profiles:
@@ -7,6 +11,7 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile
+      args: *labstore_build_args
     ports:
       - ${LABSTORE_SERVER_ADMIN_ADDRESS_PORT}:${LABSTORE_SERVER_ADMIN_ADDRESS_PORT}
       - ${LABSTORE_SERVER_IAM_ADDRESS_PORT}:${LABSTORE_SERVER_IAM_ADDRESS_PORT}
@@ -42,6 +47,7 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile
+      args: *labstore_build_args
     ports:
       - ${BENCHMARK_LABSTORE_PORT:-7789}:6789
     networks:

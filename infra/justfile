@@ -1,5 +1,8 @@
 set shell := ["bash", "-uc"]
 
+export GIT_TAG := `git describe --tags --abbrev=0 2>/dev/null`
+export GIT_COMMIT := `git rev-parse --short HEAD`
+
 default:
     just -l
 

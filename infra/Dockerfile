@@ -19,6 +19,9 @@ RUN npm run build
 
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.22 AS go_builder
 
+ARG GIT_TAG
+ARG GIT_COMMIT
+
 ARG TARGETOS
 ARG TARGETARCH
 ARG TARGETVARIANT
@@ -38,9 +41,9 @@ RUN set -eux; \
         export GOARM="${TARGETVARIANT#v}"; \
     fi; \
     GO_CONSTANTS="github.com/IllumiKnowLabs/labstore/server/constants"; \
-    LDFLAGS="-X ${GO_CONSTANTS}.GitTag=$(git describe --tags --abbrev=0 2>/dev/null) \
-        -X ${GO_CONSTANTS}.GitCommit=$(git rev-parse --short HEAD) \
-        -X ${GO_CONSTANTS}.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+    LDFLAGS="-X ${GO_CONSTANTS}.GitTag=${GIT_TAG}} \
+        -X ${GO_CONSTANTS}.GitCommit=${GIT_COMMIT} \
+        -X ${GO_CONSTANTS}.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
         -X ${GO_CONSTANTS}.Builder=docker"; \
     GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -tags embedassets -ldflags "$LDFLAGS" -o bin/labstore ./cmd/labstore
