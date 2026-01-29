@@ -51,7 +51,7 @@ jobs:
           file: infra/Dockerfile
           build-args: |
             GIT_TAG=${{ steps.meta.outputs.git_tag }}
-            GIT_COMMIT=${{ steps.meta.outputs.git_tag }}
+            GIT_COMMIT=${{ steps.meta.outputs.git_commit }}
           push: true
           tags: ${{ steps.meta.outputs.image_tag }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
