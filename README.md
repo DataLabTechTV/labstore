@@ -119,6 +119,42 @@ In the future, we will provide a proper documentation web site. However, at this
 labstore help serve
 ```
 
+```
+Run server for S3, IAM, and admin services
+
+Usage:
+  labstore serve [flags]
+
+Flags:
+      --admin-address-host string         Listening host for admin server (default "0.0.0.0")
+      --admin-address-port string         Listening port for admin server (default "0.0.0.0")
+      --admin-auth-access-key string      Administrator account access key (default "admin")
+      --admin-auth-secret-key string      Administrator account secret key (default "admin")
+  -h, --help                              help for serve
+      --iam-address-host string           Listening host for IAM server (default "0.0.0.0")
+      --iam-address-port string           Listening port for IAM server (default "0.0.0.0")
+      --iam-db-max-idle-conns int         Maximum idle reader connections for the IAM database (default 3)
+      --iam-db-max-open-conns int         Maximum open reader connections for the IAM database (default 3)
+      --iam-db-read-cache-size-kib int    Cache size of each individual reader connection for the IAM database (default 65536)
+      --iam-db-timeout-ms int             Connection timeout for the IAM database (default 5000)
+      --iam-db-write-cache-size-kib int   Cache size of the writer connection for the IAM database (default 16384)
+      --iam-db-write-chan-cap int         Buffered channel capacity for writing requests to the IAM database (default 32)
+      --s3-address-host string            Listening host for S3-compatible server (default "0.0.0.0")
+      --s3-address-port uint16            Listening port for S3-compatible server (default 6789)
+      --s3-io-buffer-size int             Input/output buffer size in bytes (default 262144)
+      --s3-paging-max-keys int            Hard limit for the maximum number of keys to return in paged requests (default 1000)
+      --storage-data-dir string           Storage root path for objects and metadata (default "./data")
+      --storage-keys-dir string           Storage root path for encryption keys (default "./data")
+      --web-address-host string           Listening host for web ui server (default "0.0.0.0")
+      --web-address-port uint16           Listening port for web ui server (default 6790)
+
+Global Flags:
+      --debug               Set debug level for logging
+      --pprof               Enable profiler
+      --pprof-host string   Profiler host (default "localhost")
+      --pprof-port int      Profiler port (default 6060)
+```
+
 
 ### Credentials
 
