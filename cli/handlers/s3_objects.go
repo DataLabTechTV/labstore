@@ -7,7 +7,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/render"
-	"github.com/IllumiKnowLabs/labstore/cli/tui"
+	"github.com/IllumiKnowLabs/labstore/cli/ui"
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
@@ -26,7 +26,7 @@ func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) error {
 		return &errs.RuntimeError{}
 	}
 
-	progressBar, err := tui.NewProgressBarModel(h.Client.Ctx, debug)
+	progressBar, err := ui.NewProgressBarModel(h.Client.Ctx, debug)
 	if err != nil {
 		fmt.Println(render.Error(err))
 		return &errs.RuntimeError{}
@@ -73,7 +73,7 @@ func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) error {
 	}
 	defer helper.CloseWithErr(file, &err)
 
-	progressBar, err := tui.NewProgressBarModel(h.Client.Ctx, debug)
+	progressBar, err := ui.NewProgressBarModel(h.Client.Ctx, debug)
 	if err != nil {
 		fmt.Println(render.Error(err))
 		return &errs.RuntimeError{}
