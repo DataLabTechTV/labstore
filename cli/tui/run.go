@@ -9,8 +9,13 @@ import (
 )
 
 func Run(ctx context.Context) {
-	p := tea.NewProgram(NewTUIModel())
-	if _, err := p.Run(); err != nil {
+	program := tea.NewProgram(
+		NewTUIModel(),
+		tea.WithAltScreen(),
+		tea.WithMouseCellMotion(),
+	)
+
+	if _, err := program.Run(); err != nil {
 		slog.Error("tui model", "err", err)
 		os.Exit(1)
 	}

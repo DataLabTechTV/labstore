@@ -15,6 +15,9 @@ func NewTUICmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "tui",
 		Short: "TUI and helper commands",
+		Annotations: map[string]string{
+			"skip-bootstrap": "yes",
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
