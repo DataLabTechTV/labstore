@@ -1,37 +1,67 @@
 package tui
 
 import (
-	"fmt"
-	"strings"
+	"github.com/charmbracelet/lipgloss"
+)
+
+const (
+	statusBarHeight = 1
 )
 
 func (m TUIModel) View() string {
-	// The header
-	var s strings.Builder
-	s.WriteString("What should we buy at the market?\n\n")
+	leftPaneWidth := int(1 / 3.0 * float64(m.width))
 
-	// Iterate over our choices
-	for i, choice := range m.choices {
+	bottomPaneHeight := int((float64(m.height-statusBarHeight-2) / 2.0))
+	topPaneHeight := m.height - bottomPaneHeight - statusBarHeight - 2
 
-		// Is the cursor pointing at this choice?
-		cursor := " " // no cursor
-		if m.cursor == i {
-			cursor = ">" // cursor!
-		}
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder())
 
-		// Is this choice selected?
-		checked := " " // not selected
-		if _, ok := m.selected[i]; ok {
-			checked = "x" // selected!
-		}
+	infoPane := boxStyle.
+		Width(leftPaneWidth).
+		Height(topPaneHeight).
+		Render()
 
-		// Render the row
-		fmt.Fprintf(&s, "%s [%s] %s\n", cursor, checked, choice)
-	}
+	credentialsPane := boxStyle.
+		Width(leftPaneWidth).
+		Height(bottomPaneHeight).
+		Render()
 
-	// The footer
-	s.WriteString("\nPress q to quit.\n")
+	localPane := boxStyle.
+		Width(m.width - leftPaneWidth - 2).
+		Height(topPaneHeight).
+		Render()
 
-	// Send the UI for rendering
-	return s.String()
+	remotePane := boxStyle.
+		Width(m.width - leftPaneWidth - 2).
+		Height(bottomPaneHeight).
+		Render()
+
+	statusBar := lipgloss.NewStyle().
+		Width(m.width).
+		Height(statusBarHeight).
+		Margin(0, 1).
+		Foreground(lipgloss.Color("003")).
+		Render("Profile: P | PUT: p | GET: g | HEAD: h")
+
+	topPanes := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		infoPane,
+		localPane,
+	)
+
+	bottomPanes := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		credentialsPane,
+		remotePane,
+	)
+
+	view := lipgloss.JoinVertical(
+		lipgloss.Left,
+		topPanes,
+		bottomPanes,
+		statusBar,
+	)
+
+	return view
 }

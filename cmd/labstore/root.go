@@ -28,7 +28,11 @@ func NewRootCmd() *cobra.Command {
 		Long:  fmt.Sprintf("%s - %s, by %s", constants.Name, constants.Description, constants.Author),
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if baseCmd := topLevelCommand(cmd); baseCmd.Name() == "completion" || baseCmd.Name() == "version" {
+			if baseCmd := topLevelCommand(cmd); baseCmd.Name() == "completion" {
+				return
+			}
+
+			if cmd.Annotations["skip-bootstrap"] == "yes" {
 				return
 			}
 

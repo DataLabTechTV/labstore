@@ -14,6 +14,9 @@ func NewVersionCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "version",
 		Short: "Display version and build details",
+		Annotations: map[string]string{
+			"skip-bootstrap": "yes",
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			printWelcome()
 
