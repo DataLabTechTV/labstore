@@ -1,21 +1,81 @@
 package tui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
-func (m TUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+const (
+	statusBarHeight = 1
+)
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
-		m.width = msg.Width - 2
-		m.height = msg.Height - 2
+		m.width = msg.Width
+		m.height = msg.Height
+
+		// --- Left ---
+
+		leftPaneWidth := int(1 / 3.0 * float64(m.width))
+
+		m.infoPanes[0].Width = leftPaneWidth
+		m.infoPanes[1].Width = leftPaneWidth
+
+		m.panes[0].Width = leftPaneWidth
+		m.panes[0].Height = (m.height - m.infoPanes[0].Height - m.infoPanes[1].Height - statusBarHeight) / 2
+
+		m.panes[1].Width = leftPaneWidth
+		m.panes[1].Height = m.height - m.infoPanes[0].Height - m.infoPanes[1].Height - m.panes[0].Height - statusBarHeight
+
+		// --- Right ---
+
+		rightPaneWidth := m.width - leftPaneWidth
+
+		m.panes[2].Width = rightPaneWidth
+		m.panes[2].Height = (m.height - statusBarHeight) / 2
+
+		m.panes[3].Width = rightPaneWidth
+		m.panes[3].Height = m.height - m.panes[2].Height - statusBarHeight
 
 	case tea.KeyMsg:
-		switch msg.String() {
+		switch km := DefaultKeyMap.(type) {
+		case HomeKeyMap:
+			switch {
+			case key.Matches(msg, km.Focus1):
+				m.paneFocus(1)
+				return m, nil
 
-		case "ctrl+c", "q":
-			return m, tea.Quit
+			case key.Matches(msg, km.Focus2):
+				m.paneFocus(2)
+				return m, nil
+
+			case key.Matches(msg, km.Focus3):
+				m.paneFocus(3)
+				return m, nil
+
+			case key.Matches(msg, km.Focus4):
+				m.paneFocus(4)
+				return m, nil
+
+			case key.Matches(msg, km.Quit):
+				return m, tea.Quit
+			}
 		}
 	}
 
 	return m, nil
+}
+
+func (m *Model) paneFocus(n int) {
+	for i, pane := range m.panes {
+		if i == n-1 {
+			pane.Focused = true
+		} else {
+			pane.Focused = false
+		}
+	}
+
+	m.focusedPane = n
 }

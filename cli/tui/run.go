@@ -10,7 +10,7 @@ import (
 
 func Run(ctx context.Context) {
 	program := tea.NewProgram(
-		NewTUIModel(),
+		New(),
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
