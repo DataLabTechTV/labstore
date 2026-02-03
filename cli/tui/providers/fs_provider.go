@@ -7,12 +7,18 @@ import (
 	"time"
 )
 
-type FSProvider struct{}
+type FSProvider struct {
+	Path string
+}
 
-func (FSProvider) List(ctx context.Context, path string) ([]Entry, error) {
+func (FSProvider) SetPath(ctx context.Context, path string) error {
+	return nil
+}
+
+func (p FSProvider) List(ctx context.Context) ([]Entry, error) {
 	entries := []Entry{}
 
-	if parent, ok := parentDir(path); ok {
+	if parent, ok := parentDir(p.Path); ok {
 		var size int64
 		var modTime time.Time
 
@@ -36,7 +42,7 @@ func (FSProvider) List(ctx context.Context, path string) ([]Entry, error) {
 		entries = append(entries, entry)
 	}
 
-	dirEntries, err := os.ReadDir(path)
+	dirEntries, err := os.ReadDir(p.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +55,7 @@ func (FSProvider) List(ctx context.Context, path string) ([]Entry, error) {
 
 		entry := Entry{
 			Name:    dirEntry.Name(),
-			Path:    filepath.Join(path, dirEntry.Name()),
+			Path:    filepath.Join(p.Path, dirEntry.Name()),
 			IsDir:   dirEntry.IsDir(),
 			Size:    info.Size(),
 			ModTime: info.ModTime(),

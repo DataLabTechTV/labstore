@@ -1,21 +1,11 @@
 package filelist
 
 import (
-	"context"
-
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/charmbracelet/bubbles/table"
 )
 
 func (m Model) View() string {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	entries, err := m.Provider.List(ctx, ".")
-	if err != nil {
-		render.Error(err)
-	}
-
 	const totalPadding = 3 * 2 // 3 columns, cell padding of 1+1 (left+right)
 	modifiedWidth := m.Width / 3
 	sizeWidth := (m.Width - modifiedWidth) / 4
@@ -28,7 +18,7 @@ func (m Model) View() string {
 	}
 
 	rows := []table.Row{}
-	for _, entry := range entries {
+	for _, entry := range m.Entries {
 		row := table.Row{
 			render.NewDate(entry.ModTime).Format(),
 			render.NewSize(entry.Size).Format(),

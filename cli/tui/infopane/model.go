@@ -1,5 +1,7 @@
 package infopane
 
+import tea "github.com/charmbracelet/bubbletea"
+
 const ValueNone = "<none>"
 
 type Model struct {
@@ -15,4 +17,8 @@ func New(label string, value string) Model {
 		Value:  value,
 		Height: 3,
 	}
+}
+
+func (m Model) Init() tea.Cmd {
+	return nil
 }

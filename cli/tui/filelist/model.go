@@ -19,5 +19,5 @@ func New(provider providers.Provider) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	return func() tea.Msg { return RefreshMsg{} }
 }
