@@ -7,17 +7,17 @@ import (
 )
 
 func (m Model) View() string {
-	helpMsg := help.New()
-	helpMsg.ShortSeparator = " | "
-	helpMsg.Width = m.Width - 2
-	helpMsg.Styles.ShortDesc = helpMsg.Styles.ShortDesc.
+	h := help.New()
+	h.Width = m.Width - 2
+	h.ShortSeparator = " | "
+	h.Styles.ShortDesc = h.Styles.ShortDesc.
 		Foreground(render.ActivePalette.TextPrimary)
 
 	statusBar := lipgloss.NewStyle().
 		Width(m.Width).
 		Height(m.Height).
 		Margin(0, 1).
-		Render(helpMsg.ShortHelpView(m.KeyMap))
+		Render(h.ShortHelpView(m.KeyMap))
 
 	return statusBar
 }

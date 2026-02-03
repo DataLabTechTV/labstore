@@ -59,6 +59,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.paneFocus(4)
 				return m, nil
 
+			case key.Matches(msg, km.Next):
+				if m.focusedPane >= len(m.panes) {
+					m.paneFocus(1)
+				} else {
+					m.paneFocus(m.focusedPane + 1)
+				}
+
+			case key.Matches(msg, km.Previous):
+				if m.focusedPane <= 1 {
+					m.paneFocus(4)
+				} else {
+					m.paneFocus(m.focusedPane - 1)
+				}
+
 			case key.Matches(msg, km.Quit):
 				return m, tea.Quit
 			}

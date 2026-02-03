@@ -30,7 +30,7 @@ func (m Model) View() string {
 		Height(m.Height - 2).
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(render.ActivePalette.Surface).
-		Render(labelStyle(m.Label+": ") + valueStyle(m.Value))
+		Render(labelStyle(m.Label) + ": " + valueStyle(m.Value))
 
 	return infoPane
 }
