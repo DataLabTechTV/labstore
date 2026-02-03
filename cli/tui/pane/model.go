@@ -38,5 +38,9 @@ func WithChild(child tea.Model) PaneOption {
 }
 
 func (m Model) Init() tea.Cmd {
+	if m.Child != nil {
+		return m.Child.Init()
+	}
+
 	return nil
 }

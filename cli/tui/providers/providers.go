@@ -14,15 +14,17 @@ type Entry struct {
 }
 
 type Provider interface {
-	List(ctx context.Context, path string) ([]Entry, error)
+	SetPath(ctx context.Context, path string) error
+	List(ctx context.Context) ([]Entry, error)
 	Stat(ctx context.Context, path string) (Entry, error)
 	Delete(ctx context.Context, path string) error
 }
 
 func NewFSProvider() FSProvider {
-	return FSProvider{}
+	return FSProvider{Path: "."}
 }
 
 func NewS3Provider() S3Provider {
-	return S3Provider{}
+	// TODO: plugin bucket and key
+	return S3Provider{Bucket: "", Key: ""}
 }

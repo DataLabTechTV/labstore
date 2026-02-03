@@ -45,8 +45,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		})
 
 		m.panes[3], _ = m.panes[3].Update(tea.WindowSizeMsg{
-			Width:  rightPaneWidth,
-			Height: m.height - m.panes[2].Height - statusBarHeight,
+			Width: rightPaneWidth,
+			// !FIXME: is -2 acceptable here?
+			Height: m.height - m.panes[2].Height - statusBarHeight - 2,
 		})
 
 	case tea.KeyMsg:

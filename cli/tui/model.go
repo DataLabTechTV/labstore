@@ -40,5 +40,17 @@ func New() Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	var cmds []tea.Cmd
+
+	for _, infoPane := range m.infoPanes {
+		cmds = append(cmds, infoPane.Init())
+	}
+
+	for _, pane := range m.panes {
+		cmds = append(cmds, pane.Init())
+	}
+
+	cmds = append(cmds, m.statusBar.Init())
+
+	return tea.Batch(cmds...)
 }
