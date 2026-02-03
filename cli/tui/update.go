@@ -22,27 +22,39 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.infoPanes[0].Width = leftPaneWidth
 		m.infoPanes[1].Width = leftPaneWidth
+		remainingHeight := m.height - m.infoPanes[0].Height - m.infoPanes[1].Height - statusBarHeight
 
-		m.panes[0].Width = leftPaneWidth
-		m.panes[0].Height = (m.height - m.infoPanes[0].Height - m.infoPanes[1].Height - statusBarHeight) / 2
+		m.panes[0], _ = m.panes[0].Update(tea.WindowSizeMsg{
+			Width:  leftPaneWidth,
+			Height: remainingHeight / 2,
+		})
+		remainingHeight -= m.panes[0].Height
 
-		m.panes[1].Width = leftPaneWidth
-		m.panes[1].Height = m.height - m.infoPanes[0].Height - m.infoPanes[1].Height - m.panes[0].Height - statusBarHeight
+		m.panes[1], _ = m.panes[1].Update(tea.WindowSizeMsg{
+			Width:  leftPaneWidth,
+			Height: remainingHeight,
+		})
 
 		// --- Right ---
 
 		rightPaneWidth := m.width - leftPaneWidth
 
-		m.panes[2].Width = rightPaneWidth
-		m.panes[2].Height = (m.height - statusBarHeight) / 2
+		m.panes[2], _ = m.panes[2].Update(tea.WindowSizeMsg{
+			Width:  rightPaneWidth,
+			Height: (m.height - statusBarHeight) / 2,
+		})
 
-		m.panes[3].Width = rightPaneWidth
-		m.panes[3].Height = m.height - m.panes[2].Height - statusBarHeight
+		m.panes[3], _ = m.panes[3].Update(tea.WindowSizeMsg{
+			Width:  rightPaneWidth,
+			Height: m.height - m.panes[2].Height - statusBarHeight,
+		})
 
 	case tea.KeyMsg:
-		switch km := DefaultKeyMap.(type) {
+		switch km := DefaultHomeKeyMap.(type) {
 		case HomeKeyMap:
 			switch {
+			// case key.Matches(msg, km.Down):
+			// 	activePane := m.panes[m.focusedPane]
 			case key.Matches(msg, km.Focus1):
 				m.paneFocus(1)
 				return m, nil

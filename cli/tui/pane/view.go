@@ -41,10 +41,17 @@ func (m Model) View() string {
 		boxStyle = boxStyle.BorderTop(true)
 	}
 
+	var childView string
+	if m.Child != nil {
+		childView = m.Child.View()
+	} else {
+		childView = ""
+	}
+
 	pane := lipgloss.JoinVertical(
 		lipgloss.Top,
 		topBorder,
-		boxStyle.Render(m.ViewFn(m.Width-2, m.Height-2)),
+		boxStyle.Render(childView),
 	)
 
 	return pane

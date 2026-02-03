@@ -12,6 +12,9 @@ type HomeKeyMap struct {
 	Get      key.Binding
 	Delete   key.Binding
 	Head     key.Binding
+	Down     key.Binding
+	Up       key.Binding
+	Open     key.Binding
 	Select   key.Binding
 	Next     key.Binding
 	Previous key.Binding
@@ -24,15 +27,31 @@ type HomeKeyMap struct {
 }
 
 func (k HomeKeyMap) All() []key.Binding {
-	return []key.Binding{k.Profiles, k.Put, k.Get, k.Delete, k.Head, k.Select, k.Next, k.Previous, k.Quit}
+	return []key.Binding{
+		k.Quit,
+		k.Profiles,
+		k.Put,
+		k.Get,
+		k.Delete,
+		k.Head,
+		k.Down,
+		k.Up,
+		k.Open,
+		k.Select,
+		k.Next,
+		k.Previous,
+	}
 }
 
-var DefaultKeyMap KeyMap = HomeKeyMap{
+var DefaultHomeKeyMap KeyMap = HomeKeyMap{
 	Profiles: key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "Profiles")),
 	Put:      key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "PUT")),
 	Get:      key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "GET")),
 	Delete:   key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "DELETE")),
 	Head:     key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "HEAD")),
+	Down:     key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "Down")),
+	Up:       key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "Up")),
+	Open:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("⏎", "Open")),
 	Select:   key.NewBinding(key.WithKeys("space"), key.WithHelp("<space>", "Select")),
 	Next:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("<tab>", "Next")),
 	Previous: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+<tab>", "Previous")),

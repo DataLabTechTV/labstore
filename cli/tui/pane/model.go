@@ -2,27 +2,24 @@ package pane
 
 import tea "github.com/charmbracelet/bubbletea"
 
-type PaneOption func(m *Model)
-
 type Model struct {
 	Title   string
 	Focused bool
 	Width   int
 	Height  int
-	ViewFn  func(width, height int) string
+	Child   tea.Model
 }
 
-func New(title string, opts ...PaneOption) *Model {
-	m := &Model{
+type PaneOption func(m *Model)
+
+func New(title string, opts ...PaneOption) Model {
+	m := Model{
 		Title:   title,
 		Focused: false,
-		ViewFn: func(width, height int) string {
-			return ""
-		},
 	}
 
 	for _, opt := range opts {
-		opt(m)
+		opt(&m)
 	}
 
 	return m
@@ -31,6 +28,12 @@ func New(title string, opts ...PaneOption) *Model {
 func WithFocus() PaneOption {
 	return func(m *Model) {
 		m.Focused = true
+	}
+}
+
+func WithChild(child tea.Model) PaneOption {
+	return func(m *Model) {
+		m.Child = child
 	}
 }
 
