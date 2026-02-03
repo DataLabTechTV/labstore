@@ -44,7 +44,7 @@ func (m Model) View() string {
 	pane := lipgloss.JoinVertical(
 		lipgloss.Top,
 		topBorder,
-		boxStyle.Render(),
+		boxStyle.Render(m.ViewFn(m.Width-2, m.Height-2)),
 	)
 
 	return pane

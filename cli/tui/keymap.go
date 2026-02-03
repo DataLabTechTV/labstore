@@ -16,14 +16,15 @@ type HomeKeyMap struct {
 	Next     key.Binding
 	Previous key.Binding
 	Quit     key.Binding
-	Focus1   key.Binding
-	Focus2   key.Binding
-	Focus3   key.Binding
-	Focus4   key.Binding
+
+	Focus1 key.Binding
+	Focus2 key.Binding
+	Focus3 key.Binding
+	Focus4 key.Binding
 }
 
 func (k HomeKeyMap) All() []key.Binding {
-	return []key.Binding{k.Profiles, k.Put, k.Get, k.Delete, k.Head, k.Select, k.Next, k.Previous}
+	return []key.Binding{k.Profiles, k.Put, k.Get, k.Delete, k.Head, k.Select, k.Next, k.Previous, k.Quit}
 }
 
 var DefaultKeyMap KeyMap = HomeKeyMap{
@@ -36,8 +37,9 @@ var DefaultKeyMap KeyMap = HomeKeyMap{
 	Next:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("<tab>", "Next")),
 	Previous: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+<tab>", "Previous")),
 	Quit:     key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "Quit")),
-	Focus1:   key.NewBinding(key.WithKeys("1")),
-	Focus2:   key.NewBinding(key.WithKeys("2")),
-	Focus3:   key.NewBinding(key.WithKeys("3")),
-	Focus4:   key.NewBinding(key.WithKeys("4")),
+
+	Focus1: key.NewBinding(key.WithKeys("1")),
+	Focus2: key.NewBinding(key.WithKeys("2")),
+	Focus3: key.NewBinding(key.WithKeys("3")),
+	Focus4: key.NewBinding(key.WithKeys("4")),
 }

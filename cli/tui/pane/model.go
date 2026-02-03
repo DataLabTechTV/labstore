@@ -6,9 +6,9 @@ type PaneOption func(m *Model)
 
 type Model struct {
 	Title   string
+	Focused bool
 	Width   int
 	Height  int
-	Focused bool
 	ViewFn  func(width, height int) string
 }
 

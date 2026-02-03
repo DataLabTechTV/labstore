@@ -8,13 +8,12 @@ import (
 )
 
 type Model struct {
+	panes       []*pane.Model
+	infoPanes   []infopane.Model
+	statusBar   statusbar.Model
+	focusedPane int
 	width       int
 	height      int
-	focusedPane int
-
-	panes     []*pane.Model
-	infoPanes []infopane.Model
-	statusBar statusbar.Model
 }
 
 func New() Model {
