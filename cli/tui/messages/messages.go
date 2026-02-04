@@ -11,4 +11,8 @@ type (
 	FileListMsg struct {
 		Msg tea.Msg
 	}
+
+	SimpleListMsg struct {
+		Msg tea.Msg
+	}
 )
