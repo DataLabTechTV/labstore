@@ -117,6 +117,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.panes[msg.Index], cmd = m.panes[msg.Index].Update(msg.Msg)
 		return m, cmd
+
+	case messages.InfoPaneMsg:
+		var cmd tea.Cmd
+		m.infoPanes[msg.Index], cmd = m.infoPanes[msg.Index].Update(msg.Msg)
+		return m, cmd
 	}
 
 	return m, nil

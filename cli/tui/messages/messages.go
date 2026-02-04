@@ -8,6 +8,11 @@ type (
 		Msg   tea.Msg
 	}
 
+	InfoPaneMsg struct {
+		Index int
+		Msg   tea.Msg
+	}
+
 	FileListMsg struct {
 		Msg tea.Msg
 	}
@@ -29,4 +34,6 @@ type (
 	PageUpMsg       struct{}
 	LevelUpMsg      struct{ PaneIndex int }
 	OpenMsg         struct{ PaneIndex int }
+
+	SetValue struct{ Value string }
 )
