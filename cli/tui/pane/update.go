@@ -17,6 +17,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.Child, _ = m.Child.Update(tea.WindowSizeMsg{Width: msg.Width - 2, Height: msg.Height - 2})
 		}
 
+	case messages.FocusMsg:
+		m.Focused = true
+		return m, nil
+
+	case messages.BlurMsg:
+		m.Focused = false
+		return m, nil
+
 	case messages.FileListMsg:
 		var cmd tea.Cmd
 		m.Child, cmd = m.Child.Update(msg.Msg)

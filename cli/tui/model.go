@@ -42,8 +42,6 @@ func New() Model {
 			infopane.New("Active Profile", infopane.ValueNone),
 		},
 		statusBar: statusbar.New(DefaultHomeKeyMap.All()),
-
-		focusedPane: 1,
 	}
 }
 

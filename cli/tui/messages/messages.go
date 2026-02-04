@@ -15,4 +15,7 @@ type (
 	SimpleListMsg struct {
 		Msg tea.Msg
 	}
+
+	FocusMsg struct{}
+	BlurMsg  struct{}
 )
