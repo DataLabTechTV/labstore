@@ -34,7 +34,7 @@ func Init() {
 	if !helper.FileExists(credentialsPath) {
 		slog.Info("creating empty credentials file")
 		credentials := Credentials{
-			DefaultProfile: helper.StringPtr("default"),
+			DefaultProfile: helper.Ptr("default"),
 			Profiles:       map[string]*Profile{},
 		}
 		helper.CheckFatal(credentials.Save())

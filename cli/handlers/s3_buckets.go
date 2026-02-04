@@ -47,7 +47,7 @@ func (h *S3Handler) HeadBucket(bucket string) error {
 
 func (h *S3Handler) ListObjects(bucket string, key *string) error {
 	if key == nil {
-		key = helper.StringPtr("/")
+		key = helper.Ptr("/")
 	}
 
 	fmt.Println(render.Title(fmt.Sprintf("ListObjectsV2: %s", bucket)))

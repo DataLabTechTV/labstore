@@ -11,7 +11,7 @@ type FSProvider struct {
 	Path string
 }
 
-func (FSProvider) SetPath(ctx context.Context, path string) error {
+func (FSProvider) Enter(ctx context.Context, path string) error {
 	return nil
 }
 
