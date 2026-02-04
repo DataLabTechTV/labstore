@@ -21,6 +21,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.Child, cmd = m.Child.Update(msg.Msg)
 		return m, cmd
+
+	case messages.SimpleListMsg:
+		var cmd tea.Cmd
+		m.Child, cmd = m.Child.Update(msg.Msg)
+		return m, cmd
 	}
 
 	return m, nil

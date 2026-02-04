@@ -8,7 +8,7 @@ import (
 
 type Model struct {
 	Provider providers.Provider
-	Entries  []providers.Entry
+	Entries  []string
 	Width    int
 	Height   int
 }
@@ -21,6 +21,6 @@ func New(provider providers.Provider) Model {
 
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
-		return messages.FileListMsg{Msg: RefreshMsg{}}
+		return messages.SimpleListMsg{Msg: RefreshMsg{}}
 	}
 }

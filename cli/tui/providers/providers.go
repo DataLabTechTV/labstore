@@ -3,8 +3,6 @@ package providers
 import (
 	"context"
 	"time"
-
-	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
 type Entry struct {
@@ -22,16 +20,28 @@ type Provider interface {
 	Delete(ctx context.Context, path string) error
 }
 
-func NewFSProvider() FSProvider {
-	return FSProvider{Path: "."}
+func NewS3BucketProvider() S3BucketProvider {
+	// TODO: keep state of last selected bucket (might not exist anymore)
+	return S3BucketProvider{Bucket: nil}
+}
+
+func NewProfilesProvider() *ProfilesProvider {
+	return &ProfilesProvider{ActiveProfile: nil}
 }
 
 func NewS3FSProvider() S3FSProvider {
-	// TODO: plugin bucket and key
-	return S3FSProvider{Bucket: NewS3BucketProvider().Bucket, Key: helper.Ptr("")}
+	// TODO: keep state of last selected bucket and key (both might not exist anymore)
+	return S3FSProvider{Bucket: nil, Key: nil}
 }
 
-func NewS3BucketProvider() S3BucketProvider {
-	// TODO: plugin bucket
-	return S3BucketProvider{Bucket: helper.Ptr("")}
+func NewFSProvider(rootPath string) FSProvider {
+	return FSProvider{Path: rootPath}
+}
+
+func EntryNames(entries []Entry) []string {
+	names := make([]string, len(entries))
+	for i, entry := range entries {
+		names[i] = entry.Name
+	}
+	return names
 }

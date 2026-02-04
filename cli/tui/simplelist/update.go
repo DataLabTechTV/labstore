@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/IllumiKnowLabs/labstore/cli/render"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -28,7 +29,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			render.Error(err)
 			return m, nil
 		}
-		m.Entries = entries
+		m.Entries = providers.EntryNames(entries)
 
 	case MoveUpMsg:
 	case MoveDownMsg:

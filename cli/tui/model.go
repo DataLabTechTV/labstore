@@ -8,6 +8,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/pane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/simplelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/statusbar"
 	"github.com/IllumiKnowLabs/labstore/server/constants"
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,14 +25,17 @@ type Model struct {
 }
 
 func New() Model {
-	localFileList := filelist.New(providers.NewFSProvider())
+	bucketProvider := simplelist.New(providers.NewS3BucketProvider())
+	profilesProvider := simplelist.New(providers.NewProfilesProvider())
+	s3FSProvider := simplelist.New(providers.NewS3FSProvider())
+	fsProvider := filelist.New(providers.NewFSProvider("."))
 
 	return Model{
 		panes: []pane.Model{
-			pane.New("[1] Buckets", pane.WithFocus()),
-			pane.New("[2] Profiles"),
-			pane.New("[3] Remote"),
-			pane.New("[4] Local", pane.WithChild(localFileList)),
+			pane.New("[1] Buckets", pane.WithFocus(), pane.WithChild(bucketProvider)),
+			pane.New("[2] Profiles", pane.WithChild(profilesProvider)),
+			pane.New("[3] Remote", pane.WithChild(s3FSProvider)),
+			pane.New("[4] Local", pane.WithChild(fsProvider)),
 		},
 		infoPanes: []infopane.Model{
 			infopane.New("Active Bucket", infopane.ValueNone),
