@@ -6,16 +6,19 @@ import (
 )
 
 func (m Model) View() string {
-	const totalPadding = 3 * 2 // 3 columns, cell padding of 1+1 (left+right)
-	modifiedWidth := m.Width / 3
-	sizeWidth := (m.Width - modifiedWidth) / 4
-	nameWidth := m.Width - modifiedWidth - sizeWidth - totalPadding
+	columns := make([]table.Column, 3)
 
-	columns := []table.Column{
-		{Title: "Modified", Width: modifiedWidth},
-		{Title: "Size", Width: sizeWidth},
-		{Title: "Name", Width: nameWidth},
-	}
+	tableStyle := table.DefaultStyles()
+	totalPadding := tableStyle.Cell.GetHorizontalPadding() * len(columns)
+
+	modifiedWidth := m.Width / 3
+	columns[0] = table.Column{Title: "Modified", Width: modifiedWidth}
+
+	sizeWidth := (m.Width - modifiedWidth) / 4
+	columns[1] = table.Column{Title: "Size", Width: sizeWidth}
+
+	nameWidth := m.Width - modifiedWidth - sizeWidth - totalPadding
+	columns[2] = table.Column{Title: "Name", Width: nameWidth}
 
 	rows := []table.Row{}
 	for _, entry := range m.Entries {
@@ -34,8 +37,6 @@ func (m Model) View() string {
 		table.WithWidth(m.Width),
 		table.WithHeight(m.Height),
 	)
-
-	tableStyle := table.DefaultStyles()
 
 	tableStyle.Header = tableStyle.Header.
 		Foreground(render.ActivePalette.SurfaceAlt).
