@@ -42,7 +42,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Entries = entries
 
 		rows := []table.Row{}
-		for _, entry := range m.Entries {
+		cursor := 0
+		for i, entry := range m.Entries {
 			var name, size string
 			if entry.IsDir {
 				name = entry.Name + "/"
@@ -53,9 +54,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			date := render.NewDate(entry.ModTime).Format()
 
+			if state, ok := m.Provider.State(); ok && name == state {
+				cursor = i
+			}
+
 			rows = append(rows, table.Row{date, size, name})
 		}
 		m.table.SetRows(rows)
+		m.table.SetCursor(cursor)
 
 	case messages.FocusMsg:
 		m.table.Focus()
@@ -88,6 +94,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.PageUpMsg:
 		m.table.MoveUp(10)
+
+	case messages.LevelUpMsg:
+		if err := m.Provider.Enter(context.Background(), ".."); err != nil {
+			render.Error(err)
+			return m, nil
+		}
+
+		cmd := func() tea.Msg {
+			return messages.PaneMsg{
+				Index: msg.PaneIndex - 1,
+				Msg: messages.FileListMsg{
+					Msg: messages.RefreshMsg{},
+				},
+			}
+		}
+		return m, cmd
+
+	case messages.OpenMsg:
+		path := m.table.SelectedRow()[2]
+
+		if err := m.Provider.Enter(context.Background(), path); err != nil {
+			render.Error(err)
+			return m, nil
+		}
+
+		cmd := func() tea.Msg {
+			return messages.PaneMsg{
+				Index: msg.PaneIndex - 1,
+				Msg: messages.FileListMsg{
+					Msg: messages.RefreshMsg{},
+				},
+			}
+		}
+		return m, cmd
+
 	}
 
 	return m, nil

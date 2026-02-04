@@ -8,14 +8,22 @@ import (
 )
 
 type FSProvider struct {
-	Path string
+	Path  string
+	state map[string]string
 }
 
-func (FSProvider) Enter(ctx context.Context, path string) error {
+func (p *FSProvider) Enter(ctx context.Context, path string) error {
+	p.state[p.Path] = path
+	p.Path = filepath.Join(p.Path, path)
 	return nil
 }
 
-func (p FSProvider) List(ctx context.Context) ([]Entry, error) {
+func (p *FSProvider) State() (string, bool) {
+	state, ok := p.state[p.Path]
+	return state, ok
+}
+
+func (p *FSProvider) List(ctx context.Context) ([]Entry, error) {
 	entries := []Entry{}
 
 	if parent, ok := parentDir(p.Path); ok {
@@ -67,11 +75,11 @@ func (p FSProvider) List(ctx context.Context) ([]Entry, error) {
 	return entries, nil
 }
 
-func (FSProvider) Stat(ctx context.Context, path string) (Entry, error) {
+func (p *FSProvider) Stat(ctx context.Context, path string) (Entry, error) {
 	return Entry{}, nil
 }
 
-func (FSProvider) Delete(ctx context.Context, path string) error {
+func (p *FSProvider) Delete(ctx context.Context, path string) error {
 	return nil
 }
 

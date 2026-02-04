@@ -76,6 +76,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, km.PgUp):
 				return m.sendToFocused(messages.PageUpMsg{})
 
+			case key.Matches(msg, km.NavUp):
+				return m.sendToFocused(messages.LevelUpMsg{PaneIndex: m.focusedPane})
+
+			case key.Matches(msg, km.Open):
+				return m.sendToFocused(messages.OpenMsg{PaneIndex: m.focusedPane})
+
 			case key.Matches(msg, km.Focus1):
 				return m.paneFocus(1)
 
