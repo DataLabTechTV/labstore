@@ -14,6 +14,10 @@ func (p *S3BucketProvider) State() (string, bool) {
 	return "", false
 }
 
+func (p *S3BucketProvider) CWD() string {
+	return ""
+}
+
 func (p *S3BucketProvider) List(ctx context.Context) ([]Entry, error) {
 	return nil, nil
 }

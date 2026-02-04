@@ -63,6 +63,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetRows(rows)
 		m.table.SetCursor(cursor)
 
+		var cmd tea.Cmd
+
+		if newTitle := m.Provider.CWD(); newTitle != "" {
+			cmd = func() tea.Msg {
+				return messages.PaneMsg{
+					Index: m.ParentID - 1,
+					Msg:   messages.SetTitle{Title: newTitle},
+				}
+			}
+		}
+
+		return m, cmd
+
 	case messages.FocusMsg:
 		m.table.Focus()
 
@@ -103,7 +116,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmd := func() tea.Msg {
 			return messages.PaneMsg{
-				Index: msg.PaneIndex - 1,
+				Index: m.ParentID - 1,
 				Msg: messages.FileListMsg{
 					Msg: messages.RefreshMsg{},
 				},
@@ -121,7 +134,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmd := func() tea.Msg {
 			return messages.PaneMsg{
-				Index: msg.PaneIndex - 1,
+				Index: m.ParentID - 1,
 				Msg: messages.FileListMsg{
 					Msg: messages.RefreshMsg{},
 				},

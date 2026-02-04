@@ -16,6 +16,7 @@ type Entry struct {
 
 type Provider interface {
 	State() (string, bool)
+	CWD() string
 	Enter(ctx context.Context, path string) error
 	List(ctx context.Context) ([]Entry, error)
 	Stat(ctx context.Context, path string) (Entry, error)

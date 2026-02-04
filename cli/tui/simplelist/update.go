@@ -75,7 +75,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmd := func() tea.Msg {
 			return messages.InfoPaneMsg{
-				Index: msg.PaneIndex - 1,
+				Index: m.ParentID - 1,
 				Msg:   messages.SetValue{Value: selectedProfile},
 			}
 		}

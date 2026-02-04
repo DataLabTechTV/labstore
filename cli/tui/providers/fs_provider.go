@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
 type FSProvider struct {
@@ -21,6 +23,11 @@ func (p *FSProvider) Enter(ctx context.Context, path string) error {
 func (p *FSProvider) State() (string, bool) {
 	state, ok := p.state[p.Path]
 	return state, ok
+}
+
+func (p *FSProvider) CWD() string {
+	homeRelPath := helper.TildePath(p.Path)
+	return homeRelPath
 }
 
 func (p *FSProvider) List(ctx context.Context) ([]Entry, error) {

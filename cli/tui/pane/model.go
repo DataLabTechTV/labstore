@@ -5,6 +5,7 @@ import (
 )
 
 type Model struct {
+	ID      int
 	Title   string
 	Focused bool
 	Width   int
@@ -14,8 +15,9 @@ type Model struct {
 
 type PaneOption func(m *Model)
 
-func New(title string, opts ...PaneOption) Model {
+func New(id int, title string, opts ...PaneOption) Model {
 	m := Model{
+		ID:      id,
 		Title:   title,
 		Focused: false,
 	}
