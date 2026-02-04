@@ -3,6 +3,8 @@ package providers
 import (
 	"context"
 	"time"
+
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
 type Entry struct {
@@ -14,7 +16,7 @@ type Entry struct {
 }
 
 type Provider interface {
-	SetPath(ctx context.Context, path string) error
+	Enter(ctx context.Context, path string) error
 	List(ctx context.Context) ([]Entry, error)
 	Stat(ctx context.Context, path string) (Entry, error)
 	Delete(ctx context.Context, path string) error
@@ -24,7 +26,12 @@ func NewFSProvider() FSProvider {
 	return FSProvider{Path: "."}
 }
 
-func NewS3Provider() S3Provider {
+func NewS3FSProvider() S3FSProvider {
 	// TODO: plugin bucket and key
-	return S3Provider{Bucket: "", Key: ""}
+	return S3FSProvider{Bucket: NewS3BucketProvider().Bucket, Key: helper.Ptr("")}
+}
+
+func NewS3BucketProvider() S3BucketProvider {
+	// TODO: plugin bucket
+	return S3BucketProvider{Bucket: helper.Ptr("")}
 }

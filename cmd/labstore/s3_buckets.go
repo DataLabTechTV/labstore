@@ -61,7 +61,7 @@ func NewBucketsListObjectsCmd() *cobra.Command {
 
 			var key *string
 			if len(args) >= 2 {
-				key = helper.StringPtr(args[1])
+				key = helper.Ptr(args[1])
 			} else {
 				key = nil
 			}
