@@ -36,7 +36,8 @@ func (m Model) View() string {
 	var topBorder string
 	if m.Width >= len(m.Title)+4 {
 		topLeftBorder := borderStyle.Render(border.TopLeft + border.Top)
-		topRightBorder := borderStyle.Render(strings.Repeat(border.Top, m.Width-len(m.Title)-3) + border.TopRight)
+		// 7 => 2 corners + 1 regular + 3 chars for ID display
+		topRightBorder := borderStyle.Render(strings.Repeat(border.Top, m.Width-len(m.Title)-7) + border.TopRight)
 		topBorder = topLeftBorder + titleStyle.Render(fmt.Sprintf("[%d] %s", m.ID, m.Title)) + topRightBorder
 	} else {
 		boxStyle = boxStyle.BorderTop(true)
