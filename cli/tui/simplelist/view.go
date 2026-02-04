@@ -11,6 +11,7 @@ func (m Model) View() string {
 	}
 
 	tableStyle := table.DefaultStyles()
+	columns := []table.Column{{Width: m.Width - tableStyle.Cell.GetHorizontalPadding()}}
 
 	rows := []table.Row{}
 	for _, entry := range m.Entries {
@@ -18,7 +19,7 @@ func (m Model) View() string {
 	}
 
 	simpleTable := table.New(
-		table.WithColumns([]table.Column{{Width: m.Width}}),
+		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(false),
 		table.WithWidth(m.Width),
