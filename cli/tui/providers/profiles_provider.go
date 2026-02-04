@@ -17,6 +17,10 @@ func (p *ProfilesProvider) Enter(ctx context.Context, path string) error {
 	return nil
 }
 
+func (p *ProfilesProvider) State() (string, bool) {
+	return "", false
+}
+
 func (*ProfilesProvider) List(ctx context.Context) ([]Entry, error) {
 	if !initialized {
 		credentials.Init()

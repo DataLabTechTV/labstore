@@ -7,22 +7,24 @@ type KeyMap interface {
 }
 
 type HomeKeyMap struct {
+	Quit     key.Binding
 	Profiles key.Binding
 	Put      key.Binding
 	Get      key.Binding
 	Delete   key.Binding
 	Head     key.Binding
-	Down     key.Binding
-	Up       key.Binding
-	End      key.Binding
-	Home     key.Binding
-	PgDn     key.Binding
-	PgUp     key.Binding
+	NavUp    key.Binding
 	Open     key.Binding
 	Select   key.Binding
 	Next     key.Binding
 	Previous key.Binding
-	Quit     key.Binding
+
+	Down key.Binding
+	Up   key.Binding
+	End  key.Binding
+	Home key.Binding
+	PgDn key.Binding
+	PgUp key.Binding
 
 	Focus1 key.Binding
 	Focus2 key.Binding
@@ -38,6 +40,7 @@ func (k HomeKeyMap) HelpKeys() []key.Binding {
 		k.Get,
 		k.Delete,
 		k.Head,
+		k.NavUp,
 		k.Open,
 		k.Select,
 		k.Next,
@@ -51,7 +54,8 @@ var DefaultHomeKeyMap KeyMap = HomeKeyMap{
 	Get:      key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "GET")),
 	Delete:   key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "DELETE")),
 	Head:     key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "HEAD")),
-	Open:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("⏎", "Open")),
+	Open:     key.NewBinding(key.WithKeys("right", "enter"), key.WithHelp("→/⏎", "Open")),
+	NavUp:    key.NewBinding(key.WithKeys("left", "backspace"), key.WithHelp("←/⌫", "Up a Level")),
 	Select:   key.NewBinding(key.WithKeys("space"), key.WithHelp("␣", "Select")),
 	Next:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("<tab>", "Next")),
 	Previous: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+<tab>", "Previous")),

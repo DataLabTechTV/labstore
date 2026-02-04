@@ -27,4 +27,6 @@ type (
 	MoveToTopMsg    struct{}
 	PageDownMsg     struct{}
 	PageUpMsg       struct{}
+	LevelUpMsg      struct{ PaneIndex int }
+	OpenMsg         struct{ PaneIndex int }
 )
