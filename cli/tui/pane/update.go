@@ -18,12 +18,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 
 	case messages.FocusMsg:
+		var cmd tea.Cmd
 		m.Focused = true
-		return m, nil
+		m.Child, cmd = m.Child.Update(messages.FocusMsg{})
+		return m, cmd
 
 	case messages.BlurMsg:
+		var cmd tea.Cmd
 		m.Focused = false
-		return m, nil
+		m.Child, cmd = m.Child.Update(messages.BlurMsg{})
+		return m, cmd
+
+	case messages.MoveDownMsg, messages.MoveUpMsg:
+		var cmd tea.Cmd
+		m.Child, cmd = m.Child.Update(msg)
+		return m, cmd
 
 	case messages.FileListMsg:
 		var cmd tea.Cmd

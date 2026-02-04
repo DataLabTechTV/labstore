@@ -16,6 +16,11 @@ type (
 		Msg tea.Msg
 	}
 
+	RefreshMsg struct{}
+
 	FocusMsg struct{}
 	BlurMsg  struct{}
+
+	MoveDownMsg struct{}
+	MoveUpMsg   struct{}
 )
