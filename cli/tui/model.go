@@ -1,11 +1,15 @@
 package tui
 
 import (
+	"fmt"
+
 	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/infopane"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/pane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/statusbar"
+	"github.com/IllumiKnowLabs/labstore/server/constants"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -46,11 +50,25 @@ func (m Model) Init() tea.Cmd {
 		cmds = append(cmds, infoPane.Init())
 	}
 
-	for _, pane := range m.panes {
-		cmds = append(cmds, pane.Init())
+	for i, pane := range m.panes {
+		paneCmd := pane.Init()
+
+		if paneCmd == nil {
+			continue
+		}
+
+		cmd := func() tea.Msg {
+			msg := paneCmd()
+			if msg == nil {
+				return nil
+			}
+			return messages.PaneMsg{Index: i, Msg: msg}
+		}
+		cmds = append(cmds, cmd)
 	}
 
 	cmds = append(cmds, m.statusBar.Init())
+	cmds = append(cmds, tea.SetWindowTitle(fmt.Sprintf("%s TUI", constants.Name)))
 
 	return tea.Batch(cmds...)
 }
