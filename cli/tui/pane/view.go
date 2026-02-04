@@ -15,8 +15,8 @@ func (m Model) View() string {
 	border := lipgloss.RoundedBorder()
 
 	boxStyle := lipgloss.NewStyle().
-		Width(m.Width-2).
-		Height(m.Height-2).
+		Width(m.Width-border.GetLeftSize()-border.GetRightSize()).
+		Height(m.Height-border.GetTopSize()-border.GetBottomSize()).
 		Border(border, false, true, true)
 
 	titleStyle := lipgloss.NewStyle()

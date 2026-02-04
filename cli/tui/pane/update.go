@@ -12,7 +12,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Height = msg.Height
 
 		if m.Child != nil {
-			m.Child, _ = m.Child.Update(tea.WindowSizeMsg{Width: msg.Width, Height: msg.Height})
+			// Not ideal to use magic numbers here, but it would be messy to access the boxStyle.
+			m.Child, _ = m.Child.Update(tea.WindowSizeMsg{Width: msg.Width - 2, Height: msg.Height - 2})
 		}
 	}
 

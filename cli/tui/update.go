@@ -24,13 +24,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.infoPanes[1].Width = leftPaneWidth
 		remainingHeight := m.height - m.infoPanes[0].Height - m.infoPanes[1].Height - statusBarHeight
 
-		m.panes[0], _ = m.panes[0].Update(tea.WindowSizeMsg{
+		cmds := make([]tea.Cmd, len(m.panes))
+
+		m.panes[0], cmds[0] = m.panes[0].Update(tea.WindowSizeMsg{
 			Width:  leftPaneWidth,
 			Height: remainingHeight / 2,
 		})
 		remainingHeight -= m.panes[0].Height
 
-		m.panes[1], _ = m.panes[1].Update(tea.WindowSizeMsg{
+		m.panes[1], cmds[1] = m.panes[1].Update(tea.WindowSizeMsg{
 			Width:  leftPaneWidth,
 			Height: remainingHeight,
 		})
@@ -39,16 +41,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		rightPaneWidth := m.width - leftPaneWidth
 
-		m.panes[2], _ = m.panes[2].Update(tea.WindowSizeMsg{
+		m.panes[2], cmds[2] = m.panes[2].Update(tea.WindowSizeMsg{
 			Width:  rightPaneWidth,
 			Height: (m.height - statusBarHeight) / 2,
 		})
 
-		m.panes[3], _ = m.panes[3].Update(tea.WindowSizeMsg{
-			Width: rightPaneWidth,
-			// !FIXME: is -2 acceptable here?
-			Height: m.height - m.panes[2].Height - statusBarHeight - 2,
+		m.panes[3], cmds[3] = m.panes[3].Update(tea.WindowSizeMsg{
+			Width:  rightPaneWidth,
+			Height: m.height - m.panes[2].Height - statusBarHeight,
 		})
+
+		return m, tea.Batch(cmds...)
 
 	case tea.KeyMsg:
 		switch km := DefaultHomeKeyMap.(type) {
