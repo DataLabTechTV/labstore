@@ -59,14 +59,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case HomeKeyMap:
 			switch {
 			case key.Matches(msg, km.Down):
-				var cmd tea.Cmd
-				m.panes[m.focusedPane-1], cmd = m.panes[m.focusedPane-1].Update(messages.MoveDownMsg{})
-				return m, cmd
+				return m.sendToFocused(messages.MoveDownMsg{})
 
 			case key.Matches(msg, km.Up):
-				var cmd tea.Cmd
-				m.panes[m.focusedPane-1], cmd = m.panes[m.focusedPane-1].Update(messages.MoveUpMsg{})
-				return m, cmd
+				return m.sendToFocused(messages.MoveUpMsg{})
+
+			case key.Matches(msg, km.End):
+				return m.sendToFocused(messages.MoveToBottomMsg{})
+
+			case key.Matches(msg, km.Home):
+				return m.sendToFocused(messages.MoveToTopMsg{})
+
+			case key.Matches(msg, km.PgDn):
+				return m.sendToFocused(messages.PageDownMsg{})
+
+			case key.Matches(msg, km.PgUp):
+				return m.sendToFocused(messages.PageUpMsg{})
 
 			case key.Matches(msg, km.Focus1):
 				return m.paneFocus(1)
@@ -127,4 +135,10 @@ func (m Model) paneFocus(n int) (Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m Model) sendToFocused(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.panes[m.focusedPane-1], cmd = m.panes[m.focusedPane-1].Update(msg)
+	return m, cmd
 }

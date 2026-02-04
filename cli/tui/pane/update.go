@@ -29,7 +29,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Child, cmd = m.Child.Update(messages.BlurMsg{})
 		return m, cmd
 
-	case messages.MoveDownMsg, messages.MoveUpMsg:
+	case messages.MoveDownMsg, messages.MoveUpMsg,
+		messages.MoveToBottomMsg, messages.MoveToTopMsg,
+		messages.PageDownMsg, messages.PageUpMsg:
+
 		var cmd tea.Cmd
 		m.Child, cmd = m.Child.Update(msg)
 		return m, cmd
