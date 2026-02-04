@@ -22,12 +22,17 @@ func (m Model) View() string {
 
 	rows := []table.Row{}
 	for _, entry := range m.Entries {
-		row := table.Row{
-			render.NewDate(entry.ModTime).Format(),
-			render.NewSize(entry.Size).Format(),
-			entry.Name,
+		var name, size string
+		if entry.IsDir {
+			name = entry.Name + "/"
+			size = "-"
+		} else {
+			name = entry.Name
+			size = render.NewSize(entry.Size).Format()
 		}
-		rows = append(rows, row)
+		date := render.NewDate(entry.ModTime).Format()
+
+		rows = append(rows, table.Row{date, size, name})
 	}
 
 	fileTable := table.New(
