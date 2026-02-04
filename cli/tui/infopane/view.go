@@ -25,12 +25,19 @@ func (m Model) View() string {
 		Foreground(valueColor).
 		Render
 
+	var displayValue string
+	if m.Value == "" {
+		displayValue = "<none>"
+	} else {
+		displayValue = m.Value
+	}
+
 	infoPane := lipgloss.NewStyle().
 		Width(m.Width - 2).
 		Height(m.Height - 2).
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(render.ActivePalette.Surface).
-		Render(labelStyle(m.Label) + ": " + valueStyle(m.Value))
+		Render(labelStyle(m.Label) + ": " + valueStyle(displayValue))
 
 	return infoPane
 }
