@@ -4,13 +4,8 @@ import (
 	"context"
 
 	"github.com/IllumiKnowLabs/labstore/cli/render"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	tea "github.com/charmbracelet/bubbletea"
-)
-
-type (
-	RefreshMsg  struct{}
-	MoveUpMsg   struct{}
-	MoveDownMsg struct{}
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -19,7 +14,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Width = msg.Width
 		m.Height = msg.Height
 
-	case RefreshMsg:
+	case messages.RefreshMsg:
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -30,8 +25,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.Entries = entries
 
-	case MoveUpMsg:
-	case MoveDownMsg:
+	case messages.MoveDownMsg:
+	case messages.MoveUpMsg:
 	}
 
 	return m, nil

@@ -21,6 +21,6 @@ func New(provider providers.Provider) Model {
 
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
-		return messages.FileListMsg{Msg: RefreshMsg{}}
+		return messages.FileListMsg{Msg: messages.RefreshMsg{}}
 	}
 }

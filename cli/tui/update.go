@@ -58,8 +58,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch km := DefaultHomeKeyMap.(type) {
 		case HomeKeyMap:
 			switch {
-			// case key.Matches(msg, km.Down):
-			// 	activePane := m.panes[m.focusedPane]
+			case key.Matches(msg, km.Down):
+				var cmd tea.Cmd
+				m.panes[m.focusedPane-1], cmd = m.panes[m.focusedPane-1].Update(messages.MoveDownMsg{})
+				return m, cmd
+
+			case key.Matches(msg, km.Up):
+				var cmd tea.Cmd
+				m.panes[m.focusedPane-1], cmd = m.panes[m.focusedPane-1].Update(messages.MoveUpMsg{})
+				return m, cmd
+
 			case key.Matches(msg, km.Focus1):
 				return m.paneFocus(1)
 

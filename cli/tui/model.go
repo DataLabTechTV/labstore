@@ -31,6 +31,7 @@ func New() Model {
 	fsProvider := filelist.New(providers.NewFSProvider("."))
 
 	return Model{
+		focusedPane: 1,
 		panes: []pane.Model{
 			pane.New("[1] Buckets", pane.WithFocus(), pane.WithChild(bucketProvider)),
 			pane.New("[2] Profiles", pane.WithChild(profilesProvider)),
