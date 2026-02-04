@@ -5,6 +5,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -13,6 +14,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
 		m.Height = msg.Height
+
+		columns := make([]table.Column, 3)
+
+		modifiedWidth := m.Width / 3
+		columns[0] = table.Column{Title: "Modified", Width: modifiedWidth}
+
+		sizeWidth := (m.Width - modifiedWidth) / 4
+		columns[1] = table.Column{Title: "Size", Width: sizeWidth}
+
+		nameWidth := m.Width - modifiedWidth - sizeWidth - m.hCellPad*len(columns)
+		columns[2] = table.Column{Title: "Name", Width: nameWidth}
+
+		m.table.SetColumns(columns)
+		m.table.SetWidth(m.Width)
+		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
 		ctx, cancel := context.WithCancel(context.Background())
@@ -25,8 +41,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.Entries = entries
 
+		rows := []table.Row{}
+		for _, entry := range m.Entries {
+			var name, size string
+			if entry.IsDir {
+				name = entry.Name + "/"
+				size = "-"
+			} else {
+				name = entry.Name
+				size = render.NewSize(entry.Size).Format()
+			}
+			date := render.NewDate(entry.ModTime).Format()
+
+			rows = append(rows, table.Row{date, size, name})
+		}
+		m.table.SetRows(rows)
+
+	case messages.FocusMsg:
+		m.table.Focus()
+
+	case messages.BlurMsg:
+		m.table.Blur()
+
 	case messages.MoveDownMsg:
+		m.table.MoveDown(1)
+
 	case messages.MoveUpMsg:
+		m.table.MoveUp(1)
 	}
 
 	return m, nil
