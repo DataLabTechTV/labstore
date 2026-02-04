@@ -21,6 +21,10 @@ type (
 	FocusMsg struct{}
 	BlurMsg  struct{}
 
-	MoveDownMsg struct{}
-	MoveUpMsg   struct{}
+	MoveDownMsg     struct{}
+	MoveUpMsg       struct{}
+	MoveToBottomMsg struct{}
+	MoveToTopMsg    struct{}
+	PageDownMsg     struct{}
+	PageUpMsg       struct{}
 )

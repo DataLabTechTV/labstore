@@ -42,7 +42,7 @@ func New() Model {
 			infopane.New("Active Bucket", infopane.ValueNone),
 			infopane.New("Active Profile", infopane.ValueNone),
 		},
-		statusBar: statusbar.New(DefaultHomeKeyMap.All()),
+		statusBar: statusbar.New(DefaultHomeKeyMap.HelpKeys()),
 	}
 }
 

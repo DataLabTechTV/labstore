@@ -3,7 +3,7 @@ package tui
 import "github.com/charmbracelet/bubbles/key"
 
 type KeyMap interface {
-	All() []key.Binding
+	HelpKeys() []key.Binding
 }
 
 type HomeKeyMap struct {
@@ -14,6 +14,10 @@ type HomeKeyMap struct {
 	Head     key.Binding
 	Down     key.Binding
 	Up       key.Binding
+	End      key.Binding
+	Home     key.Binding
+	PgDn     key.Binding
+	PgUp     key.Binding
 	Open     key.Binding
 	Select   key.Binding
 	Next     key.Binding
@@ -26,7 +30,7 @@ type HomeKeyMap struct {
 	Focus4 key.Binding
 }
 
-func (k HomeKeyMap) All() []key.Binding {
+func (k HomeKeyMap) HelpKeys() []key.Binding {
 	return []key.Binding{
 		k.Quit,
 		k.Profiles,
@@ -34,8 +38,6 @@ func (k HomeKeyMap) All() []key.Binding {
 		k.Get,
 		k.Delete,
 		k.Head,
-		k.Down,
-		k.Up,
 		k.Open,
 		k.Select,
 		k.Next,
@@ -49,13 +51,18 @@ var DefaultHomeKeyMap KeyMap = HomeKeyMap{
 	Get:      key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "GET")),
 	Delete:   key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "DELETE")),
 	Head:     key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "HEAD")),
-	Down:     key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "Down")),
-	Up:       key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "Up")),
 	Open:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("⏎", "Open")),
-	Select:   key.NewBinding(key.WithKeys("space"), key.WithHelp("<space>", "Select")),
+	Select:   key.NewBinding(key.WithKeys("space"), key.WithHelp("␣", "Select")),
 	Next:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("<tab>", "Next")),
 	Previous: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+<tab>", "Previous")),
 	Quit:     key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "Quit")),
+
+	Down: key.NewBinding(key.WithKeys("down", "j")),
+	Up:   key.NewBinding(key.WithKeys("up", "k")),
+	End:  key.NewBinding(key.WithKeys("end", "$")),
+	Home: key.NewBinding(key.WithKeys("home", "0")),
+	PgDn: key.NewBinding(key.WithKeys("pgdown")),
+	PgUp: key.NewBinding(key.WithKeys("pgup")),
 
 	Focus1: key.NewBinding(key.WithKeys("1")),
 	Focus2: key.NewBinding(key.WithKeys("2")),

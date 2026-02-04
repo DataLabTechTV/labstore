@@ -45,10 +45,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.Blur()
 
 	case messages.MoveDownMsg:
-		m.table.MoveDown(1)
+		if last := len(m.table.Rows()) - 1; m.table.Cursor() == last {
+			m.table.GotoTop()
+		} else {
+			m.table.MoveDown(1)
+		}
 
 	case messages.MoveUpMsg:
-		m.table.MoveUp(1)
+		if m.table.Cursor() == 0 {
+			m.table.GotoBottom()
+		} else {
+			m.table.MoveUp(1)
+		}
+
+	case messages.MoveToBottomMsg:
+		m.table.GotoBottom()
+
+	case messages.MoveToTopMsg:
+		m.table.GotoTop()
+
+	case messages.PageDownMsg:
+		m.table.MoveDown(10)
+
+	case messages.PageUpMsg:
+		m.table.MoveUp(10)
 	}
 
 	return m, nil
