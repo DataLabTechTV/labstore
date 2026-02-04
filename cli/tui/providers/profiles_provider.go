@@ -21,6 +21,10 @@ func (p *ProfilesProvider) State() (string, bool) {
 	return "", false
 }
 
+func (p *ProfilesProvider) CWD() string {
+	return *p.ActiveProfile
+}
+
 func (*ProfilesProvider) List(ctx context.Context) ([]Entry, error) {
 	if !initialized {
 		credentials.Init()

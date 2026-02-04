@@ -32,8 +32,9 @@ type (
 	MoveToTopMsg    struct{}
 	PageDownMsg     struct{}
 	PageUpMsg       struct{}
-	LevelUpMsg      struct{ PaneIndex int }
-	OpenMsg         struct{ PaneIndex int }
+	LevelUpMsg      struct{}
+	OpenMsg         struct{}
 
+	SetTitle struct{ Title string }
 	SetValue struct{ Value string }
 )

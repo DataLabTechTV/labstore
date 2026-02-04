@@ -38,6 +38,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Child, cmd = m.Child.Update(msg)
 		return m, cmd
 
+	case messages.SetTitle:
+		m.Title = msg.Title
+
 	case messages.FileListMsg:
 		var cmd tea.Cmd
 		m.Child, cmd = m.Child.Update(msg.Msg)

@@ -19,24 +19,24 @@ type Model struct {
 	infoPanes []infopane.Model
 	statusBar statusbar.Model
 
-	focusedPane int
-	width       int
-	height      int
+	focusedPaneID int
+	width         int
+	height        int
 }
 
 func New() Model {
-	bucketProvider := simplelist.New(providers.NewS3BucketProvider())
-	profilesProvider := simplelist.New(providers.NewProfilesProvider())
-	s3FSProvider := simplelist.New(providers.NewS3FSProvider())
-	fsProvider := filelist.New(providers.NewFSProvider("."))
+	bucketProvider := simplelist.New(1, providers.NewS3BucketProvider())
+	profilesProvider := simplelist.New(2, providers.NewProfilesProvider())
+	s3FSProvider := filelist.New(3, providers.NewS3FSProvider())
+	fsProvider := filelist.New(4, providers.NewFSProvider("."))
 
 	return Model{
-		focusedPane: 1,
+		focusedPaneID: 1,
 		panes: []pane.Model{
-			pane.New("[1] Buckets", pane.WithFocus(), pane.WithChild(bucketProvider)),
-			pane.New("[2] Profiles", pane.WithChild(profilesProvider)),
-			pane.New("[3] Remote", pane.WithChild(s3FSProvider)),
-			pane.New("[4] Local", pane.WithChild(fsProvider)),
+			pane.New(1, "Buckets", pane.WithFocus(), pane.WithChild(bucketProvider)),
+			pane.New(2, "Profiles", pane.WithChild(profilesProvider)),
+			pane.New(3, "Remote", pane.WithChild(s3FSProvider)),
+			pane.New(4, "Local", pane.WithChild(fsProvider)),
 		},
 		infoPanes: []infopane.Model{
 			infopane.New("Active Bucket", infopane.ValueNone),

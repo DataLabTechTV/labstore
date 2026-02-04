@@ -15,6 +15,10 @@ func (p *S3FSProvider) State() (string, bool) {
 	return "", false
 }
 
+func (p *S3FSProvider) CWD() string {
+	return ""
+}
+
 func (p *S3FSProvider) List(ctx context.Context) ([]Entry, error) {
 	return nil, nil
 }

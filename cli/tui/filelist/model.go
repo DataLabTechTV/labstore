@@ -9,6 +9,7 @@ import (
 )
 
 type Model struct {
+	ParentID int
 	Provider providers.Provider
 	Entries  []providers.Entry
 	Width    int
@@ -18,7 +19,7 @@ type Model struct {
 	hCellPad int
 }
 
-func New(provider providers.Provider) Model {
+func New(parentID int, provider providers.Provider) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Header = tableStyle.Header.
@@ -38,6 +39,7 @@ func New(provider providers.Provider) Model {
 	)
 
 	return Model{
+		ParentID: parentID,
 		Provider: provider,
 		table:    fileTable,
 		hCellPad: tableStyle.Cell.GetHorizontalPadding(),

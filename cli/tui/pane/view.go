@@ -1,6 +1,7 @@
 package pane
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/cli/render"
@@ -36,7 +37,7 @@ func (m Model) View() string {
 	if m.Width >= len(m.Title)+4 {
 		topLeftBorder := borderStyle.Render(border.TopLeft + border.Top)
 		topRightBorder := borderStyle.Render(strings.Repeat(border.Top, m.Width-len(m.Title)-3) + border.TopRight)
-		topBorder = topLeftBorder + titleStyle.Render(m.Title) + topRightBorder
+		topBorder = topLeftBorder + titleStyle.Render(fmt.Sprintf("[%d] %s", m.ID, m.Title)) + topRightBorder
 	} else {
 		boxStyle = boxStyle.BorderTop(true)
 	}

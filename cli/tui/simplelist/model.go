@@ -9,6 +9,7 @@ import (
 )
 
 type Model struct {
+	ParentID int
 	Provider providers.Provider
 	Entries  []string
 	Width    int
@@ -20,7 +21,7 @@ type Model struct {
 
 type SimpleListOption func(m *Model)
 
-func New(provider providers.Provider, opts ...SimpleListOption) Model {
+func New(parentID int, provider providers.Provider, opts ...SimpleListOption) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Selected = tableStyle.Selected.
@@ -36,6 +37,7 @@ func New(provider providers.Provider, opts ...SimpleListOption) Model {
 	)
 
 	model := Model{
+		ParentID: parentID,
 		Provider: provider,
 		table:    simpleTable,
 		hCellPad: tableStyle.Cell.GetHorizontalPadding(),
