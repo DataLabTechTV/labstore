@@ -69,6 +69,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.PageUpMsg:
 		m.table.MoveUp(10)
+
+	case messages.OpenMsg:
+		selectedProfile := m.table.SelectedRow()[0]
+
+		cmd := func() tea.Msg {
+			return messages.InfoPaneMsg{
+				Index: msg.PaneIndex - 1,
+				Msg:   messages.SetValue{Value: selectedProfile},
+			}
+		}
+
+		return m, cmd
 	}
 
 	return m, nil

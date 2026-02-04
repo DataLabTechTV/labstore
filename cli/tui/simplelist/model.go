@@ -18,7 +18,9 @@ type Model struct {
 	hCellPad int
 }
 
-func New(provider providers.Provider) Model {
+type SimpleListOption func(m *Model)
+
+func New(provider providers.Provider, opts ...SimpleListOption) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Selected = tableStyle.Selected.
@@ -33,11 +35,17 @@ func New(provider providers.Provider) Model {
 		table.WithStyles(tableStyle),
 	)
 
-	return Model{
+	model := Model{
 		Provider: provider,
 		table:    simpleTable,
 		hCellPad: tableStyle.Cell.GetHorizontalPadding(),
 	}
+
+	for _, opt := range opts {
+		opt(&model)
+	}
+
+	return model
 }
 
 func (m Model) Init() tea.Cmd {
