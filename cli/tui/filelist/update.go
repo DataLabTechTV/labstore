@@ -26,6 +26,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		entries, err := m.Provider.List(ctx)
 		if err != nil {
 			render.Error(err)
+			return m, nil
 		}
 		m.Entries = entries
 

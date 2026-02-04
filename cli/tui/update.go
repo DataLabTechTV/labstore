@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -93,6 +94,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 		}
+
+	case messages.PaneMsg:
+		var cmd tea.Cmd
+		m.panes[msg.Index], cmd = m.panes[msg.Index].Update(msg.Msg)
+		return m, cmd
 	}
 
 	return m, nil

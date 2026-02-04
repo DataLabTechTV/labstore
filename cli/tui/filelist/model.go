@@ -1,6 +1,7 @@
 package filelist
 
 import (
+	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -19,5 +20,7 @@ func New(provider providers.Provider) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return func() tea.Msg { return RefreshMsg{} }
+	return func() tea.Msg {
+		return messages.FileListMsg{Msg: RefreshMsg{}}
+	}
 }

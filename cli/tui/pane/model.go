@@ -1,6 +1,8 @@
 package pane
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type Model struct {
 	Title   string
@@ -39,7 +41,14 @@ func WithChild(child tea.Model) PaneOption {
 
 func (m Model) Init() tea.Cmd {
 	if m.Child != nil {
-		return m.Child.Init()
+		childCmd := m.Child.Init()
+		return func() tea.Msg {
+			msg := childCmd()
+			if msg == nil {
+				return nil
+			}
+			return msg
+		}
 	}
 
 	return nil
