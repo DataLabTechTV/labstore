@@ -30,19 +30,19 @@ func New() Model {
 	s3FSProvider := filelist.New(3, providers.NewS3FSProvider())
 	fsProvider := filelist.New(4, providers.NewFSProvider("."))
 
+	bucketPane := pane.New(1, "Buckets", pane.WithFocus(), pane.WithChild(bucketProvider))
+	profilesPane := pane.New(2, "Profiles", pane.WithChild(profilesProvider))
+	remotePane := pane.New(3, "Remote", pane.WithChild(s3FSProvider))
+	localPane := pane.New(4, "Local", pane.WithChild(fsProvider))
+
+	activeBucketsInfo := infopane.New("Active Bucket", infopane.ValueNone)
+	activeProfileInfo := infopane.New("Active Profile", infopane.ValueNone)
+
 	return Model{
+		panes:         []pane.Model{bucketPane, profilesPane, remotePane, localPane},
+		infoPanes:     []infopane.Model{activeBucketsInfo, activeProfileInfo},
+		statusBar:     statusbar.New(DefaultHomeKeyMap.HelpKeys()),
 		focusedPaneID: 1,
-		panes: []pane.Model{
-			pane.New(1, "Buckets", pane.WithFocus(), pane.WithChild(bucketProvider)),
-			pane.New(2, "Profiles", pane.WithChild(profilesProvider)),
-			pane.New(3, "Remote", pane.WithChild(s3FSProvider)),
-			pane.New(4, "Local", pane.WithChild(fsProvider)),
-		},
-		infoPanes: []infopane.Model{
-			infopane.New("Active Bucket", infopane.ValueNone),
-			infopane.New("Active Profile", infopane.ValueNone),
-		},
-		statusBar: statusbar.New(DefaultHomeKeyMap.HelpKeys()),
 	}
 }
 

@@ -2,7 +2,7 @@ package infopane
 
 import tea "github.com/charmbracelet/bubbletea"
 
-const ValueNone = "<none>"
+const ValueNone = ""
 
 type Model struct {
 	Label  string
