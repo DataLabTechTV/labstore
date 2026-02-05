@@ -23,9 +23,6 @@ type (
 
 	RefreshMsg struct{}
 
-	FocusMsg struct{}
-	BlurMsg  struct{}
-
 	MoveDownMsg     struct{}
 	MoveUpMsg       struct{}
 	MoveToBottomMsg struct{}

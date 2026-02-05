@@ -76,10 +76,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, cmd
 
-	case messages.FocusMsg:
+	case tea.FocusMsg:
 		m.table.Focus()
 
-	case messages.BlurMsg:
+	case tea.BlurMsg:
 		m.table.Blur()
 
 	case messages.MoveDownMsg:
