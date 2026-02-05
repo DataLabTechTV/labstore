@@ -138,9 +138,9 @@ func (m Model) paneFocus(n int) (Model, tea.Cmd) {
 	for i := range m.panes {
 		var cmd tea.Cmd
 		if i == n-1 {
-			m.panes[i], cmd = m.panes[i].Update(messages.FocusMsg{})
+			m.panes[i], cmd = m.panes[i].Update(tea.FocusMsg{})
 		} else {
-			m.panes[i], cmd = m.panes[i].Update(messages.BlurMsg{})
+			m.panes[i], cmd = m.panes[i].Update(tea.BlurMsg{})
 		}
 		cmds = append(cmds, cmd)
 	}
