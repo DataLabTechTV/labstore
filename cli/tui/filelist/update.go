@@ -40,10 +40,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, refreshCmd(m.ParentIndex, m.Provider)
 
 	case messages.RefreshResultMsg:
-		if msg.Err != nil {
-			render.Error(msg.Err)
-			return m, nil
-		}
 		m.Entries = msg.Entries
 		m.updateTable(msg.Active)
 		return m, nil
@@ -121,7 +117,7 @@ func refreshCmd(parentIndex int, provider providers.Provider) tea.Cmd {
 		if err != nil {
 			return messages.PaneMsg{
 				Index: parentIndex,
-				Msg:   messages.RefreshResultMsg{Err: err},
+				Msg:   messages.ErrorMsg{Err: err},
 			}
 		}
 

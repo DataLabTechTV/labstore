@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -112,6 +113,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 		}
+
+	case messages.ErrorMsg:
+		// !FIXME: Implement proper error handling component.
+		render.Error(msg.Err)
+		return m, nil
 
 	case messages.PaneMsg:
 		var cmd tea.Cmd

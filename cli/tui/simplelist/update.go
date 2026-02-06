@@ -1,7 +1,6 @@
 package simplelist
 
 import (
-	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/charmbracelet/bubbles/table"
@@ -20,13 +19,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		return m, refreshCmd(m.ParentIndex, m.Provider)
+		return m, refreshCmd(m.ParentIndex, m.Provider, msg.Metadata)
 
 	case messages.RefreshResultMsg:
-		if msg.Err != nil {
-			render.Error(msg.Err)
-			return m, nil
-		}
 		m.Entries = providers.EntryNames(msg.Entries)
 		m.updateTable()
 		return m, nil
@@ -64,33 +59,61 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.MoveUp(10)
 
 	case messages.OpenMsg:
-		selectedProfile := m.table.SelectedRow()[0]
+		selected := m.table.SelectedRow()[0]
+		if m.Active != nil && *m.Active == selected {
+			m.Active = nil
+			selected = ""
+		} else {
+			m.Active = &selected
+		}
 
-		var cmd tea.Cmd
+		var cmds []tea.Cmd
 
-		if m.InfoPaneIndex != nil {
-			cmd = func() tea.Msg {
-				return messages.InfoPaneMsg{
-					Index: *m.InfoPaneIndex,
-					Msg:   messages.SetValueMsg{Value: selectedProfile},
-				}
+		if err := m.Provider.Enter(selected); err != nil {
+			return m, func() tea.Msg {
+				return messages.ErrorMsg{Err: err}
 			}
 		}
 
-		return m, cmd
+		for _, paneIndex := range m.RefreshPaneIndexes {
+			cmd := func() tea.Msg {
+				return messages.PaneMsg{
+					Index: paneIndex,
+					Msg: messages.RefreshMsg{
+						Metadata: map[string]string{
+							"selected": *m.Active,
+						},
+					},
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
+
+		for _, infoPaneIndex := range m.RefreshInfoPaneIndexes {
+			cmd := func() tea.Msg {
+				return messages.InfoPaneMsg{
+					Index: infoPaneIndex,
+					Msg:   messages.SetValueMsg{Value: selected},
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
+
+		return m, tea.Batch(cmds...)
 	}
 
 	return m, nil
 }
 
-func refreshCmd(parentID int, provider providers.Provider) tea.Cmd {
+func refreshCmd(parentID int, provider providers.Provider, metadata map[string]string) tea.Cmd {
 	return func() tea.Msg {
+		if err := provider.Enter(metadata["selected"]); err != nil {
+			return messages.ErrorMsg{Err: err}
+		}
+
 		entries, err := provider.List()
 		if err != nil {
-			return messages.PaneMsg{
-				Index: parentID,
-				Msg:   messages.RefreshResultMsg{Err: err},
-			}
+			return messages.ErrorMsg{Err: err}
 		}
 
 		return messages.PaneMsg{

@@ -86,7 +86,7 @@ func (c *Credentials) Save() error {
 }
 
 func LoadProfile(name string) (*Profile, error) {
-	slog.Info("loading profile", "name", name)
+	slog.Debug("loading profile", "name", name)
 
 	credentials, err := LoadCredentials()
 	if err != nil {
@@ -102,7 +102,7 @@ func LoadProfile(name string) (*Profile, error) {
 }
 
 func LoadDefaultProfile() (*Profile, error) {
-	slog.Info("loading default profile")
+	slog.Debug("loading default profile")
 
 	accessKey, accessKeyOK := os.LookupEnv(AccessKeyEnvVar)
 	secretKey, secretKeyOK := os.LookupEnv(SecretKeyEnvVar)

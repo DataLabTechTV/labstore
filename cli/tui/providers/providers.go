@@ -14,17 +14,17 @@ type Entry struct {
 }
 
 type Provider interface {
+	Enter(string) error
 	State() (string, bool)
 	CWD() string
-	Enter(path string) error
 	List() ([]Entry, error)
-	Stat(path string) (Entry, error)
-	Delete(path string) error
+	Stat(string) (Entry, error)
+	Delete(string) error
 }
 
 func NewS3BucketProvider() *S3BucketProvider {
 	// TODO: keep state of last selected bucket (might not exist anymore)
-	return &S3BucketProvider{Bucket: nil}
+	return &S3BucketProvider{}
 }
 
 func NewProfilesProvider() *ProfilesProvider {

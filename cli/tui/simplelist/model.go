@@ -9,12 +9,14 @@ import (
 )
 
 type Model struct {
-	ParentIndex   int
-	InfoPaneIndex *int
-	Provider      providers.Provider
-	Entries       []string
-	Width         int
-	Height        int
+	ParentIndex            int
+	RefreshInfoPaneIndexes []int
+	RefreshPaneIndexes     []int
+	Provider               providers.Provider
+	Entries                []string
+	Active                 *string
+	Width                  int
+	Height                 int
 
 	table    table.Model
 	hCellPad int
@@ -51,9 +53,15 @@ func New(parentIndex int, provider providers.Provider, opts ...SimpleListOption)
 	return model
 }
 
-func WithInfoPaneIndex(infoPaneIndex int) SimpleListOption {
+func WithRefreshInfoPaneIndexes(infoPaneIndex []int) SimpleListOption {
 	return func(m *Model) {
-		m.InfoPaneIndex = &infoPaneIndex
+		m.RefreshInfoPaneIndexes = infoPaneIndex
+	}
+}
+
+func WithRefreshPaneIndexes(paneIndexes []int) SimpleListOption {
+	return func(m *Model) {
+		m.RefreshPaneIndexes = paneIndexes
 	}
 }
 

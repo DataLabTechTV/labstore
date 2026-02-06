@@ -1,23 +1,73 @@
 package providers
 
+import (
+	"context"
+	"time"
+
+	"github.com/IllumiKnowLabs/labstore/cli/credentials"
+	"github.com/IllumiKnowLabs/labstore/client/s3"
+	"github.com/IllumiKnowLabs/labstore/server/config"
+)
+
 type S3BucketProvider struct {
-	Bucket *string
+	Active  bool
+	Host    string
+	Port    uint16
+	Profile string
+	Bucket  string
 }
 
-func (p *S3BucketProvider) Enter(path string) error {
+func (p *S3BucketProvider) Enter(profile string) error {
+	p.Active = profile != ""
+	p.Host = config.App.Server.S3.Address.Host
+	p.Port = config.App.Server.S3.Address.Port
+	p.Profile = profile
 	return nil
 }
 
 func (p *S3BucketProvider) State() (string, bool) {
+	// No state, because there is no navigation.
 	return "", false
 }
 
 func (p *S3BucketProvider) CWD() string {
-	return ""
+	return p.Bucket
 }
 
 func (p *S3BucketProvider) List() ([]Entry, error) {
-	return nil, nil
+	if !p.Active {
+		return []Entry{}, nil
+	}
+
+	profile, err := credentials.LoadProfile(p.Profile)
+	if err != nil {
+		return nil, err
+	}
+
+	client := s3.NewS3Client(
+		context.Background(),
+		p.Host,
+		p.Port,
+		profile.AccessKey,
+		profile.SecretKey,
+		false,
+		config.App.Server.S3.IO.BufferSize,
+	)
+
+	buckets, err := client.ListBuckets()
+	if err != nil {
+		return nil, err
+	}
+
+	var entries []Entry
+	for _, bucket := range buckets {
+		entry := Entry{
+			Name:    bucket.Name,
+			ModTime: time.Time(bucket.CreationDate),
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
 }
 
 func (p *S3BucketProvider) Stat(path string) (Entry, error) {
