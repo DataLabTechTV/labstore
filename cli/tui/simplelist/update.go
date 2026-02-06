@@ -20,7 +20,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		return m, refreshCmd(m.ParentID, m.Provider)
+		return m, refreshCmd(m.ParentIndex, m.Provider)
 
 	case messages.RefreshResultMsg:
 		if msg.Err != nil {
@@ -66,10 +66,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.OpenMsg:
 		selectedProfile := m.table.SelectedRow()[0]
 
-		cmd := func() tea.Msg {
-			return messages.InfoPaneMsg{
-				ID:  m.ParentID,
-				Msg: messages.SetValueMsg{Value: selectedProfile},
+		var cmd tea.Cmd
+
+		if m.InfoPaneIndex != nil {
+			cmd = func() tea.Msg {
+				return messages.InfoPaneMsg{
+					Index: *m.InfoPaneIndex,
+					Msg:   messages.SetValueMsg{Value: selectedProfile},
+				}
 			}
 		}
 
@@ -84,14 +88,14 @@ func refreshCmd(parentID int, provider providers.Provider) tea.Cmd {
 		entries, err := provider.List()
 		if err != nil {
 			return messages.PaneMsg{
-				ID:  parentID,
-				Msg: messages.RefreshResultMsg{Err: err},
+				Index: parentID,
+				Msg:   messages.RefreshResultMsg{Err: err},
 			}
 		}
 
 		return messages.PaneMsg{
-			ID:  parentID,
-			Msg: messages.RefreshResultMsg{Entries: entries},
+			Index: parentID,
+			Msg:   messages.RefreshResultMsg{Entries: entries},
 		}
 	}
 }

@@ -115,12 +115,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.PaneMsg:
 		var cmd tea.Cmd
-		m.panes[msg.ID-1], cmd = m.panes[msg.ID-1].Update(msg.Msg)
+		m.panes[msg.Index], cmd = m.panes[msg.Index].Update(msg.Msg)
 		return m, cmd
 
 	case messages.InfoPaneMsg:
 		var cmd tea.Cmd
-		m.infoPanes[msg.ID-1], cmd = m.infoPanes[msg.ID-1].Update(msg.Msg)
+		m.infoPanes[msg.Index], cmd = m.infoPanes[msg.Index].Update(msg.Msg)
 		return m, cmd
 	}
 

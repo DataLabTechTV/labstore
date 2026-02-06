@@ -9,11 +9,12 @@ import (
 )
 
 type Model struct {
-	ParentID int
-	Provider providers.Provider
-	Entries  []string
-	Width    int
-	Height   int
+	ParentIndex   int
+	InfoPaneIndex *int
+	Provider      providers.Provider
+	Entries       []string
+	Width         int
+	Height        int
 
 	table    table.Model
 	hCellPad int
@@ -21,7 +22,7 @@ type Model struct {
 
 type SimpleListOption func(m *Model)
 
-func New(parentID int, provider providers.Provider, opts ...SimpleListOption) Model {
+func New(parentIndex int, provider providers.Provider, opts ...SimpleListOption) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Selected = tableStyle.Selected.
@@ -37,10 +38,10 @@ func New(parentID int, provider providers.Provider, opts ...SimpleListOption) Mo
 	)
 
 	model := Model{
-		ParentID: parentID,
-		Provider: provider,
-		table:    simpleTable,
-		hCellPad: tableStyle.Cell.GetHorizontalPadding(),
+		ParentIndex: parentIndex,
+		Provider:    provider,
+		table:       simpleTable,
+		hCellPad:    tableStyle.Cell.GetHorizontalPadding(),
 	}
 
 	for _, opt := range opts {
@@ -50,11 +51,17 @@ func New(parentID int, provider providers.Provider, opts ...SimpleListOption) Mo
 	return model
 }
 
+func WithInfoPaneIndex(infoPaneIndex int) SimpleListOption {
+	return func(m *Model) {
+		m.InfoPaneIndex = &infoPaneIndex
+	}
+}
+
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
 		return messages.PaneMsg{
-			ID:  m.ParentID,
-			Msg: messages.RefreshMsg{},
+			Index: m.ParentIndex,
+			Msg:   messages.RefreshMsg{},
 		}
 	}
 }

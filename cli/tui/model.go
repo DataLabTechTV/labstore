@@ -25,18 +25,22 @@ type Model struct {
 }
 
 func New() Model {
+	const bucketsPaneIndex, profilesPaneIndex, remotePaneIndex, localPaneIndex = 0, 1, 2, 3
+	const bucketInfoIndex, profileInfoIndex = 0, 1
+
 	s3BucketProvider := providers.NewS3BucketProvider()
 	profilesProvider := providers.NewProfilesProvider()
 	s3FSProvider := providers.NewS3FSProvider()
 	fsProvider := providers.NewFSProvider(".")
 
-	bucketList := simplelist.New(1, s3BucketProvider)
-	profileList := simplelist.New(2, profilesProvider)
-	s3FileList := filelist.New(3, s3FSProvider)
-	fsFileList := filelist.New(4, fsProvider)
+	bucketList := simplelist.New(bucketsPaneIndex, s3BucketProvider, simplelist.WithInfoPaneIndex(bucketInfoIndex))
+	profileList := simplelist.New(profilesPaneIndex, profilesProvider, simplelist.WithInfoPaneIndex(profileInfoIndex))
+	s3FileList := filelist.New(remotePaneIndex, s3FSProvider)
+	fsFileList := filelist.New(localPaneIndex, fsProvider)
 
 	bucketPane := pane.New(
-		1, "Buckets", pane.WithFocus(),
+		1, "Buckets",
+		pane.WithFocus(),
 		pane.WithChild(bucketList),
 	)
 
@@ -57,12 +61,12 @@ func New() Model {
 		pane.WithProvider(fsProvider),
 	)
 
-	activeBucketsInfo := infopane.New("Active Bucket", infopane.ValueNone)
-	activeProfileInfo := infopane.New("Active Profile", infopane.ValueNone)
+	bucketInfo := infopane.New("Active Bucket", infopane.ValueNone)
+	profileInfo := infopane.New("Active Profile", infopane.ValueNone)
 
 	return Model{
 		panes:         []pane.Model{bucketPane, profilesPane, remotePane, localPane},
-		infoPanes:     []infopane.Model{activeBucketsInfo, activeProfileInfo},
+		infoPanes:     []infopane.Model{bucketInfo, profileInfo},
 		statusBar:     statusbar.New(DefaultHomeKeyMap.HelpKeys()),
 		focusedPaneID: 1,
 	}
@@ -87,7 +91,7 @@ func (m Model) Init() tea.Cmd {
 			if msg == nil {
 				return nil
 			}
-			return messages.PaneMsg{ID: i + 1, Msg: msg}
+			return messages.PaneMsg{Index: i, Msg: msg}
 		}
 		cmds = append(cmds, cmd)
 	}
