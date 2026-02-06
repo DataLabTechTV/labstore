@@ -20,19 +20,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		// !FIXME: return as a cmd
-		entries, err := m.Provider.List()
-		if err != nil {
-			render.Error(err)
+		return m, refreshCmd(m.ParentID, m.Provider)
+
+	case messages.RefreshResultMsg:
+		if msg.Err != nil {
+			render.Error(msg.Err)
 			return m, nil
 		}
-		m.Entries = providers.EntryNames(entries)
-
-		rows := []table.Row{}
-		for _, entry := range m.Entries {
-			rows = append(rows, table.Row{entry})
-		}
-		m.table.SetRows(rows)
+		m.Entries = providers.EntryNames(msg.Entries)
+		m.updateTable()
+		return m, nil
 
 	case tea.FocusMsg:
 		m.table.Focus()
@@ -80,4 +77,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func refreshCmd(parentID int, provider providers.Provider) tea.Cmd {
+	return func() tea.Msg {
+		entries, err := provider.List()
+		if err != nil {
+			return messages.PaneMsg{
+				ID:  parentID,
+				Msg: messages.RefreshResultMsg{Err: err},
+			}
+		}
+
+		return messages.PaneMsg{
+			ID:  parentID,
+			Msg: messages.RefreshResultMsg{Entries: entries},
+		}
+	}
+}
+
+func (m *Model) updateTable() {
+	rows := []table.Row{}
+	for _, entry := range m.Entries {
+		rows = append(rows, table.Row{entry})
+	}
+	m.table.SetRows(rows)
 }
