@@ -1,16 +1,19 @@
 package pane
 
 import (
+	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Model struct {
-	ID      int
-	Title   string
-	Focused bool
-	Width   int
-	Height  int
-	Child   tea.Model
+	ID       int
+	Title    string
+	Focused  bool
+	Width    int
+	Height   int
+	Child    tea.Model
+	Provider providers.Provider
 }
 
 type PaneOption func(m *Model)
@@ -41,17 +44,12 @@ func WithChild(child tea.Model) PaneOption {
 	}
 }
 
-func (m Model) Init() tea.Cmd {
-	if m.Child != nil {
-		childCmd := m.Child.Init()
-		return func() tea.Msg {
-			msg := childCmd()
-			if msg == nil {
-				return nil
-			}
-			return msg
-		}
+func WithProvider(provider providers.Provider) PaneOption {
+	return func(m *Model) {
+		m.Provider = provider
 	}
+}
 
-	return nil
+func (m Model) Init() tea.Cmd {
+	return func() tea.Msg { return messages.RefreshMsg{} }
 }

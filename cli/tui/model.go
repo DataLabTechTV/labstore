@@ -25,15 +25,37 @@ type Model struct {
 }
 
 func New() Model {
-	bucketProvider := simplelist.New(1, providers.NewS3BucketProvider())
-	profilesProvider := simplelist.New(2, providers.NewProfilesProvider())
-	s3FSProvider := filelist.New(3, providers.NewS3FSProvider())
-	fsProvider := filelist.New(4, providers.NewFSProvider("."))
+	s3BucketProvider := providers.NewS3BucketProvider()
+	profilesProvider := providers.NewProfilesProvider()
+	s3FSProvider := providers.NewS3FSProvider()
+	fsProvider := providers.NewFSProvider(".")
 
-	bucketPane := pane.New(1, "Buckets", pane.WithFocus(), pane.WithChild(bucketProvider))
-	profilesPane := pane.New(2, "Profiles", pane.WithChild(profilesProvider))
-	remotePane := pane.New(3, "Remote", pane.WithChild(s3FSProvider))
-	localPane := pane.New(4, "Local", pane.WithChild(fsProvider))
+	bucketList := simplelist.New(1, s3BucketProvider)
+	profileList := simplelist.New(2, profilesProvider)
+	s3FileList := filelist.New(3, s3FSProvider)
+	fsFileList := filelist.New(4, fsProvider)
+
+	bucketPane := pane.New(
+		1, "Buckets", pane.WithFocus(),
+		pane.WithChild(bucketList),
+	)
+
+	profilesPane := pane.New(
+		2, "Profiles",
+		pane.WithChild(profileList),
+	)
+
+	remotePane := pane.New(
+		3, "Remote",
+		pane.WithChild(s3FileList),
+		pane.WithProvider(s3FSProvider),
+	)
+
+	localPane := pane.New(
+		4, "Local",
+		pane.WithChild(fsFileList),
+		pane.WithProvider(fsProvider),
+	)
 
 	activeBucketsInfo := infopane.New("Active Bucket", infopane.ValueNone)
 	activeProfileInfo := infopane.New("Active Profile", infopane.ValueNone)
@@ -65,7 +87,7 @@ func (m Model) Init() tea.Cmd {
 			if msg == nil {
 				return nil
 			}
-			return messages.PaneMsg{Index: i, Msg: msg}
+			return messages.PaneMsg{ID: i + 1, Msg: msg}
 		}
 		cmds = append(cmds, cmd)
 	}

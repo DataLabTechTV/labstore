@@ -38,17 +38,24 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Child, cmd = m.Child.Update(msg)
 		return m, cmd
 
-	case messages.SetTitle:
-		m.Title = msg.Title
-
-	case messages.FileListMsg:
+	case messages.RefreshMsg:
 		var cmd tea.Cmd
-		m.Child, cmd = m.Child.Update(msg.Msg)
+
+		if m.Child != nil {
+			m.Child, cmd = m.Child.Update(msg)
+		}
+
 		return m, cmd
 
-	case messages.SimpleListMsg:
-		var cmd tea.Cmd
-		m.Child, cmd = m.Child.Update(msg.Msg)
+	case messages.RefreshResultMsg:
+		if m.Provider != nil {
+			if cwd := m.Provider.CWD(); cwd != "" {
+				m.Title = cwd
+			}
+		}
+
+		child, cmd := m.Child.Update(msg)
+		m.Child = child
 		return m, cmd
 	}
 

@@ -8,7 +8,7 @@ import (
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	case messages.SetValue:
+	case messages.SetValueMsg:
 		if m.Value == msg.Value {
 			m.Value = ValueNone
 		} else {

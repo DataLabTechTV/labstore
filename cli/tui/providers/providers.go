@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"path/filepath"
 	"time"
 )
@@ -17,10 +16,10 @@ type Entry struct {
 type Provider interface {
 	State() (string, bool)
 	CWD() string
-	Enter(ctx context.Context, path string) error
-	List(ctx context.Context) ([]Entry, error)
-	Stat(ctx context.Context, path string) (Entry, error)
-	Delete(ctx context.Context, path string) error
+	Enter(path string) error
+	List() ([]Entry, error)
+	Stat(path string) (Entry, error)
+	Delete(path string) error
 }
 
 func NewS3BucketProvider() *S3BucketProvider {

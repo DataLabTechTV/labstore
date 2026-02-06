@@ -1,13 +1,11 @@
 package providers
 
-import "context"
-
 type S3FSProvider struct {
 	Bucket *string
 	Key    *string
 }
 
-func (p *S3FSProvider) Enter(ctx context.Context, path string) error {
+func (p *S3FSProvider) Enter(path string) error {
 	return nil
 }
 
@@ -19,14 +17,14 @@ func (p *S3FSProvider) CWD() string {
 	return ""
 }
 
-func (p *S3FSProvider) List(ctx context.Context) ([]Entry, error) {
+func (p *S3FSProvider) List() ([]Entry, error) {
 	return nil, nil
 }
 
-func (p *S3FSProvider) Stat(ctx context.Context, path string) (Entry, error) {
+func (p *S3FSProvider) Stat(path string) (Entry, error) {
 	return Entry{}, nil
 }
 
-func (p *S3FSProvider) Delete(ctx context.Context, path string) error {
+func (p *S3FSProvider) Delete(path string) error {
 	return nil
 }
