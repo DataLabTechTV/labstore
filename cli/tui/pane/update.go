@@ -40,11 +40,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case messages.RefreshMsg:
 		var cmd tea.Cmd
-
 		if m.Child != nil {
 			m.Child, cmd = m.Child.Update(msg)
 		}
-
 		return m, cmd
 
 	case messages.RefreshResultMsg:

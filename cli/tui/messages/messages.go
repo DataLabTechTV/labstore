@@ -16,14 +16,16 @@ type (
 		Msg   tea.Msg
 	}
 
-	RefreshMsg       struct{}
+	ErrorMsg struct{ Err error }
+
+	RefreshMsg       struct{ Metadata map[string]string }
 	RefreshResultMsg struct {
 		Entries []providers.Entry
 		Active  *string
-		Err     error
 	}
 
-	SetValueMsg struct{ Value string }
+	SelectItemMsg struct{ Item string }
+	SetValueMsg   struct{ Value string }
 
 	MoveDownMsg     struct{}
 	MoveUpMsg       struct{}

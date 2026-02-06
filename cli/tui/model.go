@@ -14,6 +14,18 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const (
+	BucketsPaneIndex = iota
+	ProfilesPaneIndex
+	RemotePaneIndex
+	LocalPaneIndex
+)
+
+const (
+	BucketInfoIndex = iota
+	ProfileInfoIndex
+)
+
 type Model struct {
 	panes     []pane.Model
 	infoPanes []infopane.Model
@@ -25,18 +37,25 @@ type Model struct {
 }
 
 func New() Model {
-	const bucketsPaneIndex, profilesPaneIndex, remotePaneIndex, localPaneIndex = 0, 1, 2, 3
-	const bucketInfoIndex, profileInfoIndex = 0, 1
-
 	s3BucketProvider := providers.NewS3BucketProvider()
 	profilesProvider := providers.NewProfilesProvider()
 	s3FSProvider := providers.NewS3FSProvider()
 	fsProvider := providers.NewFSProvider(".")
 
-	bucketList := simplelist.New(bucketsPaneIndex, s3BucketProvider, simplelist.WithInfoPaneIndex(bucketInfoIndex))
-	profileList := simplelist.New(profilesPaneIndex, profilesProvider, simplelist.WithInfoPaneIndex(profileInfoIndex))
-	s3FileList := filelist.New(remotePaneIndex, s3FSProvider)
-	fsFileList := filelist.New(localPaneIndex, fsProvider)
+	bucketList := simplelist.New(
+		BucketsPaneIndex,
+		s3BucketProvider,
+		simplelist.WithRefreshInfoPaneIndexes([]int{BucketInfoIndex}),
+		simplelist.WithRefreshPaneIndexes([]int{RemotePaneIndex}),
+	)
+	profileList := simplelist.New(
+		ProfilesPaneIndex,
+		profilesProvider,
+		simplelist.WithRefreshInfoPaneIndexes([]int{ProfileInfoIndex}),
+		simplelist.WithRefreshPaneIndexes([]int{BucketsPaneIndex}),
+	)
+	s3FileList := filelist.New(RemotePaneIndex, s3FSProvider)
+	fsFileList := filelist.New(LocalPaneIndex, fsProvider)
 
 	bucketPane := pane.New(
 		1, "Buckets",
