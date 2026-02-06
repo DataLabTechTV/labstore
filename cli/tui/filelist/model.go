@@ -9,17 +9,17 @@ import (
 )
 
 type Model struct {
-	ParentID int
-	Provider providers.Provider
-	Entries  []providers.Entry
-	Width    int
-	Height   int
+	ParentIndex int
+	Provider    providers.Provider
+	Entries     []providers.Entry
+	Width       int
+	Height      int
 
 	table    table.Model
 	hCellPad int
 }
 
-func New(parentID int, provider providers.Provider) Model {
+func New(parentIndex int, provider providers.Provider) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Header = tableStyle.Header.
@@ -39,18 +39,18 @@ func New(parentID int, provider providers.Provider) Model {
 	)
 
 	return Model{
-		ParentID: parentID,
-		Provider: provider,
-		table:    fileTable,
-		hCellPad: tableStyle.Cell.GetHorizontalPadding(),
+		ParentIndex: parentIndex,
+		Provider:    provider,
+		table:       fileTable,
+		hCellPad:    tableStyle.Cell.GetHorizontalPadding(),
 	}
 }
 
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
 		return messages.PaneMsg{
-			ID:  m.ParentID,
-			Msg: messages.RefreshMsg{},
+			Index: m.ParentIndex,
+			Msg:   messages.RefreshMsg{},
 		}
 	}
 }

@@ -7,13 +7,13 @@ import (
 
 type (
 	PaneMsg struct {
-		ID  int
-		Msg tea.Msg
+		Index int
+		Msg   tea.Msg
 	}
 
 	InfoPaneMsg struct {
-		ID  int
-		Msg tea.Msg
+		Index int
+		Msg   tea.Msg
 	}
 
 	RefreshMsg       struct{}

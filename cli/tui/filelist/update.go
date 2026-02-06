@@ -37,7 +37,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		return m, refreshCmd(m.ParentID, m.Provider)
+		return m, refreshCmd(m.ParentIndex, m.Provider)
 
 	case messages.RefreshResultMsg:
 		if msg.Err != nil {
@@ -88,8 +88,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmd := func() tea.Msg {
 			return messages.PaneMsg{
-				ID:  m.ParentID,
-				Msg: messages.RefreshMsg{},
+				Index: m.ParentIndex,
+				Msg:   messages.RefreshMsg{},
 			}
 		}
 		return m, cmd
@@ -104,8 +104,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmd := func() tea.Msg {
 			return messages.PaneMsg{
-				ID:  m.ParentID,
-				Msg: messages.RefreshMsg{},
+				Index: m.ParentIndex,
+				Msg:   messages.RefreshMsg{},
 			}
 		}
 		return m, cmd
@@ -115,13 +115,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func refreshCmd(parentID int, provider providers.Provider) tea.Cmd {
+func refreshCmd(parentIndex int, provider providers.Provider) tea.Cmd {
 	return func() tea.Msg {
 		entries, err := provider.List()
 		if err != nil {
 			return messages.PaneMsg{
-				ID:  parentID,
-				Msg: messages.RefreshResultMsg{Err: err},
+				Index: parentIndex,
+				Msg:   messages.RefreshResultMsg{Err: err},
 			}
 		}
 
@@ -131,8 +131,8 @@ func refreshCmd(parentID int, provider providers.Provider) tea.Cmd {
 		}
 
 		return messages.PaneMsg{
-			ID:  parentID,
-			Msg: messages.RefreshResultMsg{Entries: entries, Active: active},
+			Index: parentIndex,
+			Msg:   messages.RefreshResultMsg{Entries: entries, Active: active},
 		}
 	}
 }
