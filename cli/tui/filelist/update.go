@@ -3,6 +3,7 @@ package filelist
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -36,7 +37,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		return m.refresh()
+		return m, refreshCmd(m.ParentID, m.Provider)
 
 	case messages.RefreshResultMsg:
 		if msg.Err != nil {
@@ -114,23 +115,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) refresh() (Model, tea.Cmd) {
-	return m, func() tea.Msg {
-		entries, err := m.Provider.List()
+func refreshCmd(parentID int, provider providers.Provider) tea.Cmd {
+	return func() tea.Msg {
+		entries, err := provider.List()
 		if err != nil {
 			return messages.PaneMsg{
-				ID:  m.ParentID,
+				ID:  parentID,
 				Msg: messages.RefreshResultMsg{Err: err},
 			}
 		}
 
 		var active *string
-		if state, ok := m.Provider.State(); ok && state != "" {
+		if state, ok := provider.State(); ok && state != "" {
 			active = &state
 		}
 
 		return messages.PaneMsg{
-			ID:  m.ParentID,
+			ID:  parentID,
 			Msg: messages.RefreshResultMsg{Entries: entries, Active: active},
 		}
 	}

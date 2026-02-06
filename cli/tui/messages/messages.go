@@ -16,20 +16,14 @@ type (
 		Msg tea.Msg
 	}
 
-	FileListMsg struct {
-		Msg tea.Msg
-	}
-
-	SimpleListMsg struct {
-		Msg tea.Msg
-	}
-
 	RefreshMsg       struct{}
 	RefreshResultMsg struct {
 		Entries []providers.Entry
 		Active  *string
 		Err     error
 	}
+
+	SetValueMsg struct{ Value string }
 
 	MoveDownMsg     struct{}
 	MoveUpMsg       struct{}
@@ -39,6 +33,4 @@ type (
 	PageUpMsg       struct{}
 	LevelUpMsg      struct{}
 	OpenMsg         struct{}
-
-	SetValueMsg struct{ Value string }
 )
