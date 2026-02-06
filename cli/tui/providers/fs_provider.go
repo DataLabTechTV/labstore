@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,7 +13,7 @@ type FSProvider struct {
 	state map[string]string
 }
 
-func (p *FSProvider) Enter(ctx context.Context, path string) error {
+func (p *FSProvider) Enter(path string) error {
 	p.state[p.Path] = path
 	p.Path = filepath.Join(p.Path, path)
 	return nil
@@ -30,7 +29,7 @@ func (p *FSProvider) CWD() string {
 	return homeRelPath
 }
 
-func (p *FSProvider) List(ctx context.Context) ([]Entry, error) {
+func (p *FSProvider) List() ([]Entry, error) {
 	entries := []Entry{}
 
 	if parent, ok := parentDir(p.Path); ok {
@@ -82,11 +81,11 @@ func (p *FSProvider) List(ctx context.Context) ([]Entry, error) {
 	return entries, nil
 }
 
-func (p *FSProvider) Stat(ctx context.Context, path string) (Entry, error) {
+func (p *FSProvider) Stat(path string) (Entry, error) {
 	return Entry{}, nil
 }
 
-func (p *FSProvider) Delete(ctx context.Context, path string) error {
+func (p *FSProvider) Delete(path string) error {
 	return nil
 }
 

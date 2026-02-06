@@ -1,8 +1,6 @@
 package providers
 
 import (
-	"context"
-
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
 )
 
@@ -12,7 +10,7 @@ type ProfilesProvider struct {
 
 var initialized bool = false
 
-func (p *ProfilesProvider) Enter(ctx context.Context, path string) error {
+func (p *ProfilesProvider) Enter(path string) error {
 	p.ActiveProfile = &path
 	return nil
 }
@@ -25,7 +23,7 @@ func (p *ProfilesProvider) CWD() string {
 	return *p.ActiveProfile
 }
 
-func (*ProfilesProvider) List(ctx context.Context) ([]Entry, error) {
+func (*ProfilesProvider) List() ([]Entry, error) {
 	if !initialized {
 		credentials.Init()
 	}
@@ -42,10 +40,10 @@ func (*ProfilesProvider) List(ctx context.Context) ([]Entry, error) {
 	return entries, nil
 }
 
-func (*ProfilesProvider) Stat(ctx context.Context, path string) (Entry, error) {
+func (*ProfilesProvider) Stat(path string) (Entry, error) {
 	return Entry{}, nil
 }
 
-func (*ProfilesProvider) Delete(ctx context.Context, path string) error {
+func (*ProfilesProvider) Delete(path string) error {
 	return nil
 }

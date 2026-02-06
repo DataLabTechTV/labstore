@@ -1,8 +1,6 @@
 package simplelist
 
 import (
-	"context"
-
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
@@ -22,10 +20,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		entries, err := m.Provider.List(ctx)
+		// !FIXME: return as a cmd
+		entries, err := m.Provider.List()
 		if err != nil {
 			render.Error(err)
 			return m, nil
@@ -75,8 +71,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmd := func() tea.Msg {
 			return messages.InfoPaneMsg{
-				Index: m.ParentID - 1,
-				Msg:   messages.SetValue{Value: selectedProfile},
+				ID:  m.ParentID,
+				Msg: messages.SetValueMsg{Value: selectedProfile},
 			}
 		}
 

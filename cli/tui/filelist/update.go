@@ -1,12 +1,17 @@
 package filelist
 
 import (
-	"context"
-
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+)
+
+type (
+	UpdateTableMsg struct {
+		Rows   []table.Row
+		Cursor int
+	}
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -31,50 +36,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		return m.refresh()
 
-		entries, err := m.Provider.List(ctx)
-		if err != nil {
-			render.Error(err)
+	case messages.RefreshResultMsg:
+		if msg.Err != nil {
+			render.Error(msg.Err)
 			return m, nil
 		}
-		m.Entries = entries
-
-		rows := []table.Row{}
-		cursor := 0
-		for i, entry := range m.Entries {
-			var name, size string
-			if entry.IsDir {
-				name = entry.Name + "/"
-				size = "-"
-			} else {
-				name = entry.Name
-				size = render.NewSize(entry.Size).Format()
-			}
-			date := render.NewDate(entry.ModTime).Format()
-
-			if state, ok := m.Provider.State(); ok && name == state {
-				cursor = i
-			}
-
-			rows = append(rows, table.Row{date, size, name})
-		}
-		m.table.SetRows(rows)
-		m.table.SetCursor(cursor)
-
-		var cmd tea.Cmd
-
-		if newTitle := m.Provider.CWD(); newTitle != "" {
-			cmd = func() tea.Msg {
-				return messages.PaneMsg{
-					Index: m.ParentID - 1,
-					Msg:   messages.SetTitle{Title: newTitle},
-				}
-			}
-		}
-
-		return m, cmd
+		m.Entries = msg.Entries
+		m.updateTable(msg.Active)
+		return m, nil
 
 	case tea.FocusMsg:
 		m.table.Focus()
@@ -109,17 +80,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.MoveUp(10)
 
 	case messages.LevelUpMsg:
-		if err := m.Provider.Enter(context.Background(), ".."); err != nil {
+		if err := m.Provider.Enter(".."); err != nil {
 			render.Error(err)
 			return m, nil
 		}
 
 		cmd := func() tea.Msg {
 			return messages.PaneMsg{
-				Index: m.ParentID - 1,
-				Msg: messages.FileListMsg{
-					Msg: messages.RefreshMsg{},
-				},
+				ID:  m.ParentID,
+				Msg: messages.RefreshMsg{},
 			}
 		}
 		return m, cmd
@@ -127,17 +96,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.OpenMsg:
 		path := m.table.SelectedRow()[2]
 
-		if err := m.Provider.Enter(context.Background(), path); err != nil {
+		if err := m.Provider.Enter(path); err != nil {
 			render.Error(err)
 			return m, nil
 		}
 
 		cmd := func() tea.Msg {
 			return messages.PaneMsg{
-				Index: m.ParentID - 1,
-				Msg: messages.FileListMsg{
-					Msg: messages.RefreshMsg{},
-				},
+				ID:  m.ParentID,
+				Msg: messages.RefreshMsg{},
 			}
 		}
 		return m, cmd
@@ -145,4 +112,52 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func (m Model) refresh() (Model, tea.Cmd) {
+	return m, func() tea.Msg {
+		entries, err := m.Provider.List()
+		if err != nil {
+			return messages.PaneMsg{
+				ID:  m.ParentID,
+				Msg: messages.RefreshResultMsg{Err: err},
+			}
+		}
+
+		var active *string
+		if state, ok := m.Provider.State(); ok && state != "" {
+			active = &state
+		}
+
+		return messages.PaneMsg{
+			ID:  m.ParentID,
+			Msg: messages.RefreshResultMsg{Entries: entries, Active: active},
+		}
+	}
+}
+
+func (m *Model) updateTable(active *string) {
+	cursor := 0
+	rows := []table.Row{}
+
+	for i, entry := range m.Entries {
+		var name, size string
+		if entry.IsDir {
+			name = entry.Name + "/"
+			size = "-"
+		} else {
+			name = entry.Name
+			size = render.NewSize(entry.Size).Format()
+		}
+		date := render.NewDate(entry.ModTime).Format()
+
+		if active != nil && name == *active {
+			cursor = i
+		}
+
+		rows = append(rows, table.Row{date, size, name})
+	}
+
+	m.table.SetRows(rows)
+	m.table.SetCursor(cursor)
 }

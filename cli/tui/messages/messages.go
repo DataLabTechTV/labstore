@@ -1,16 +1,19 @@
 package messages
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type (
 	PaneMsg struct {
-		Index int
-		Msg   tea.Msg
+		ID  int
+		Msg tea.Msg
 	}
 
 	InfoPaneMsg struct {
-		Index int
-		Msg   tea.Msg
+		ID  int
+		Msg tea.Msg
 	}
 
 	FileListMsg struct {
@@ -21,7 +24,12 @@ type (
 		Msg tea.Msg
 	}
 
-	RefreshMsg struct{}
+	RefreshMsg       struct{}
+	RefreshResultMsg struct {
+		Entries []providers.Entry
+		Active  *string
+		Err     error
+	}
 
 	MoveDownMsg     struct{}
 	MoveUpMsg       struct{}
@@ -32,6 +40,5 @@ type (
 	LevelUpMsg      struct{}
 	OpenMsg         struct{}
 
-	SetTitle struct{ Title string }
-	SetValue struct{ Value string }
+	SetValueMsg struct{ Value string }
 )
