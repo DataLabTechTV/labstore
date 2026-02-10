@@ -13,23 +13,27 @@ type FSProvider struct {
 	state map[string]string
 }
 
-func (p *FSProvider) Enter(path string) error {
+func (p *FSProvider) Select(path string) error {
 	p.state[p.Path] = path
 	p.Path = filepath.Join(p.Path, path)
 	return nil
 }
 
-func (p *FSProvider) State() (string, bool) {
+func (p *FSProvider) Deselect() error {
+	return nil
+}
+
+func (p *FSProvider) LastSelected() (string, bool) {
 	state, ok := p.state[p.Path]
 	return state, ok
 }
 
-func (p *FSProvider) CWD() string {
+func (p *FSProvider) Selected() string {
 	homeRelPath := helper.TildePath(p.Path)
 	return homeRelPath
 }
 
-func (p *FSProvider) List() ([]Entry, error) {
+func (p *FSProvider) Children() ([]Entry, error) {
 	entries := []Entry{}
 
 	if parent, ok := parentDir(p.Path); ok {

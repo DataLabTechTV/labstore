@@ -47,8 +47,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case messages.RefreshResultMsg:
 		if m.Provider != nil {
-			if cwd := m.Provider.CWD(); cwd != "" {
-				m.Title = cwd
+			if selected := m.Provider.Selected(); selected != "" {
+				m.Title = selected
 			}
 		}
 

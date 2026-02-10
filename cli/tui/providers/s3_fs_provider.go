@@ -5,19 +5,23 @@ type S3FSProvider struct {
 	Key    *string
 }
 
-func (p *S3FSProvider) Enter(path string) error {
+func (p *S3FSProvider) Select(path string) error {
 	return nil
 }
 
-func (p *S3FSProvider) State() (string, bool) {
-	return "", false
+func (p *S3FSProvider) Deselect() error {
+	return nil
 }
 
-func (p *S3FSProvider) CWD() string {
+func (p *S3FSProvider) Selected() string {
 	return ""
 }
 
-func (p *S3FSProvider) List() ([]Entry, error) {
+func (p *S3FSProvider) LastSelected() (string, bool) {
+	return "", false
+}
+
+func (p *S3FSProvider) Children() ([]Entry, error) {
 	return nil, nil
 }
 

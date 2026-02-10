@@ -17,7 +17,7 @@ type S3BucketProvider struct {
 	Bucket  string
 }
 
-func (p *S3BucketProvider) Enter(profile string) error {
+func (p *S3BucketProvider) Select(profile string) error {
 	p.Active = profile != ""
 	p.Host = config.App.Server.S3.Address.Host
 	p.Port = config.App.Server.S3.Address.Port
@@ -25,16 +25,24 @@ func (p *S3BucketProvider) Enter(profile string) error {
 	return nil
 }
 
-func (p *S3BucketProvider) State() (string, bool) {
+func (p *S3BucketProvider) Deselect() error {
+	p.Active = false
+	p.Host = ""
+	p.Port = 0
+	p.Profile = ""
+	return nil
+}
+
+func (p *S3BucketProvider) Selected() string {
+	return p.Bucket
+}
+
+func (p *S3BucketProvider) LastSelected() (string, bool) {
 	// No state, because there is no navigation.
 	return "", false
 }
 
-func (p *S3BucketProvider) CWD() string {
-	return p.Bucket
-}
-
-func (p *S3BucketProvider) List() ([]Entry, error) {
+func (p *S3BucketProvider) Children() ([]Entry, error) {
 	if !p.Active {
 		return []Entry{}, nil
 	}
