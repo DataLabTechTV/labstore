@@ -77,7 +77,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.MoveUp(10)
 
 	case messages.LevelUpMsg:
-		if err := m.Provider.Enter(".."); err != nil {
+		if err := m.Provider.Select(".."); err != nil {
 			render.Error(err)
 			return m, nil
 		}
@@ -93,7 +93,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.OpenMsg:
 		path := m.table.SelectedRow()[2]
 
-		if err := m.Provider.Enter(path); err != nil {
+		if err := m.Provider.Select(path); err != nil {
 			render.Error(err)
 			return m, nil
 		}
@@ -113,7 +113,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func refreshCmd(parentIndex int, provider providers.Provider) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := provider.List()
+		entries, err := provider.Children()
 		if err != nil {
 			return messages.PaneMsg{
 				Index: parentIndex,
@@ -122,8 +122,8 @@ func refreshCmd(parentIndex int, provider providers.Provider) tea.Cmd {
 		}
 
 		var active *string
-		if state, ok := provider.State(); ok && state != "" {
-			active = &state
+		if lastSelected, ok := provider.LastSelected(); ok && lastSelected != "" {
+			active = &lastSelected
 		}
 
 		return messages.PaneMsg{

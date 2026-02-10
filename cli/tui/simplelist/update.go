@@ -59,31 +59,43 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.MoveUp(10)
 
 	case messages.OpenMsg:
-		selected := m.table.SelectedRow()[0]
-		if m.Active != nil && *m.Active == selected {
+		selectedRow := m.table.SelectedRow()
+		if len(selectedRow) < 1 {
+			return m, nil
+		}
+
+		selectedCol := selectedRow[0]
+		if m.Active != nil && *m.Active == selectedCol {
 			m.Active = nil
-			selected = ""
+			selectedCol = ""
+
+			if err := m.Provider.Deselect(); err != nil {
+				return m, func() tea.Msg {
+					return messages.ErrorMsg{Err: err}
+				}
+			}
 		} else {
-			m.Active = &selected
+			m.Active = &selectedCol
+
+			if err := m.Provider.Select(selectedCol); err != nil {
+				return m, func() tea.Msg {
+					return messages.ErrorMsg{Err: err}
+				}
+			}
 		}
 
 		var cmds []tea.Cmd
 
-		if err := m.Provider.Enter(selected); err != nil {
-			return m, func() tea.Msg {
-				return messages.ErrorMsg{Err: err}
-			}
-		}
-
 		for _, paneIndex := range m.RefreshPaneIndexes {
+			msg := messages.RefreshMsg{}
+			if m.Active != nil {
+				msg.Metadata = map[string]string{"selected": *m.Active}
+			}
+
 			cmd := func() tea.Msg {
 				return messages.PaneMsg{
 					Index: paneIndex,
-					Msg: messages.RefreshMsg{
-						Metadata: map[string]string{
-							"selected": *m.Active,
-						},
-					},
+					Msg:   msg,
 				}
 			}
 			cmds = append(cmds, cmd)
@@ -93,7 +105,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := func() tea.Msg {
 				return messages.InfoPaneMsg{
 					Index: infoPaneIndex,
-					Msg:   messages.SetValueMsg{Value: selected},
+					Msg:   messages.SetValueMsg{Value: selectedCol},
 				}
 			}
 			cmds = append(cmds, cmd)
@@ -107,11 +119,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func refreshCmd(parentID int, provider providers.Provider, metadata map[string]string) tea.Cmd {
 	return func() tea.Msg {
-		if err := provider.Enter(metadata["selected"]); err != nil {
+		if err := provider.Select(metadata["selected"]); err != nil {
 			return messages.ErrorMsg{Err: err}
 		}
 
-		entries, err := provider.List()
+		entries, err := provider.Children()
 		if err != nil {
 			return messages.ErrorMsg{Err: err}
 		}

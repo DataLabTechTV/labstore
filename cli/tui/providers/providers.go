@@ -14,10 +14,11 @@ type Entry struct {
 }
 
 type Provider interface {
-	Enter(string) error
-	State() (string, bool)
-	CWD() string
-	List() ([]Entry, error)
+	Select(string) error
+	Deselect() error
+	LastSelected() (string, bool)
+	Selected() string
+	Children() ([]Entry, error)
 	Stat(string) (Entry, error)
 	Delete(string) error
 }

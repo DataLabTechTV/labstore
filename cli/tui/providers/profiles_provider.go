@@ -10,20 +10,25 @@ type ProfilesProvider struct {
 
 var initialized bool = false
 
-func (p *ProfilesProvider) Enter(path string) error {
-	p.ActiveProfile = &path
+func (p *ProfilesProvider) Select(profile string) error {
+	p.ActiveProfile = &profile
 	return nil
 }
 
-func (p *ProfilesProvider) State() (string, bool) {
-	return "", false
+func (p *ProfilesProvider) Deselect() error {
+	p.ActiveProfile = nil
+	return nil
 }
 
-func (p *ProfilesProvider) CWD() string {
+func (p *ProfilesProvider) Selected() string {
 	return *p.ActiveProfile
 }
 
-func (*ProfilesProvider) List() ([]Entry, error) {
+func (p *ProfilesProvider) LastSelected() (string, bool) {
+	return "", false
+}
+
+func (*ProfilesProvider) Children() ([]Entry, error) {
 	if !initialized {
 		credentials.Init()
 	}
