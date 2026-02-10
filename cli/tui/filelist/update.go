@@ -78,8 +78,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.LevelUpMsg:
 		if err := m.Provider.Select(".."); err != nil {
-			render.Error(err)
-			return m, nil
+			return m, func() tea.Msg {
+				return messages.ErrorMsg{Err: err}
+			}
 		}
 
 		cmd := func() tea.Msg {
@@ -94,8 +95,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		path := m.table.SelectedRow()[2]
 
 		if err := m.Provider.Select(path); err != nil {
-			render.Error(err)
-			return m, nil
+			return m, func() tea.Msg {
+				return messages.ErrorMsg{Err: err}
+			}
 		}
 
 		cmd := func() tea.Msg {
