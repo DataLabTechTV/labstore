@@ -106,6 +106,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				case state.BucketsPaneIndex:
 					m.state.SetBucket(*m.Active)
+
+				case state.RemotePaneIndex:
+					// State is set on previous states
+
+				default:
+					// Unsupported
+					return nil
 				}
 
 				return messages.PaneMsg{

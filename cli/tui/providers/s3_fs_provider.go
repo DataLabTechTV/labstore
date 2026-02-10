@@ -2,7 +2,8 @@ package providers
 
 import (
 	"context"
-	"fmt"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
@@ -32,7 +33,7 @@ func (p *S3FSProvider) Select(args ...string) error {
 	p.Bucket = args[1]
 
 	if len(args) > 2 {
-		p.Key = args[2]
+		p.Key = path.Clean(args[2]) + "/"
 	}
 
 	return nil
@@ -47,7 +48,7 @@ func (p *S3FSProvider) Deselect() error {
 }
 
 func (p *S3FSProvider) Selected() string {
-	return fmt.Sprintf("s3://%s%s", p.Bucket, p.Key)
+	return p.Key
 }
 
 func (p *S3FSProvider) LastSelected() (string, bool) {
@@ -77,6 +78,10 @@ func (p *S3FSProvider) Children() ([]Entry, error) {
 	resCh := client.ListObjects(p.Bucket, p.Key, true)
 	var entries []Entry
 
+	if keyParts := strings.Split(p.Key, "/"); len(keyParts) > 1 {
+		entries = append(entries, Entry{Name: keyParts[len(keyParts)-2] + "/.."})
+	}
+
 	for res := range resCh {
 		if res.Err != nil {
 			return nil, res.Err
@@ -85,8 +90,9 @@ func (p *S3FSProvider) Children() ([]Entry, error) {
 		var entry *Entry
 		if res.CommonPrefix != nil {
 			entry = &Entry{
-				Name:  res.CommonPrefix.Prefix,
-				IsDir: true,
+				Name:    res.CommonPrefix.Prefix,
+				IsDir:   true,
+				ModTime: time.Now(),
 			}
 		} else {
 			entry = &Entry{
