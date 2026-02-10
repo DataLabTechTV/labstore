@@ -3,6 +3,7 @@ package simplelist
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -19,7 +20,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		return m, refreshCmd(m.ParentIndex, m.Provider, msg.Metadata)
+		return m, refreshCmd(m.ParentIndex, m.Provider, m.state)
 
 	case messages.RefreshResultMsg:
 		m.Entries = providers.EntryNames(msg.Entries)
@@ -86,21 +87,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		var cmds []tea.Cmd
 
-		for _, paneIndex := range m.RefreshPaneIndexes {
-			msg := messages.RefreshMsg{}
-			if m.Active != nil {
-				msg.Metadata = map[string]string{"selected": *m.Active}
-			}
-
-			cmd := func() tea.Msg {
-				return messages.PaneMsg{
-					Index: paneIndex,
-					Msg:   msg,
-				}
-			}
-			cmds = append(cmds, cmd)
-		}
-
 		for _, infoPaneIndex := range m.RefreshInfoPaneIndexes {
 			cmd := func() tea.Msg {
 				return messages.InfoPaneMsg{
@@ -111,18 +97,56 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 
-		return m, tea.Batch(cmds...)
+		for _, paneIndex := range m.RefreshPaneIndexes {
+			cmd := func() tea.Msg {
+				switch paneIndex {
+
+				case state.ProfilesPaneIndex:
+					m.state.SetProfile(*m.Active)
+
+				case state.BucketsPaneIndex:
+					m.state.SetBucket(*m.Active)
+				}
+
+				return messages.PaneMsg{
+					Index: paneIndex,
+					Msg:   messages.RefreshMsg{},
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
+
+		return m, tea.Sequence(cmds...)
 	}
 
 	return m, nil
 }
 
-func refreshCmd(parentID int, provider providers.Provider, metadata map[string]string) tea.Cmd {
+func refreshCmd(parentID int, provider providers.Provider, state *state.State) tea.Cmd {
 	return func() tea.Msg {
-		if selected, ok := metadata["selected"]; ok {
-			if err := provider.Select(selected); err != nil {
-				return messages.ErrorMsg{Err: err}
+		switch provider.(type) {
+		case *providers.S3BucketProvider:
+			if state.HasBucket() {
+				args := []string{state.Bucket()}
+				if state.HasRemotePath() {
+					args = append(args, state.RemotePath())
+				}
+
+				if err := provider.Select(args...); err != nil {
+					return messages.ErrorMsg{Err: err}
+				}
 			}
+
+		case *providers.ProfilesProvider:
+			if state.HasProfile() {
+				if err := provider.Select(state.Profile()); err != nil {
+					return messages.ErrorMsg{Err: err}
+				}
+			}
+
+		default:
+			// Unsupported
+			return nil
 		}
 
 		entries, err := provider.Children()

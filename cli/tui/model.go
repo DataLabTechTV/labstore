@@ -10,24 +10,15 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/pane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/simplelist"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/statusbar"
 	"github.com/IllumiKnowLabs/labstore/server/constants"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const (
-	BucketsPaneIndex = iota
-	ProfilesPaneIndex
-	RemotePaneIndex
-	LocalPaneIndex
-)
-
-const (
-	BucketInfoIndex = iota
-	ProfileInfoIndex
-)
-
 type Model struct {
+	State *state.State
+
 	panes     []pane.Model
 	infoPanes []infopane.Model
 	statusBar statusbar.Model
@@ -39,25 +30,29 @@ type Model struct {
 }
 
 func New() Model {
+	var globalState state.State
+
 	s3BucketProvider := providers.NewS3BucketProvider()
 	profilesProvider := providers.NewProfilesProvider()
 	s3FSProvider := providers.NewS3FSProvider()
-	fsProvider := providers.NewFSProvider(".")
+	fsProvider := providers.NewFSProvider()
 
 	bucketList := simplelist.New(
-		BucketsPaneIndex,
+		&globalState,
+		state.BucketsPaneIndex,
 		s3BucketProvider,
-		simplelist.WithRefreshInfoPaneIndexes([]int{BucketInfoIndex}),
-		simplelist.WithRefreshPaneIndexes([]int{RemotePaneIndex}),
+		simplelist.WithRefreshInfoPaneIndexes([]int{state.BucketInfoIndex}),
+		simplelist.WithRefreshPaneIndexes([]int{state.RemotePaneIndex}),
 	)
 	profileList := simplelist.New(
-		ProfilesPaneIndex,
+		&globalState,
+		state.ProfilesPaneIndex,
 		profilesProvider,
-		simplelist.WithRefreshInfoPaneIndexes([]int{ProfileInfoIndex}),
-		simplelist.WithRefreshPaneIndexes([]int{BucketsPaneIndex}),
+		simplelist.WithRefreshInfoPaneIndexes([]int{state.ProfileInfoIndex}),
+		simplelist.WithRefreshPaneIndexes([]int{state.BucketsPaneIndex}),
 	)
-	s3FileList := filelist.New(RemotePaneIndex, s3FSProvider)
-	fsFileList := filelist.New(LocalPaneIndex, fsProvider)
+	s3FileList := filelist.New(&globalState, state.RemotePaneIndex, s3FSProvider)
+	fsFileList := filelist.New(&globalState, state.LocalPaneIndex, fsProvider)
 
 	bucketPane := pane.New(
 		1, "Buckets",
@@ -86,6 +81,7 @@ func New() Model {
 	profileInfo := infopane.New("Active Profile", infopane.ValueNone)
 
 	return Model{
+		State:         &globalState,
 		panes:         []pane.Model{bucketPane, profilesPane, remotePane, localPane},
 		infoPanes:     []infopane.Model{bucketInfo, profileInfo},
 		statusBar:     statusbar.New(DefaultHomeKeyMap.HelpKeys()),

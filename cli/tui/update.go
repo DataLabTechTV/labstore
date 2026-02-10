@@ -5,6 +5,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -139,6 +140,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.InfoPaneMsg:
 		var cmd tea.Cmd
 		m.infoPanes[msg.Index], cmd = m.infoPanes[msg.Index].Update(msg.Msg)
+
+		switch msg.Index {
+
+		case state.ProfileInfoIndex:
+			m.State.SetProfile(msg.Msg.(messages.SetValueMsg).Value)
+
+		case state.BucketInfoIndex:
+			m.State.SetBucket(msg.Msg.(messages.SetValueMsg).Value)
+		}
+
 		return m, cmd
 	}
 

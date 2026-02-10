@@ -2,6 +2,7 @@ package providers
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
+	"github.com/IllumiKnowLabs/labstore/cli/errs"
 )
 
 type ProfilesProvider struct {
@@ -10,8 +11,12 @@ type ProfilesProvider struct {
 
 var initialized bool = false
 
-func (p *ProfilesProvider) Select(profile string) error {
-	p.ActiveProfile = &profile
+func (p *ProfilesProvider) Select(args ...string) error {
+	if len(args) < 1 {
+		return &errs.ErrInsufficientArguments{}
+	}
+
+	p.ActiveProfile = &args[0]
 	return nil
 }
 
@@ -31,6 +36,7 @@ func (p *ProfilesProvider) LastSelected() (string, bool) {
 func (*ProfilesProvider) Children() ([]Entry, error) {
 	if !initialized {
 		credentials.Init()
+		initialized = true
 	}
 
 	cred, err := credentials.LoadCredentials()

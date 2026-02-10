@@ -4,6 +4,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -37,7 +38,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(m.Height)
 
 	case messages.RefreshMsg:
-		return m, refreshCmd(m.ParentIndex, m.Provider)
+		return m, refreshCmd(m.ParentIndex, m.Provider, m.state)
 
 	case messages.RefreshResultMsg:
 		m.Entries = msg.Entries
@@ -113,8 +114,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func refreshCmd(parentIndex int, provider providers.Provider) tea.Cmd {
+func refreshCmd(parentIndex int, provider providers.Provider, state *state.State) tea.Cmd {
 	return func() tea.Msg {
+		switch provider.(type) {
+		case *providers.FSProvider:
+			if state.HasLocalPath() {
+				if err := provider.Select(state.LocalPath()); err != nil {
+					return messages.ErrorMsg{Err: err}
+				}
+			}
+
+		case *providers.S3FSProvider:
+			if state.HasProfile() && state.HasBucket() {
+				args := []string{state.Profile(), state.Bucket()}
+				if state.HasRemotePath() {
+					args = append(args, state.RemotePath())
+				}
+
+				if err := provider.Select(args...); err != nil {
+					return messages.ErrorMsg{Err: err}
+				}
+			}
+
+		default:
+			// Unsupported
+			return nil
+		}
+
 		entries, err := provider.Children()
 		if err != nil {
 			return messages.PaneMsg{

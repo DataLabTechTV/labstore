@@ -18,7 +18,7 @@ type (
 
 	ErrorMsg struct{ Err error }
 
-	RefreshMsg       struct{ Metadata map[string]string }
+	RefreshMsg       struct{}
 	RefreshResultMsg struct {
 		Entries []providers.Entry
 		Active  *string
