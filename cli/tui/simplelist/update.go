@@ -119,8 +119,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func refreshCmd(parentID int, provider providers.Provider, metadata map[string]string) tea.Cmd {
 	return func() tea.Msg {
-		if err := provider.Select(metadata["selected"]); err != nil {
-			return messages.ErrorMsg{Err: err}
+		if selected, ok := metadata["selected"]; ok {
+			if err := provider.Select(selected); err != nil {
+				return messages.ErrorMsg{Err: err}
+			}
 		}
 
 		entries, err := provider.Children()
