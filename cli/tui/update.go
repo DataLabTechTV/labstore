@@ -1,7 +1,9 @@
 package tui
 
 import (
-	"github.com/IllumiKnowLabs/labstore/cli/render"
+	"fmt"
+
+	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -115,8 +117,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case messages.ErrorMsg:
-		// !FIXME: Implement proper error handling component.
-		render.Error(msg.Err)
+		alert, cmd := alert.New(alert.AlertError, fmt.Sprintf("%T", msg.Err), msg.Err.Error())
+		m.alerts = append(m.alerts, alert)
+		return m, cmd
+
+	case messages.HideAlertMsg:
+		alerts := []alert.Model{}
+		for _, alert := range m.alerts {
+			if alert.ID != msg.ID {
+				alerts = append(alerts, alert)
+			}
+		}
+		m.alerts = alerts
 		return m, nil
 
 	case messages.PaneMsg:

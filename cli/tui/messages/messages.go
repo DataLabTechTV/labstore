@@ -24,6 +24,8 @@ type (
 		Active  *string
 	}
 
+	HideAlertMsg struct{ ID string }
+
 	SelectItemMsg struct{ Item string }
 	SetValueMsg   struct{ Value string }
 

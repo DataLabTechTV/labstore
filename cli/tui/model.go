@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 
+	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/infopane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
@@ -30,6 +31,7 @@ type Model struct {
 	panes     []pane.Model
 	infoPanes []infopane.Model
 	statusBar statusbar.Model
+	alerts    []alert.Model
 
 	focusedPaneID int
 	width         int
