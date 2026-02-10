@@ -77,8 +77,13 @@ func (p *FSProvider) Children() ([]Entry, error) {
 			return nil, err
 		}
 
+		name := dirEntry.Name()
+		if dirEntry.IsDir() {
+			name += "/"
+		}
+
 		entry := Entry{
-			Name:    dirEntry.Name(),
+			Name:    name,
 			Path:    filepath.Join(p.Path, dirEntry.Name()),
 			IsDir:   dirEntry.IsDir(),
 			Size:    info.Size(),

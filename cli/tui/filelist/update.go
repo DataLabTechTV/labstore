@@ -93,12 +93,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case messages.OpenMsg:
-		path := m.table.SelectedRow()[2]
+		filename := m.table.SelectedRow()[2]
 
-		if err := m.Provider.Select(path); err != nil {
-			return m, func() tea.Msg {
-				return messages.ErrorMsg{Err: err}
-			}
+		switch m.ParentIndex {
+		case state.LocalPaneIndex:
+			m.state.SetLocalPath(filename)
+
+		case state.RemotePaneIndex:
+			m.state.SetRemotePath(filename)
+
+		default:
+			// Unsupported
+			return m, nil
 		}
 
 		cmd := func() tea.Msg {
@@ -168,7 +174,7 @@ func (m *Model) updateTable(active *string) {
 	for i, entry := range m.Entries {
 		var name, size string
 		if entry.IsDir {
-			name = entry.Name + "/"
+			name = entry.Name
 			size = "-"
 		} else {
 			name = entry.Name
