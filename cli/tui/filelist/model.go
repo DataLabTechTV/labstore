@@ -4,6 +4,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -15,11 +16,12 @@ type Model struct {
 	Width       int
 	Height      int
 
+	state    *state.State
 	table    table.Model
 	hCellPad int
 }
 
-func New(parentIndex int, provider providers.Provider) Model {
+func New(state *state.State, parentIndex int, provider providers.Provider) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Header = tableStyle.Header.
@@ -41,6 +43,7 @@ func New(parentIndex int, provider providers.Provider) Model {
 	return Model{
 		ParentIndex: parentIndex,
 		Provider:    provider,
+		state:       state,
 		table:       fileTable,
 		hCellPad:    tableStyle.Cell.GetHorizontalPadding(),
 	}

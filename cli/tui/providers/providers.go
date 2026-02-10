@@ -1,7 +1,7 @@
 package providers
 
 import (
-	"path/filepath"
+	"os"
 	"time"
 )
 
@@ -14,7 +14,7 @@ type Entry struct {
 }
 
 type Provider interface {
-	Select(string) error
+	Select(...string) error
 	Deselect() error
 	LastSelected() (string, bool)
 	Selected() string
@@ -29,23 +29,24 @@ func NewS3BucketProvider() *S3BucketProvider {
 }
 
 func NewProfilesProvider() *ProfilesProvider {
+	// TODO: keep state of last selected profile (fallback to default if it does not exist anymore)
 	return &ProfilesProvider{ActiveProfile: nil}
 }
 
 func NewS3FSProvider() *S3FSProvider {
 	// TODO: keep state of last selected bucket and key (both might not exist anymore)
-	return &S3FSProvider{Bucket: nil, Key: nil}
+	return &S3FSProvider{}
 }
 
-func NewFSProvider(rootPath string) *FSProvider {
-	absPath, err := filepath.Abs(rootPath)
+func NewFSProvider() *FSProvider {
+	path, err := os.Getwd()
 	if err != nil {
-		absPath = rootPath
+		path = "."
 	}
 
 	return &FSProvider{
-		Path:  absPath,
-		state: make(map[string]string),
+		Path:         path,
+		lastSelected: make(map[string]string),
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
+	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/client/s3"
 	"github.com/IllumiKnowLabs/labstore/server/config"
 )
@@ -14,10 +15,14 @@ type S3BucketProvider struct {
 	Host    string
 	Port    uint16
 	Profile string
-	Bucket  string
 }
 
-func (p *S3BucketProvider) Select(profile string) error {
+func (p *S3BucketProvider) Select(args ...string) error {
+	if len(args) < 1 {
+		return &errs.ErrInsufficientArguments{}
+	}
+
+	profile := args[0]
 	p.Active = profile != ""
 	p.Host = config.App.Server.S3.Address.Host
 	p.Port = config.App.Server.S3.Address.Port
@@ -34,7 +39,7 @@ func (p *S3BucketProvider) Deselect() error {
 }
 
 func (p *S3BucketProvider) Selected() string {
-	return p.Bucket
+	return p.Profile
 }
 
 func (p *S3BucketProvider) LastSelected() (string, bool) {

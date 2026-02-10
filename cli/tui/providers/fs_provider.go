@@ -5,17 +5,23 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
 type FSProvider struct {
-	Path  string
-	state map[string]string
+	Path         string
+	lastSelected map[string]string
 }
 
-func (p *FSProvider) Select(path string) error {
-	p.state[p.Path] = path
-	p.Path = filepath.Join(p.Path, path)
+func (p *FSProvider) Select(args ...string) error {
+	if len(args) < 1 {
+		return &errs.ErrInsufficientArguments{}
+	}
+
+	filename := args[0]
+	p.lastSelected[p.Path] = filename
+	p.Path = filepath.Join(p.Path, filename)
 	return nil
 }
 
@@ -24,7 +30,7 @@ func (p *FSProvider) Deselect() error {
 }
 
 func (p *FSProvider) LastSelected() (string, bool) {
-	state, ok := p.state[p.Path]
+	state, ok := p.lastSelected[p.Path]
 	return state, ok
 }
 

@@ -4,6 +4,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -18,13 +19,14 @@ type Model struct {
 	Width                  int
 	Height                 int
 
+	state    *state.State
 	table    table.Model
 	hCellPad int
 }
 
 type SimpleListOption func(m *Model)
 
-func New(parentIndex int, provider providers.Provider, opts ...SimpleListOption) Model {
+func New(state *state.State, parentIndex int, provider providers.Provider, opts ...SimpleListOption) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Selected = tableStyle.Selected.
@@ -42,6 +44,7 @@ func New(parentIndex int, provider providers.Provider, opts ...SimpleListOption)
 	model := Model{
 		ParentIndex: parentIndex,
 		Provider:    provider,
+		state:       state,
 		table:       simpleTable,
 		hCellPad:    tableStyle.Cell.GetHorizontalPadding(),
 	}

@@ -21,3 +21,9 @@ func (e *ErrProfileNotFound) Error() string {
 func (e *ErrDefaultProfileNotSet) Error() string {
 	return "default profile not set"
 }
+
+type ErrInsufficientArguments struct{}
+
+func (e *ErrInsufficientArguments) Error() string {
+	return "insufficient arguments"
+}
