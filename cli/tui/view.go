@@ -10,16 +10,16 @@ import (
 func (m Model) View() string {
 	leftPanes := lipgloss.JoinVertical(
 		lipgloss.Left,
-		m.infoPanes[0].View(),
-		m.panes[0].View(),
-		m.panes[1].View(),
-		m.infoPanes[1].View(),
+		m.bucketInfoPane.View(),
+		m.bucketsPane.View(),
+		m.profilesPane.View(),
+		m.profileInfoPane.View(),
 	)
 
 	rightPanes := lipgloss.JoinVertical(
 		lipgloss.Left,
-		m.panes[2].View(),
-		m.panes[3].View(),
+		m.remotePane.View(),
+		m.localPane.View(),
 	)
 
 	topPanes := lipgloss.JoinHorizontal(

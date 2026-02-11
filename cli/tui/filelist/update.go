@@ -1,12 +1,8 @@
 package filelist
 
 import (
-	"strings"
-
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -17,6 +13,10 @@ type (
 		Cursor int
 	}
 )
+
+func (m Model) Init() tea.Cmd {
+	return func() tea.Msg { return messages.RefreshMsg{} }
+}
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -39,8 +39,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetWidth(m.Width)
 		m.table.SetHeight(m.Height)
 
-	case messages.RefreshMsg:
-		return m, refreshCmd(m.ParentIndex, m.Provider, m.state)
+	// case messages.RefreshMsg:
+	// 	return m, refreshCmd(m.ParentIndex, m.Provider, m.state)
 
 	case messages.RefreshResultMsg:
 		m.Entries = msg.Entries
@@ -79,112 +79,111 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.PageUpMsg:
 		m.table.MoveUp(10)
 
-	case messages.LevelUpMsg:
-		switch m.ParentIndex {
+		// case messages.LevelUpMsg:
+		// 	switch m.ParentIndex {
 
-		case state.LocalPaneIndex:
-			if !m.state.HasLocalPath() || m.state.IsLocalPathRoot() {
-				return m, nil
-			}
-			m.state.CDLocalPath("..")
+		// 	case state.FocusLocal:
+		// 		if !m.state.HasLocalPath() || m.state.IsLocalPathRoot() {
+		// 			return m, nil
+		// 		}
+		// 		m.state.CDLocalPath("..")
 
-		case state.RemotePaneIndex:
-			if !m.state.HasRemotePath() || m.state.IsRemotePathRoot() {
-				return m, nil
-			}
-			m.state.CDRemotePath("..")
-		}
+		// 	case state.FocusRemote:
+		// 		if !m.state.HasRemotePath() || m.state.IsRemotePathRoot() {
+		// 			return m, nil
+		// 		}
+		// 		m.state.CDRemotePath("..")
+		// 	}
 
-		cmd := func() tea.Msg {
-			return messages.PaneMsg{
-				Index: m.ParentIndex,
-				Msg:   messages.RefreshMsg{},
-			}
-		}
-		return m, cmd
+		// 	cmd := func() tea.Msg {
+		// 		return messages.PaneMsg{
+		// 			Index: m.ParentIndex,
+		// 			Msg:   messages.RefreshMsg{},
+		// 		}
+		// 	}
+		// 	return m, cmd
 
-	case messages.OpenMsg:
-		selectedRow := m.table.SelectedRow()
-		if len(selectedRow) < 3 {
-			return m, nil
-		}
-		dirname := selectedRow[2]
+		// case messages.OpenMsg:
+		// 	selectedRow := m.table.SelectedRow()
+		// 	if len(selectedRow) < 3 {
+		// 		return m, nil
+		// 	}
+		// 	dirname := selectedRow[2]
 
-		if dirname != ".." && !strings.HasSuffix(dirname, "/") {
-			return m, nil
-		}
+		// 	if dirname != ".." && !strings.HasSuffix(dirname, "/") {
+		// 		return m, nil
+		// 	}
 
-		switch m.ParentIndex {
-		case state.LocalPaneIndex:
-			m.state.CDLocalPath(dirname)
+		// 	switch m.ParentIndex {
+		// 	case state.FocusLocal:
+		// 		m.state.CDLocalPath(dirname)
 
-		case state.RemotePaneIndex:
-			m.state.CDRemotePath(dirname)
+		// 	case state.FocusRemote:
+		// 		m.state.CDRemotePath(dirname)
 
-		default:
-			// Unsupported
-			return m, nil
-		}
+		// 	default:
+		// 		// Unsupported
+		// 		return m, nil
+		// 	}
 
-		cmd := func() tea.Msg {
-			return messages.PaneMsg{
-				Index: m.ParentIndex,
-				Msg:   messages.RefreshMsg{},
-			}
-		}
-		return m, cmd
-
+		// 	cmd := func() tea.Msg {
+		// 		return messages.PaneMsg{
+		// 			Index: m.ParentIndex,
+		// 			Msg:   messages.RefreshMsg{},
+		// 		}
+		// 	}
+		// 	return m, cmd
 	}
 
 	return m, nil
 }
 
-func refreshCmd(parentIndex int, provider providers.Provider, globalState *state.State) tea.Cmd {
-	return func() tea.Msg {
-		switch parentIndex {
-		case state.LocalPaneIndex:
-			if globalState.HasLocalPath() {
-				if err := provider.Select(globalState.LocalPath()); err != nil {
-					return messages.AlertErrorMsg{Err: err}
-				}
-			}
+// func refreshCmd(parentIndex int, provider providers.Provider, globalState *state.State) tea.Cmd {
+// 	return func() tea.Msg {
+// 		switch parentIndex {
+// 		case state.FocusLocal:
+// 			if globalState.HasLocalPath() {
+// 				if err := provider.Select(globalState.LocalPath()); err != nil {
+// 					return messages.AlertErrorMsg{Err: err}
+// 				}
+// 			}
 
-		case state.RemotePaneIndex:
-			if globalState.HasProfile() && globalState.HasBucket() {
-				args := []string{globalState.Profile(), globalState.Bucket()}
-				if globalState.HasRemotePath() {
-					args = append(args, globalState.RemotePath())
-				}
+// 		case state.FocusRemote:
+// 			if globalState.HasProfile() && globalState.HasBucket() {
+// 				args := []string{globalState.Profile(), globalState.Bucket()}
+// 				if globalState.HasRemotePath() {
+// 					args = append(args, globalState.RemotePath())
+// 				}
 
-				if err := provider.Select(args...); err != nil {
-					return messages.AlertErrorMsg{Err: err}
-				}
-			}
+// 				if err := provider.Select(args...); err != nil {
+// 					return messages.AlertErrorMsg{Err: err}
+// 				}
+// 			}
 
-		default:
-			// Unsupported
-			return nil
-		}
+// 		default:
+// 			// Unsupported
+// 			return nil
+// 		}
 
-		entries, err := provider.Children()
-		if err != nil {
-			return messages.PaneMsg{
-				Index: parentIndex,
-				Msg:   messages.AlertErrorMsg{Err: err},
-			}
-		}
+// 		entries, err := provider.Children()
+// 		if err != nil {
+// 			return messages.PaneMsg{
+// 				Index: parentIndex,
+// 				Msg:   messages.AlertErrorMsg{Err: err},
+// 			}
+// 		}
 
-		var active *string
-		if lastSelected, ok := provider.LastSelected(); ok && lastSelected != "" {
-			active = &lastSelected
-		}
+// 		var active *string
+// 		if lastSelected, ok := provider.LastSelected(); ok && lastSelected != "" {
+// 			active = &lastSelected
+// 		}
 
-		return messages.PaneMsg{
-			Index: parentIndex,
-			Msg:   messages.RefreshResultMsg{Entries: entries, Active: active},
-		}
-	}
-}
+// 		return messages.PaneMsg{
+// 			Index: parentIndex,
+// 			Msg:   messages.RefreshResultMsg{Entries: entries, Active: active},
+// 		}
+// 	}
+// }
 
 func (m *Model) updateTable(active *string) {
 	cursor := 0

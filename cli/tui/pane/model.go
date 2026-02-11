@@ -1,18 +1,18 @@
 package pane
 
 import (
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/simplelist"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Model struct {
-	ID       int
-	Title    string
-	Focused  bool
-	Width    int
-	Height   int
-	Child    tea.Model
-	Provider providers.Provider
+	ID      int
+	Title   string
+	Focused bool
+	Width   int
+	Height  int
+	Child   tea.Model
 }
 
 type PaneOption func(m *Model)
@@ -43,15 +43,32 @@ func WithChild(child tea.Model) PaneOption {
 	}
 }
 
-func WithProvider(provider providers.Provider) PaneOption {
+func WithSimpleList() PaneOption {
 	return func(m *Model) {
-		m.Provider = provider
+		m.Child = simplelist.New()
 	}
 }
 
-func (m Model) Init() tea.Cmd {
-	if childCmd := m.Child.Init(); childCmd != nil {
-		return childCmd
+func WithFileList() PaneOption {
+	return func(m *Model) {
+		m.Child = filelist.New()
 	}
-	return nil
+}
+
+func (m Model) SetFocused(focused bool) Model {
+	m.Focused = focused
+	return m
+}
+
+func (m Model) Clear() Model {
+	switch child := m.Child.(type) {
+
+	case simplelist.Model:
+		m.Child = child.Clear()
+
+	case filelist.Model:
+		m.Child = child.Clear()
+	}
+
+	return m
 }

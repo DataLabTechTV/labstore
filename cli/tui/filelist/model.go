@@ -2,26 +2,20 @@ package filelist
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Model struct {
-	ParentIndex int
-	Provider    providers.Provider
-	Entries     []providers.Entry
-	Width       int
-	Height      int
+	Entries []providers.Entry
+	Width   int
+	Height  int
 
-	state    *state.State
 	table    table.Model
 	hCellPad int
 }
 
-func New(state *state.State, parentIndex int, provider providers.Provider) Model {
+func New() Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Header = tableStyle.Header.
@@ -41,14 +35,20 @@ func New(state *state.State, parentIndex int, provider providers.Provider) Model
 	)
 
 	return Model{
-		ParentIndex: parentIndex,
-		Provider:    provider,
-		state:       state,
-		table:       fileTable,
-		hCellPad:    tableStyle.Cell.GetHorizontalPadding(),
+		table:    fileTable,
+		hCellPad: tableStyle.Cell.GetHorizontalPadding(),
 	}
 }
 
-func (m Model) Init() tea.Cmd {
-	return func() tea.Msg { return messages.RefreshMsg{} }
+func (m Model) SetEntries(entries []providers.Entry, active *string) Model {
+	m.Entries = entries
+	m.updateTable(active)
+	return m
+}
+
+func (m Model) Clear() Model {
+	m.Entries = []providers.Entry{}
+	m.table.SetRows([]table.Row{})
+	m.table.SetCursor(0)
+	return m
 }

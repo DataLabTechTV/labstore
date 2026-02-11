@@ -5,7 +5,6 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -13,6 +12,10 @@ import (
 const (
 	statusBarHeight = 1
 )
+
+func (m Model) Init() tea.Cmd {
+	return func() tea.Msg { return messages.LoadProfilesMsg{} }
+}
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -25,36 +28,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		leftPaneWidth := int(1 / 3.0 * float64(m.width))
 
-		m.infoPanes[0].Width = leftPaneWidth
-		m.infoPanes[1].Width = leftPaneWidth
-		remainingHeight := m.height - m.infoPanes[0].Height - m.infoPanes[1].Height - statusBarHeight
+		m.bucketInfoPane.Width = leftPaneWidth
+		m.profileInfoPane.Width = leftPaneWidth
+		remainingHeight := m.height - m.bucketInfoPane.Height - m.profileInfoPane.Height - statusBarHeight
 
-		cmds := make([]tea.Cmd, len(m.panes))
+		var cmds []tea.Cmd
 
-		m.panes[0], cmds[0] = m.panes[0].Update(tea.WindowSizeMsg{
+		var cmd tea.Cmd
+		m.bucketsPane, cmd = m.bucketsPane.Update(tea.WindowSizeMsg{
 			Width:  leftPaneWidth,
 			Height: remainingHeight / 2,
 		})
-		remainingHeight -= m.panes[0].Height
+		cmds = append(cmds, cmd)
+		remainingHeight -= m.bucketsPane.Height
 
-		m.panes[1], cmds[1] = m.panes[1].Update(tea.WindowSizeMsg{
+		m.profilesPane, cmd = m.profilesPane.Update(tea.WindowSizeMsg{
 			Width:  leftPaneWidth,
 			Height: remainingHeight,
 		})
+		cmds = append(cmds, cmd)
 
 		// --- Right ---
 
 		rightPaneWidth := m.width - leftPaneWidth
 
-		m.panes[2], cmds[2] = m.panes[2].Update(tea.WindowSizeMsg{
+		m.remotePane, cmd = m.remotePane.Update(tea.WindowSizeMsg{
 			Width:  rightPaneWidth,
 			Height: (m.height - statusBarHeight) / 2,
 		})
+		cmds = append(cmds, cmd)
 
-		m.panes[3], cmds[3] = m.panes[3].Update(tea.WindowSizeMsg{
+		m.localPane, cmd = m.localPane.Update(tea.WindowSizeMsg{
 			Width:  rightPaneWidth,
-			Height: m.height - m.panes[2].Height - statusBarHeight,
+			Height: m.height - m.remotePane.Height - statusBarHeight,
 		})
+		cmds = append(cmds, cmd)
 
 		return m, tea.Batch(cmds...)
 
@@ -66,7 +74,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, km.Refresh):
 				var cmds []tea.Cmd
 
-				m, cmd := m.sendToAll(messages.RefreshMsg{})
+				m, cmd := m.SendToAllPanes(messages.RefreshMsg{})
 				cmds = append(cmds, cmd)
 
 				alertCmd := func() tea.Msg {
@@ -80,59 +88,145 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Batch(cmds...)
 
 			case key.Matches(msg, km.Open):
-				return m.sendToFocused(messages.OpenMsg{})
+				return m.SendToFocusedPane(messages.OpenMsg{})
 
 			case key.Matches(msg, km.NavUp):
-				return m.sendToFocused(messages.LevelUpMsg{})
+				return m.SendToFocusedPane(messages.LevelUpMsg{})
 
 			case key.Matches(msg, km.Down):
-				return m.sendToFocused(messages.MoveDownMsg{})
+				return m.SendToFocusedPane(messages.MoveDownMsg{})
 
 			case key.Matches(msg, km.Up):
-				return m.sendToFocused(messages.MoveUpMsg{})
+				return m.SendToFocusedPane(messages.MoveUpMsg{})
 
 			case key.Matches(msg, km.End):
-				return m.sendToFocused(messages.MoveToBottomMsg{})
+				return m.SendToFocusedPane(messages.MoveToBottomMsg{})
 
 			case key.Matches(msg, km.Home):
-				return m.sendToFocused(messages.MoveToTopMsg{})
+				return m.SendToFocusedPane(messages.MoveToTopMsg{})
 
 			case key.Matches(msg, km.PgDn):
-				return m.sendToFocused(messages.PageDownMsg{})
+				return m.SendToFocusedPane(messages.PageDownMsg{})
 
 			case key.Matches(msg, km.PgUp):
-				return m.sendToFocused(messages.PageUpMsg{})
+				return m.SendToFocusedPane(messages.PageUpMsg{})
 
 			case key.Matches(msg, km.Focus1):
-				return m.paneFocus(0)
+				var cmd tea.Cmd
+				m = m.SetFocusedPane(FocusBuckets)
+				m.bucketsPane, cmd = m.bucketsPane.Update(messages.RefreshMsg{})
+				return m, cmd
 
 			case key.Matches(msg, km.Focus2):
-				return m.paneFocus(1)
+				m = m.SetFocusedPane(FocusProfiles)
 
 			case key.Matches(msg, km.Focus3):
-				return m.paneFocus(2)
+				m = m.SetFocusedPane(FocusRemote)
 
 			case key.Matches(msg, km.Focus4):
-				return m.paneFocus(3)
+				m = m.SetFocusedPane(FocusLocal)
 
 			case key.Matches(msg, km.Next):
-				if m.focusedPaneIndex+1 >= len(m.panes) {
-					return m.paneFocus(0)
-				} else {
-					return m.paneFocus(m.focusedPaneIndex + 1)
-				}
+				m = m.SetFocusedPane((m.focusedPane + 1) % 4)
 
 			case key.Matches(msg, km.Previous):
-				if m.focusedPaneIndex-1 < 0 {
-					return m.paneFocus(len(m.panes) - 1)
-				} else {
-					return m.paneFocus(m.focusedPaneIndex - 1)
-				}
+				m = m.SetFocusedPane((m.focusedPane + 4 - 1) % 4)
 
 			case key.Matches(msg, km.Quit):
 				return m, tea.Quit
 			}
 		}
+
+	case messages.LoadProfilesMsg:
+		return m, func() tea.Msg {
+			entries, err := m.profilesProvider.Children()
+			if err != nil {
+				return messages.AlertErrorMsg{Err: err}
+			}
+			return messages.ProfilesLoadedMsg{Entries: entries}
+		}
+
+	case messages.ProfilesLoadedMsg:
+		var cmd tea.Cmd
+		m.profilesPane = m.profilesPane.SetEntries(msg.Entries)
+		m.profilesPane, cmd = m.profilesPane.Update(msg)
+		return m, cmd
+
+	case messages.ProfileSelectedMsg:
+		if m.profileInfoPane.Value == msg.Profile {
+			m.profileInfoPane = m.profileInfoPane.Clear()
+
+			m.bucketsPane = m.bucketsPane.Clear()
+			m.bucketInfoPane = m.bucketInfoPane.Clear()
+			m.remotePane = m.remotePane.Clear()
+
+			m.AppState.UnsetProfile()
+			m.AppState.UnsetBucket()
+			m.AppState.UnsetRemotePath()
+		} else {
+			m.profileInfoPane.Value = msg.Profile
+			m.AppState.SetProfile(msg.Profile)
+			return m, func() tea.Msg { return messages.LoadBucketsMsg(msg) }
+		}
+
+	case messages.LoadBucketsMsg:
+		return m, func() tea.Msg {
+			if err := m.s3BucketProvider.Select(msg.Profile); err != nil {
+				return messages.AlertErrorMsg{Err: err}
+			}
+
+			entries, err := m.s3BucketProvider.Children()
+			if err != nil {
+				return messages.AlertErrorMsg{Err: err}
+			}
+
+			return messages.BucketsLoadedMsg{Entries: entries}
+		}
+
+	case messages.BucketsLoadedMsg:
+		var cmd tea.Cmd
+		m.bucketsPane = m.bucketsPane.SetEntries(msg.Entries)
+		m.bucketsPane, cmd = m.bucketsPane.Update(msg)
+		return m, cmd
+
+	case messages.BucketSelectedMsg:
+		if m.bucketInfoPane.Value == msg.Bucket {
+			m.bucketInfoPane = m.bucketInfoPane.Clear()
+
+			m.remotePane = m.remotePane.Clear()
+
+			m.AppState.UnsetBucket()
+			m.AppState.UnsetRemotePath()
+		} else {
+			m.bucketInfoPane.Value = msg.Bucket
+			m.AppState.SetBucket(msg.Bucket)
+			return m, func() tea.Msg { return messages.LoadRemoteMsg{} }
+		}
+
+	case messages.LoadRemoteMsg:
+		return m, func() tea.Msg {
+			if err := m.s3FSProvider.Select(m.AppState.Profile(), m.AppState.Bucket()); err != nil {
+				return messages.AlertErrorMsg{Err: err}
+			}
+
+			entries, err := m.s3FSProvider.Children()
+			if err != nil {
+				return messages.AlertErrorMsg{Err: err}
+			}
+
+			var active *string
+			if lastSel, ok := m.s3BucketProvider.LastSelected(); ok {
+				active = &lastSel
+			}
+
+			return messages.RemoteLoadedMsg{Entries: entries, Active: active}
+		}
+
+	case messages.RemoteLoadedMsg:
+		var cmd tea.Cmd
+		m.remotePane = m.remotePane.SetEntries(msg.Entries, msg.Active)
+		m.remotePane, cmd = m.remotePane.Update(msg)
+		return m, cmd
 
 	case messages.AlertInfoMsg:
 		alert, cmd := alert.New(alert.AlertInfo, msg.Title, msg.Content)
@@ -158,64 +252,57 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.alerts = alerts
 		return m, nil
-
-	case messages.PaneMsg:
-		var cmd tea.Cmd
-		m.panes[msg.Index], cmd = m.panes[msg.Index].Update(msg.Msg)
-		return m, cmd
-
-	case messages.InfoPaneMsg:
-		var cmd tea.Cmd
-		m.infoPanes[msg.Index], cmd = m.infoPanes[msg.Index].Update(msg.Msg)
-
-		switch msg.Index {
-
-		case state.ProfileInfoIndex:
-			m.State.SetProfile(msg.Msg.(messages.SetValueMsg).Value)
-
-		case state.BucketInfoIndex:
-			m.State.SetBucket(msg.Msg.(messages.SetValueMsg).Value)
-		}
-
-		return m, cmd
 	}
 
 	return m, nil
 }
 
-func (m Model) paneFocus(index int) (Model, tea.Cmd) {
-	if index < 0 || index > len(m.panes) {
-		return m, nil
-	}
-
-	var cmds []tea.Cmd
-	m.focusedPaneIndex = index
-
-	for i := range m.panes {
-		var cmd tea.Cmd
-		if i == index {
-			m.panes[i], cmd = m.panes[i].Update(tea.FocusMsg{})
-		} else {
-			m.panes[i], cmd = m.panes[i].Update(tea.BlurMsg{})
-		}
-		cmds = append(cmds, cmd)
-	}
-
-	return m, tea.Batch(cmds...)
+func (m Model) SetFocusedPane(focusedPane FocusedPane) Model {
+	m.focusedPane = focusedPane
+	m.bucketsPane.Model = m.bucketsPane.SetFocused(focusedPane == FocusBuckets)
+	m.profilesPane.Model = m.profilesPane.SetFocused(focusedPane == FocusProfiles)
+	m.remotePane.Model = m.remotePane.SetFocused(focusedPane == FocusRemote)
+	m.localPane.Model = m.localPane.SetFocused(focusedPane == FocusLocal)
+	return m
 }
 
-func (m Model) sendToFocused(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) SendToFocusedPane(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
-	m.panes[m.focusedPaneIndex], cmd = m.panes[m.focusedPaneIndex].Update(msg)
+
+	switch m.focusedPane {
+
+	case FocusBuckets:
+		m.bucketsPane, cmd = m.bucketsPane.Update(msg)
+
+	case FocusProfiles:
+		m.profilesPane, cmd = m.profilesPane.Update(msg)
+
+	case FocusRemote:
+		m.remotePane, cmd = m.remotePane.Update(msg)
+
+	case FocusLocal:
+		m.localPane, cmd = m.localPane.Update(msg)
+	}
+
 	return m, cmd
 }
 
-func (m Model) sendToAll(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) SendToAllPanes(msg tea.Msg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
-	for i := range m.panes {
-		var cmd tea.Cmd
-		m.panes[i], cmd = m.panes[i].Update(msg)
-		cmds = append(cmds, cmd)
-	}
+
+	var cmd tea.Cmd
+
+	m.bucketsPane, cmd = m.bucketsPane.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.profilesPane, cmd = m.profilesPane.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.remotePane, cmd = m.remotePane.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.localPane, cmd = m.localPane.Update(msg)
+	cmds = append(cmds, cmd)
+
 	return m, tea.Batch(cmds...)
 }
