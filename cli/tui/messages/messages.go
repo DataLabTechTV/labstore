@@ -16,6 +16,8 @@ type (
 		Msg   tea.Msg
 	}
 
+	InfoMsg  struct{ Title, Content string }
+	WarnMsg  struct{ Title, Content string }
 	ErrorMsg struct{ Err error }
 
 	RefreshMsg       struct{}
