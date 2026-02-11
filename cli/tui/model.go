@@ -24,9 +24,9 @@ type Model struct {
 	statusBar statusbar.Model
 	alerts    []alert.Model
 
-	focusedPaneID int
-	width         int
-	height        int
+	focusedPaneIndex int
+	width            int
+	height           int
 }
 
 func New() Model {
@@ -81,11 +81,10 @@ func New() Model {
 	profileInfo := infopane.New("Active Profile", infopane.ValueNone)
 
 	return Model{
-		State:         &globalState,
-		panes:         []pane.Model{bucketPane, profilesPane, remotePane, localPane},
-		infoPanes:     []infopane.Model{bucketInfo, profileInfo},
-		statusBar:     statusbar.New(DefaultHomeKeyMap.HelpKeys()),
-		focusedPaneID: 1,
+		State:     &globalState,
+		panes:     []pane.Model{bucketPane, profilesPane, remotePane, localPane},
+		infoPanes: []infopane.Model{bucketInfo, profileInfo},
+		statusBar: statusbar.New(DefaultHomeKeyMap.HelpKeys()),
 	}
 }
 
