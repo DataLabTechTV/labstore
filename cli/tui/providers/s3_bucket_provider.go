@@ -24,16 +24,12 @@ func (p *S3BucketProvider) Select(args ...string) error {
 
 	profile := args[0]
 	p.Active = profile != ""
-	p.Host = config.App.Server.S3.Address.Host
-	p.Port = config.App.Server.S3.Address.Port
 	p.Profile = profile
 	return nil
 }
 
 func (p *S3BucketProvider) Deselect() error {
 	p.Active = false
-	p.Host = ""
-	p.Port = 0
 	p.Profile = ""
 	return nil
 }
