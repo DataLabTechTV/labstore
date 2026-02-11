@@ -69,10 +69,5 @@ func WithRefreshPaneIndexes(paneIndexes []int) SimpleListOption {
 }
 
 func (m Model) Init() tea.Cmd {
-	return func() tea.Msg {
-		return messages.PaneMsg{
-			Index: m.ParentIndex,
-			Msg:   messages.RefreshMsg{},
-		}
-	}
+	return func() tea.Msg { return messages.RefreshMsg{} }
 }

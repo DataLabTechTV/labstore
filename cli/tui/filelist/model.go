@@ -50,10 +50,5 @@ func New(state *state.State, parentIndex int, provider providers.Provider) Model
 }
 
 func (m Model) Init() tea.Cmd {
-	return func() tea.Msg {
-		return messages.PaneMsg{
-			Index: m.ParentIndex,
-			Msg:   messages.RefreshMsg{},
-		}
-	}
+	return func() tea.Msg { return messages.RefreshMsg{} }
 }

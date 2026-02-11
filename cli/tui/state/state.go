@@ -1,5 +1,7 @@
 package state
 
+import "path/filepath"
+
 type State struct {
 	profile    string
 	hasProfile bool
@@ -50,8 +52,24 @@ func (s *State) Bucket() string {
 	return s.bucket
 }
 
-func (s *State) SetLocalPath(path string) {
-	s.localPath = path
+func (s *State) SetLocalPath(localPath string) {
+	s.localPath = localPath
+	s.hasLocalPath = true
+}
+
+func (s *State) CDLocalPath(dirname string) {
+	var cdPath string
+	if s.hasLocalPath {
+		cdPath = filepath.Join(s.localPath, dirname)
+	} else {
+		cdPath = dirname
+	}
+
+	absPath, err := filepath.Abs(cdPath)
+	if err != nil {
+		absPath = cdPath
+	}
+	s.localPath = absPath
 	s.hasLocalPath = true
 }
 
@@ -68,8 +86,8 @@ func (s *State) LocalPath() string {
 	return s.localPath
 }
 
-func (s *State) SetRemotePath(path string) {
-	s.remotePath = path
+func (s *State) SetRemotePath(remotePath string) {
+	s.remotePath = remotePath
 	s.hasRemotePath = true
 }
 
@@ -84,4 +102,8 @@ func (s *State) HasRemotePath() bool {
 
 func (s *State) RemotePath() string {
 	return s.remotePath
+}
+
+func (s *State) CDRemotePath(dirname string) {
+	// TODO: implement
 }

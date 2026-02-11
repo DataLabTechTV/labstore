@@ -5,6 +5,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -78,13 +79,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.MoveUp(10)
 
 	case messages.LevelUpMsg:
-		if err := m.Provider.Select(".."); err != nil {
-			return m, func() tea.Msg {
-				return messages.ErrorMsg{Err: err}
-			}
+		if !m.state.HasLocalPath() {
+			return m, nil
 		}
 
 		cmd := func() tea.Msg {
+			m.state.CDLocalPath("..")
 			return messages.PaneMsg{
 				Index: m.ParentIndex,
 				Msg:   messages.RefreshMsg{},
@@ -93,14 +93,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case messages.OpenMsg:
-		filename := m.table.SelectedRow()[2]
+		dirname := m.table.SelectedRow()[2]
+
+		if dirname == ".." {
+			return m, nil
+		}
+
+		if !helper.IsDir(dirname) {
+			return m, nil
+		}
 
 		switch m.ParentIndex {
 		case state.LocalPaneIndex:
-			m.state.SetLocalPath(filename)
+			m.state.CDLocalPath(dirname)
 
 		case state.RemotePaneIndex:
-			m.state.SetRemotePath(filename)
+			m.state.CDRemotePath(dirname)
 
 		default:
 			// Unsupported
@@ -182,7 +190,7 @@ func (m *Model) updateTable(active *string) {
 		}
 		date := render.NewDate(entry.ModTime).Format()
 
-		if active != nil && name == *active {
+		if active != nil && entry.Path == *active {
 			cursor = i
 		}
 

@@ -102,10 +102,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch paneIndex {
 
 				case state.ProfilesPaneIndex:
-					m.state.SetProfile(*m.Active)
+					if m.Active != nil {
+						m.state.SetProfile(*m.Active)
+					}
 
 				case state.BucketsPaneIndex:
-					m.state.SetBucket(*m.Active)
+					if m.Active != nil {
+						m.state.SetBucket(*m.Active)
+					}
 
 				case state.RemotePaneIndex:
 					// State is set on previous states
