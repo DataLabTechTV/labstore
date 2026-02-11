@@ -87,29 +87,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.sendToFocused(messages.OpenMsg{})
 
 			case key.Matches(msg, km.Focus1):
-				return m.paneFocus(1)
+				return m.paneFocus(0)
 
 			case key.Matches(msg, km.Focus2):
-				return m.paneFocus(2)
+				return m.paneFocus(1)
 
 			case key.Matches(msg, km.Focus3):
-				return m.paneFocus(3)
+				return m.paneFocus(2)
 
 			case key.Matches(msg, km.Focus4):
-				return m.paneFocus(4)
+				return m.paneFocus(3)
 
 			case key.Matches(msg, km.Next):
-				if m.focusedPaneID >= len(m.panes) {
-					return m.paneFocus(1)
+				if m.focusedPaneIndex+1 >= len(m.panes) {
+					return m.paneFocus(0)
 				} else {
-					return m.paneFocus(m.focusedPaneID + 1)
+					return m.paneFocus(m.focusedPaneIndex + 1)
 				}
 
 			case key.Matches(msg, km.Previous):
-				if m.focusedPaneID <= 1 {
-					return m.paneFocus(4)
+				if m.focusedPaneIndex-1 < 0 {
+					return m.paneFocus(len(m.panes) - 1)
 				} else {
-					return m.paneFocus(m.focusedPaneID - 1)
+					return m.paneFocus(m.focusedPaneIndex - 1)
 				}
 
 			case key.Matches(msg, km.Quit):
@@ -156,17 +156,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) paneFocus(n int) (Model, tea.Cmd) {
-	if n < 1 || n > len(m.panes) {
+func (m Model) paneFocus(index int) (Model, tea.Cmd) {
+	if index < 0 || index > len(m.panes) {
 		return m, nil
 	}
 
 	var cmds []tea.Cmd
-	m.focusedPaneID = n
+	m.focusedPaneIndex = index
 
 	for i := range m.panes {
 		var cmd tea.Cmd
-		if i == n-1 {
+		if i == index {
 			m.panes[i], cmd = m.panes[i].Update(tea.FocusMsg{})
 		} else {
 			m.panes[i], cmd = m.panes[i].Update(tea.BlurMsg{})
@@ -179,6 +179,6 @@ func (m Model) paneFocus(n int) (Model, tea.Cmd) {
 
 func (m Model) sendToFocused(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
-	m.panes[m.focusedPaneID-1], cmd = m.panes[m.focusedPaneID-1].Update(msg)
+	m.panes[m.focusedPaneIndex], cmd = m.panes[m.focusedPaneIndex].Update(msg)
 	return m, cmd
 }

@@ -1,6 +1,9 @@
 package state
 
-import "path/filepath"
+import (
+	"path"
+	"path/filepath"
+)
 
 type State struct {
 	profile    string
@@ -105,5 +108,13 @@ func (s *State) RemotePath() string {
 }
 
 func (s *State) CDRemotePath(dirname string) {
-	// TODO: implement
+	var cdPath string
+	if s.hasRemotePath {
+		cdPath = path.Join(s.remotePath, dirname)
+	} else {
+		cdPath = dirname
+	}
+
+	s.localPath = path.Clean(cdPath)
+	s.hasLocalPath = true
 }
