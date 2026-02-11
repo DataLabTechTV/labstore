@@ -41,7 +41,7 @@ func New(level AlertLevel, title, message string) (Model, tea.Cmd) {
 	}
 
 	cmd := tea.Tick(3*time.Second, func(time.Time) tea.Msg {
-		return messages.HideAlertMsg{ID: m.ID}
+		return messages.AlertHideMsg{ID: m.ID}
 	})
 
 	return m, cmd

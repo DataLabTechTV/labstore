@@ -145,7 +145,7 @@ func refreshCmd(parentIndex int, provider providers.Provider, globalState *state
 		case state.LocalPaneIndex:
 			if globalState.HasLocalPath() {
 				if err := provider.Select(globalState.LocalPath()); err != nil {
-					return messages.ErrorMsg{Err: err}
+					return messages.AlertErrorMsg{Err: err}
 				}
 			}
 
@@ -157,7 +157,7 @@ func refreshCmd(parentIndex int, provider providers.Provider, globalState *state
 				}
 
 				if err := provider.Select(args...); err != nil {
-					return messages.ErrorMsg{Err: err}
+					return messages.AlertErrorMsg{Err: err}
 				}
 			}
 
@@ -170,7 +170,7 @@ func refreshCmd(parentIndex int, provider providers.Provider, globalState *state
 		if err != nil {
 			return messages.PaneMsg{
 				Index: parentIndex,
-				Msg:   messages.ErrorMsg{Err: err},
+				Msg:   messages.AlertErrorMsg{Err: err},
 			}
 		}
 

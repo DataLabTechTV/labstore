@@ -70,7 +70,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 
 				alertCmd := func() tea.Msg {
-					return messages.InfoMsg{
+					return messages.AlertInfoMsg{
 						Title:   "Refreshing",
 						Content: "All panels are being refreshed",
 					}
@@ -134,22 +134,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	case messages.InfoMsg:
+	case messages.AlertInfoMsg:
 		alert, cmd := alert.New(alert.AlertInfo, msg.Title, msg.Content)
 		m.alerts = append(m.alerts, alert)
 		return m, cmd
 
-	case messages.WarnMsg:
+	case messages.AlertWarnMsg:
 		alert, cmd := alert.New(alert.AlertWarn, msg.Title, msg.Content)
 		m.alerts = append(m.alerts, alert)
 		return m, cmd
 
-	case messages.ErrorMsg:
+	case messages.AlertErrorMsg:
 		alert, cmd := alert.New(alert.AlertError, fmt.Sprintf("%T", msg.Err), msg.Err.Error())
 		m.alerts = append(m.alerts, alert)
 		return m, cmd
 
-	case messages.HideAlertMsg:
+	case messages.AlertHideMsg:
 		alerts := []alert.Model{}
 		for _, alert := range m.alerts {
 			if alert.ID != msg.ID {
