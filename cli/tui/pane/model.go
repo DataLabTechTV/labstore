@@ -1,7 +1,6 @@
 package pane
 
 import (
-	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -51,5 +50,8 @@ func WithProvider(provider providers.Provider) PaneOption {
 }
 
 func (m Model) Init() tea.Cmd {
-	return func() tea.Msg { return messages.RefreshMsg{} }
+	if childCmd := m.Child.Init(); childCmd != nil {
+		return childCmd
+	}
+	return nil
 }

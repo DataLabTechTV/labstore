@@ -19,9 +19,9 @@ func (p *FSProvider) Select(args ...string) error {
 		return &errs.ErrInsufficientArguments{}
 	}
 
-	filename := args[0]
-	p.lastSelected[p.Path] = filename
-	p.Path = filepath.Join(p.Path, filename)
+	localPath := args[0]
+	p.lastSelected[p.Path] = localPath
+	p.Path = localPath
 	return nil
 }
 

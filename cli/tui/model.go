@@ -97,20 +97,16 @@ func (m Model) Init() tea.Cmd {
 	}
 
 	for i, pane := range m.panes {
-		paneCmd := pane.Init()
-
-		if paneCmd == nil {
-			continue
-		}
-
-		cmd := func() tea.Msg {
-			msg := paneCmd()
-			if msg == nil {
-				return nil
+		if paneCmd := pane.Init(); paneCmd != nil {
+			cmd := func() tea.Msg {
+				msg := paneCmd()
+				if msg == nil {
+					return nil
+				}
+				return messages.PaneMsg{Index: i, Msg: msg}
 			}
-			return messages.PaneMsg{Index: i, Msg: msg}
+			cmds = append(cmds, cmd)
 		}
-		cmds = append(cmds, cmd)
 	}
 
 	cmds = append(cmds, m.statusBar.Init())
