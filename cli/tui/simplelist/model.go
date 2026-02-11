@@ -51,7 +51,7 @@ func (m Model) Clear() Model {
 	return m
 }
 
-func (m Model) Selection() (string, bool) {
+func (m Model) Selected() (string, bool) {
 	selectedRow := m.table.SelectedRow()
 	if len(selectedRow) < 1 {
 		return "", false

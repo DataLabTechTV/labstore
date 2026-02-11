@@ -52,3 +52,12 @@ func (m Model) Clear() Model {
 	m.table.SetCursor(0)
 	return m
 }
+
+func (m Model) Selected() (string, bool) {
+	selectedRow := m.table.SelectedRow()
+	if len(selectedRow) < 3 {
+		return "", false
+	}
+	value := selectedRow[2]
+	return value, true
+}

@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"os"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/server/config"
@@ -49,13 +48,7 @@ func NewS3FSProvider() *S3FSProvider {
 }
 
 func NewFSProvider() *FSProvider {
-	path, err := os.Getwd()
-	if err != nil {
-		path = "."
-	}
-
 	return &FSProvider{
-		Path:         path,
 		lastSelected: make(map[string]string),
 	}
 }

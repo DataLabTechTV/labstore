@@ -45,11 +45,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Child, cmd = m.Child.Update(msg)
 		return m, cmd
 
-	case messages.OpenMsg:
-		var cmd tea.Cmd
-		m.Child, cmd = m.Child.Update(msg)
-		return m, cmd
-
 	case messages.ProfilesLoadedMsg:
 		var cmd tea.Cmd
 		if m.Child != nil {

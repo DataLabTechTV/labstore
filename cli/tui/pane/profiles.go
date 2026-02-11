@@ -31,7 +31,7 @@ func (m ProfilesPane) Update(msg tea.Msg) (ProfilesPane, tea.Cmd) {
 
 	case messages.OpenMsg:
 		if list, ok := m.Child.(simplelist.Model); ok {
-			if selection, ok := list.Selection(); ok {
+			if selection, ok := list.Selected(); ok {
 				cmd = func() tea.Msg { return messages.ProfileSelectedMsg{Profile: selection} }
 			}
 		}

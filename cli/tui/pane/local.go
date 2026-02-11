@@ -1,7 +1,10 @@
 package pane
 
 import (
+	"strings"
+
 	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -25,6 +28,22 @@ func (m LocalPane) SetEntries(entries []providers.Entry, active *string) LocalPa
 
 func (m LocalPane) Update(msg tea.Msg) (LocalPane, tea.Cmd) {
 	var cmd tea.Cmd
-	m.Model, cmd = m.Model.Update(msg)
+
+	switch msg := msg.(type) {
+
+	case messages.OpenMsg:
+		if list, ok := m.Child.(filelist.Model); ok {
+			if dirname, ok := list.Selected(); ok {
+				if dirname != ".." && !strings.HasSuffix(dirname, "/") {
+					return m, nil
+				}
+				cmd = func() tea.Msg { return messages.LoadLocalMsg{Dirname: &dirname} }
+			}
+		}
+
+	default:
+		m.Model, cmd = m.Model.Update(msg)
+	}
+
 	return m, cmd
 }

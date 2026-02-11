@@ -207,8 +207,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case messages.LoadRemoteMsg:
+		if msg.Dirname != nil {
+			m.AppState.CDRemotePath(*msg.Dirname)
+		}
+
 		return m, func() tea.Msg {
-			if err := m.s3FSProvider.Select(m.AppState.Profile(), m.AppState.Bucket()); err != nil {
+			if err := m.s3FSProvider.Select(
+				m.AppState.Profile(),
+				m.AppState.Bucket(),
+				m.AppState.RemotePath(),
+			); err != nil {
 				return messages.AlertErrorMsg{Err: err}
 			}
 
@@ -232,7 +240,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case messages.LoadLocalMsg:
+		if msg.Dirname != nil {
+			m.AppState.CDLocalPath(*msg.Dirname)
+		}
+
 		return m, func() tea.Msg {
+			if err := m.fsProvider.Select(m.AppState.LocalPath()); err != nil {
+				return messages.AlertErrorMsg{Err: err}
+			}
+
 			entries, err := m.fsProvider.Children()
 			if err != nil {
 				return messages.AlertErrorMsg{Err: err}
