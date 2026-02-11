@@ -102,37 +102,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// 		}
 		// 	}
 		// 	return m, cmd
-
-		// case messages.OpenMsg:
-		// 	selectedRow := m.table.SelectedRow()
-		// 	if len(selectedRow) < 3 {
-		// 		return m, nil
-		// 	}
-		// 	dirname := selectedRow[2]
-
-		// 	if dirname != ".." && !strings.HasSuffix(dirname, "/") {
-		// 		return m, nil
-		// 	}
-
-		// 	switch m.ParentIndex {
-		// 	case state.FocusLocal:
-		// 		m.state.CDLocalPath(dirname)
-
-		// 	case state.FocusRemote:
-		// 		m.state.CDRemotePath(dirname)
-
-		// 	default:
-		// 		// Unsupported
-		// 		return m, nil
-		// 	}
-
-		// 	cmd := func() tea.Msg {
-		// 		return messages.PaneMsg{
-		// 			Index: m.ParentIndex,
-		// 			Msg:   messages.RefreshMsg{},
-		// 		}
-		// 	}
-		// 	return m, cmd
 	}
 
 	return m, nil

@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"os"
+
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/infopane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/pane"
@@ -56,7 +58,7 @@ func New() Model {
 	bucketInfo := infopane.NewBucket("Active Bucket", infopane.ValueNone)
 	profileInfo := infopane.NewProfile("Active Profile", infopane.ValueNone)
 
-	return Model{
+	m := Model{
 		bucketsPane:  bucketPane,
 		profilesPane: profilesPane,
 		remotePane:   remotePane,
@@ -72,4 +74,12 @@ func New() Model {
 		s3FSProvider:     *s3FSProvider,
 		fsProvider:       *fsProvider,
 	}
+
+	path, err := os.Getwd()
+	if err != nil {
+		path = "."
+	}
+	m.AppState.SetLocalPath(path)
+
+	return m
 }

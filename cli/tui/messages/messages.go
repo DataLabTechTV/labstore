@@ -14,13 +14,13 @@ type (
 	BucketsLoadedMsg  struct{ Entries []providers.Entry }
 	BucketSelectedMsg struct{ Bucket string }
 
-	LoadRemoteMsg   struct{}
+	LoadRemoteMsg   struct{ Dirname *string }
 	RemoteLoadedMsg struct {
 		Entries []providers.Entry
 		Active  *string
 	}
 
-	LoadLocalMsg   struct{}
+	LoadLocalMsg   struct{ Dirname *string }
 	LocalLoadedMsg struct {
 		Entries []providers.Entry
 		Active  *string
