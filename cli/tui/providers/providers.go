@@ -43,6 +43,8 @@ func NewS3FSProvider() *S3FSProvider {
 	return &S3FSProvider{
 		Host: config.App.Server.S3.Address.Host,
 		Port: config.App.Server.S3.Address.Port,
+
+		lastSelected: make(map[string]string),
 	}
 }
 
