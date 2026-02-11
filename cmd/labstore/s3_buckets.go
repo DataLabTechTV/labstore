@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/handlers"
-	"github.com/IllumiKnowLabs/labstore/server/helper"
 	"github.com/spf13/cobra"
 )
 
@@ -56,16 +55,12 @@ func NewBucketsListObjectsCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			handler := cmd.Context().Value(handlerKeyCtx).(*handlers.S3Handler)
-
 			bucket := args[0]
 
-			var key *string
+			var key string
 			if len(args) >= 2 {
-				key = helper.Ptr(args[1])
-			} else {
-				key = nil
+				key = args[1]
 			}
-
 			return handler.ListObjects(bucket, key)
 		},
 	}

@@ -6,7 +6,6 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/render"
-	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
 func (h *S3Handler) CreateBucket(bucket string) error {
@@ -45,14 +44,14 @@ func (h *S3Handler) HeadBucket(bucket string) error {
 	return nil
 }
 
-func (h *S3Handler) ListObjects(bucket string, key *string) error {
-	if key == nil {
-		key = helper.Ptr("/")
+func (h *S3Handler) ListObjects(bucket string, key string) error {
+	if key == "" {
+		key = "/"
 	}
 
 	fmt.Println(render.Title(fmt.Sprintf("ListObjectsV2: %s", bucket)))
 
-	res := h.Client.ListObjects(bucket, *key, true)
+	res := h.Client.ListObjects(bucket, key, true)
 	for r := range res {
 		if r.Err != nil {
 			fmt.Println(render.Error(r.Err))
