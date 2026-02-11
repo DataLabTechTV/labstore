@@ -1,11 +1,12 @@
 package filelist
 
 import (
+	"strings"
+
 	"github.com/IllumiKnowLabs/labstore/cli/render"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
-	"github.com/IllumiKnowLabs/labstore/server/helper"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -79,12 +80,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.MoveUp(10)
 
 	case messages.LevelUpMsg:
-		if !m.state.HasLocalPath() {
-			return m, nil
+		switch m.ParentIndex {
+
+		case state.LocalPaneIndex:
+			if !m.state.HasLocalPath() || m.state.IsLocalPathRoot() {
+				return m, nil
+			}
+			m.state.CDLocalPath("..")
+
+		case state.RemotePaneIndex:
+			if !m.state.HasRemotePath() || m.state.IsRemotePathRoot() {
+				return m, nil
+			}
+			m.state.CDRemotePath("..")
 		}
 
 		cmd := func() tea.Msg {
-			m.state.CDLocalPath("..")
 			return messages.PaneMsg{
 				Index: m.ParentIndex,
 				Msg:   messages.RefreshMsg{},
@@ -95,11 +106,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.OpenMsg:
 		dirname := m.table.SelectedRow()[2]
 
-		if dirname == ".." {
-			return m, nil
-		}
-
-		if !helper.IsDir(dirname) {
+		if dirname != ".." && !strings.HasSuffix(dirname, "/") {
 			return m, nil
 		}
 

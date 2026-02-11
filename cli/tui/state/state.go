@@ -76,6 +76,16 @@ func (s *State) CDLocalPath(dirname string) {
 	s.hasLocalPath = true
 }
 
+func (s *State) IsLocalPathRoot() bool {
+	if !s.hasLocalPath {
+		return false
+	}
+
+	vol := filepath.VolumeName(s.localPath)
+	root := vol + string(filepath.Separator)
+	return s.localPath == root
+}
+
 func (s *State) UnsetLocalPath() {
 	s.localPath = ""
 	s.hasLocalPath = false
@@ -115,6 +125,10 @@ func (s *State) CDRemotePath(dirname string) {
 		cdPath = dirname
 	}
 
-	s.localPath = path.Clean(cdPath)
-	s.hasLocalPath = true
+	s.remotePath = path.Clean(cdPath)
+	s.hasRemotePath = true
+}
+
+func (s *State) IsRemotePathRoot() bool {
+	return s.hasRemotePath && s.remotePath == "."
 }

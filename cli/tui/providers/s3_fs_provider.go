@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ type S3FSProvider struct {
 	Profile string
 	Bucket  string
 	Key     string
+
+	lastSelected map[string]string
 }
 
 func (p *S3FSProvider) Select(args ...string) error {
@@ -30,9 +33,18 @@ func (p *S3FSProvider) Select(args ...string) error {
 	p.Profile = args[0]
 	p.Bucket = args[1]
 
+	lastSelKey := p.lastSelKey()
+
 	if len(args) > 2 {
-		p.Key = path.Clean(args[2]) + "/"
+		p.Key = path.Clean(args[2])
+		if p.Key == "." {
+			p.Key = ""
+		} else {
+			p.Key += "/"
+		}
 	}
+
+	p.lastSelected[lastSelKey] = p.Key
 
 	return nil
 }
@@ -50,7 +62,9 @@ func (p *S3FSProvider) Selected() string {
 }
 
 func (p *S3FSProvider) LastSelected() (string, bool) {
-	return "", false
+	state, ok := p.lastSelected[p.lastSelKey()]
+	return state, ok
+
 }
 
 func (p *S3FSProvider) Children() ([]Entry, error) {
@@ -77,7 +91,13 @@ func (p *S3FSProvider) Children() ([]Entry, error) {
 	var entries []Entry
 
 	if keyParts := strings.Split(p.Key, "/"); len(keyParts) > 1 {
-		entries = append(entries, Entry{Name: keyParts[len(keyParts)-2] + "/.."})
+		upLevelEntry := Entry{
+			Name:    "..",
+			Path:    path.Clean(keyParts[len(keyParts)-2]) + "/",
+			IsDir:   true,
+			ModTime: time.Now(),
+		}
+		entries = append(entries, upLevelEntry)
 	}
 
 	for res := range resCh {
@@ -114,4 +134,8 @@ func (p *S3FSProvider) Stat(path string) (Entry, error) {
 
 func (p *S3FSProvider) Delete(path string) error {
 	return nil
+}
+
+func (p *S3FSProvider) lastSelKey() string {
+	return fmt.Sprintf("%s@%s/%s", p.Profile, p.Bucket, p.Key)
 }
