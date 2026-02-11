@@ -26,7 +26,7 @@ type Model struct {
 
 type SimpleListOption func(m *Model)
 
-func New(state *state.State, parentIndex int, provider providers.Provider, opts ...SimpleListOption) Model {
+func New(parentIndex int, state *state.State, provider providers.Provider, opts ...SimpleListOption) Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Selected = tableStyle.Selected.

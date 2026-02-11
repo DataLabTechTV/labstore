@@ -104,7 +104,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case messages.OpenMsg:
-		dirname := m.table.SelectedRow()[2]
+		selectedRow := m.table.SelectedRow()
+		if len(selectedRow) < 3 {
+			return m, nil
+		}
+		dirname := selectedRow[2]
 
 		if dirname != ".." && !strings.HasSuffix(dirname, "/") {
 			return m, nil
@@ -135,21 +139,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func refreshCmd(parentIndex int, provider providers.Provider, state *state.State) tea.Cmd {
+func refreshCmd(parentIndex int, provider providers.Provider, globalState *state.State) tea.Cmd {
 	return func() tea.Msg {
-		switch provider.(type) {
-		case *providers.FSProvider:
-			if state.HasLocalPath() {
-				if err := provider.Select(state.LocalPath()); err != nil {
+		switch parentIndex {
+		case state.LocalPaneIndex:
+			if globalState.HasLocalPath() {
+				if err := provider.Select(globalState.LocalPath()); err != nil {
 					return messages.ErrorMsg{Err: err}
 				}
 			}
 
-		case *providers.S3FSProvider:
-			if state.HasProfile() && state.HasBucket() {
-				args := []string{state.Profile(), state.Bucket()}
-				if state.HasRemotePath() {
-					args = append(args, state.RemotePath())
+		case state.RemotePaneIndex:
+			if globalState.HasProfile() && globalState.HasBucket() {
+				args := []string{globalState.Profile(), globalState.Bucket()}
+				if globalState.HasRemotePath() {
+					args = append(args, globalState.RemotePath())
 				}
 
 				if err := provider.Select(args...); err != nil {

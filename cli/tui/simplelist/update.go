@@ -64,25 +64,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(selectedRow) < 1 {
 			return m, nil
 		}
+		value := selectedRow[0]
 
-		selectedCol := selectedRow[0]
-		if m.Active != nil && *m.Active == selectedCol {
+		if m.Active != nil && *m.Active == value {
 			m.Active = nil
-			selectedCol = ""
-
-			if err := m.Provider.Deselect(); err != nil {
-				return m, func() tea.Msg {
-					return messages.ErrorMsg{Err: err}
-				}
-			}
+			value = ""
 		} else {
-			m.Active = &selectedCol
+			m.Active = &value
+		}
 
-			if err := m.Provider.Select(selectedCol); err != nil {
-				return m, func() tea.Msg {
-					return messages.ErrorMsg{Err: err}
-				}
+		switch m.ParentIndex {
+
+		case state.ProfilesPaneIndex:
+			if m.Active == nil {
+				m.state.UnsetProfile()
+			} else {
+				m.state.SetProfile(*m.Active)
 			}
+
+		case state.BucketsPaneIndex:
+			if m.Active == nil {
+				m.state.UnsetBucket()
+			} else {
+				m.state.SetBucket(*m.Active)
+			}
+
+		case state.RemotePaneIndex:
+			// State is set on previous states
 		}
 
 		var cmds []tea.Cmd
@@ -91,7 +99,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := func() tea.Msg {
 				return messages.InfoPaneMsg{
 					Index: infoPaneIndex,
-					Msg:   messages.SetValueMsg{Value: selectedCol},
+					Msg:   messages.SetValueMsg{Value: value},
 				}
 			}
 			cmds = append(cmds, cmd)
@@ -99,26 +107,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		for _, paneIndex := range m.RefreshPaneIndexes {
 			cmd := func() tea.Msg {
-				switch paneIndex {
-
-				case state.ProfilesPaneIndex:
-					if m.Active != nil {
-						m.state.SetProfile(*m.Active)
-					}
-
-				case state.BucketsPaneIndex:
-					if m.Active != nil {
-						m.state.SetBucket(*m.Active)
-					}
-
-				case state.RemotePaneIndex:
-					// State is set on previous states
-
-				default:
-					// Unsupported
-					return nil
-				}
-
 				return messages.PaneMsg{
 					Index: paneIndex,
 					Msg:   messages.RefreshMsg{},
@@ -133,24 +121,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func refreshCmd(parentID int, provider providers.Provider, state *state.State) tea.Cmd {
+func refreshCmd(parentIndex int, provider providers.Provider, globalState *state.State) tea.Cmd {
 	return func() tea.Msg {
-		switch provider.(type) {
-		case *providers.S3BucketProvider:
-			if state.HasProfile() && state.HasBucket() {
-				args := []string{state.Profile(), state.Bucket()}
-				if state.HasRemotePath() {
-					args = append(args, state.RemotePath())
-				}
+		switch parentIndex {
 
-				if err := provider.Select(args...); err != nil {
+		case state.ProfilesPaneIndex:
+			if globalState.HasProfile() {
+				if err := provider.Select(globalState.Profile()); err != nil {
 					return messages.ErrorMsg{Err: err}
 				}
 			}
 
-		case *providers.ProfilesProvider:
-			if state.HasProfile() {
-				if err := provider.Select(state.Profile()); err != nil {
+		case state.BucketsPaneIndex:
+			if globalState.HasProfile() {
+				if err := provider.Select(globalState.Profile()); err != nil {
 					return messages.ErrorMsg{Err: err}
 				}
 			}
@@ -166,7 +150,7 @@ func refreshCmd(parentID int, provider providers.Provider, state *state.State) t
 		}
 
 		return messages.PaneMsg{
-			Index: parentID,
+			Index: parentIndex,
 			Msg:   messages.RefreshResultMsg{Entries: entries},
 		}
 	}

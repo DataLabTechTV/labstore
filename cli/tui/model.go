@@ -38,15 +38,15 @@ func New() Model {
 	fsProvider := providers.NewFSProvider()
 
 	bucketList := simplelist.New(
-		&globalState,
 		state.BucketsPaneIndex,
+		&globalState,
 		s3BucketProvider,
 		simplelist.WithRefreshInfoPaneIndexes([]int{state.BucketInfoIndex}),
 		simplelist.WithRefreshPaneIndexes([]int{state.RemotePaneIndex}),
 	)
 	profileList := simplelist.New(
-		&globalState,
 		state.ProfilesPaneIndex,
+		&globalState,
 		profilesProvider,
 		simplelist.WithRefreshInfoPaneIndexes([]int{state.ProfileInfoIndex}),
 		simplelist.WithRefreshPaneIndexes([]int{state.BucketsPaneIndex}),
