@@ -5,6 +5,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func (m Model) Init() tea.Cmd {
+	if childCmd := m.Child.Init(); childCmd != nil {
+		return childCmd
+	}
+	return nil
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
@@ -32,10 +39,22 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case messages.MoveDownMsg, messages.MoveUpMsg,
 		messages.MoveToBottomMsg, messages.MoveToTopMsg,
 		messages.PageDownMsg, messages.PageUpMsg,
-		messages.LevelUpMsg, messages.OpenMsg:
+		messages.LevelUpMsg:
 
 		var cmd tea.Cmd
 		m.Child, cmd = m.Child.Update(msg)
+		return m, cmd
+
+	case messages.OpenMsg:
+		var cmd tea.Cmd
+		m.Child, cmd = m.Child.Update(msg)
+		return m, cmd
+
+	case messages.ProfilesLoadedMsg:
+		var cmd tea.Cmd
+		if m.Child != nil {
+			m.Child, cmd = m.Child.Update(msg)
+		}
 		return m, cmd
 
 	case messages.RefreshMsg:
@@ -45,16 +64,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		return m, cmd
 
-	case messages.RefreshResultMsg:
-		if m.Provider != nil {
-			if selected := m.Provider.Selected(); selected != "" {
-				m.Title = selected
-			}
-		}
+		// case messages.RefreshResultMsg:
+		// 	if m.Provider != nil {
+		// 		if selected := m.Provider.Selected(); selected != "" {
+		// 			m.Title = selected
+		// 		}
+		// 	}
 
-		child, cmd := m.Child.Update(msg)
-		m.Child = child
-		return m, cmd
+		// 	child, cmd := m.Child.Update(msg)
+		// 	m.Child = child
+		// 	return m, cmd
 	}
 
 	return m, nil

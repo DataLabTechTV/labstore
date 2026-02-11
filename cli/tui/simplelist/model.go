@@ -2,31 +2,20 @@ package simplelist
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Model struct {
-	ParentIndex            int
-	RefreshInfoPaneIndexes []int
-	RefreshPaneIndexes     []int
-	Provider               providers.Provider
-	Entries                []string
-	Active                 *string
-	Width                  int
-	Height                 int
+	Entries []string
+	Width   int
+	Height  int
 
-	state    *state.State
 	table    table.Model
 	hCellPad int
 }
 
-type SimpleListOption func(m *Model)
-
-func New(parentIndex int, state *state.State, provider providers.Provider, opts ...SimpleListOption) Model {
+func New() Model {
 	tableStyle := table.DefaultStyles()
 
 	tableStyle.Selected = tableStyle.Selected.
@@ -42,32 +31,31 @@ func New(parentIndex int, state *state.State, provider providers.Provider, opts 
 	)
 
 	model := Model{
-		ParentIndex: parentIndex,
-		Provider:    provider,
-		state:       state,
-		table:       simpleTable,
-		hCellPad:    tableStyle.Cell.GetHorizontalPadding(),
-	}
-
-	for _, opt := range opts {
-		opt(&model)
+		table:    simpleTable,
+		hCellPad: tableStyle.Cell.GetHorizontalPadding(),
 	}
 
 	return model
 }
 
-func WithRefreshInfoPaneIndexes(infoPaneIndex []int) SimpleListOption {
-	return func(m *Model) {
-		m.RefreshInfoPaneIndexes = infoPaneIndex
-	}
+func (m Model) SetEntries(entries []providers.Entry) Model {
+	m.Entries = providers.EntryNames(entries)
+	m.updateTable()
+	return m
 }
 
-func WithRefreshPaneIndexes(paneIndexes []int) SimpleListOption {
-	return func(m *Model) {
-		m.RefreshPaneIndexes = paneIndexes
-	}
+func (m Model) Clear() Model {
+	m.Entries = []string{}
+	m.table.SetRows([]table.Row{})
+	m.table.SetCursor(0)
+	return m
 }
 
-func (m Model) Init() tea.Cmd {
-	return func() tea.Msg { return messages.RefreshMsg{} }
+func (m Model) Selection() (string, bool) {
+	selectedRow := m.table.SelectedRow()
+	if len(selectedRow) < 1 {
+		return "", false
+	}
+	value := selectedRow[0]
+	return value, true
 }

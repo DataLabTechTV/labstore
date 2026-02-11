@@ -6,12 +6,21 @@ import (
 )
 
 type (
-	PaneMsg struct {
-		Index int
-		Msg   tea.Msg
+	LoadProfilesMsg    struct{}
+	ProfilesLoadedMsg  struct{ Entries []providers.Entry }
+	ProfileSelectedMsg struct{ Profile string }
+
+	LoadBucketsMsg    struct{ Profile string }
+	BucketsLoadedMsg  struct{ Entries []providers.Entry }
+	BucketSelectedMsg struct{ Bucket string }
+
+	LoadRemoteMsg   struct{}
+	RemoteLoadedMsg struct {
+		Entries []providers.Entry
+		Active  *string
 	}
 
-	InfoPaneMsg struct {
+	PaneMsg struct {
 		Index int
 		Msg   tea.Msg
 	}

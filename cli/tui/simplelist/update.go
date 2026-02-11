@@ -2,11 +2,13 @@ package simplelist
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+func (m Model) Init() tea.Cmd {
+	return func() tea.Msg { return messages.RefreshMsg{} }
+}
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -18,14 +20,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetColumns(columns)
 		m.table.SetWidth(m.Width)
 		m.table.SetHeight(m.Height)
-
-	case messages.RefreshMsg:
-		return m, refreshCmd(m.ParentIndex, m.Provider, m.state)
-
-	case messages.RefreshResultMsg:
-		m.Entries = providers.EntryNames(msg.Entries)
-		m.updateTable()
-		return m, nil
 
 	case tea.FocusMsg:
 		m.table.Focus()
@@ -58,96 +52,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.PageUpMsg:
 		m.table.MoveUp(10)
-
-	case messages.OpenMsg:
-		selectedRow := m.table.SelectedRow()
-		if len(selectedRow) < 1 {
-			return m, nil
-		}
-		value := selectedRow[0]
-
-		if m.Active != nil && *m.Active == value {
-			m.Active = nil
-			value = ""
-		} else {
-			m.Active = &value
-		}
-
-		switch m.ParentIndex {
-
-		case state.ProfilesPaneIndex:
-			if m.Active == nil {
-				m.state.UnsetProfile()
-				m.state.UnsetBucket()
-			} else {
-				m.state.SetProfile(*m.Active)
-			}
-
-		case state.BucketsPaneIndex:
-			if m.Active == nil {
-				m.state.UnsetBucket()
-			} else {
-				m.state.SetBucket(*m.Active)
-			}
-		}
-
-		var cmds []tea.Cmd
-
-		for _, infoPaneIndex := range m.RefreshInfoPaneIndexes {
-			cmd := func() tea.Msg {
-				return messages.InfoPaneMsg{
-					Index: infoPaneIndex,
-					Msg:   messages.SetValueMsg{Value: value},
-				}
-			}
-			cmds = append(cmds, cmd)
-		}
-
-		for _, paneIndex := range m.RefreshPaneIndexes {
-			cmd := func() tea.Msg {
-				return messages.PaneMsg{
-					Index: paneIndex,
-					Msg:   messages.RefreshMsg{},
-				}
-			}
-			cmds = append(cmds, cmd)
-		}
-
-		return m, tea.Sequence(cmds...)
 	}
 
 	return m, nil
-}
-
-func refreshCmd(parentIndex int, provider providers.Provider, globalState *state.State) tea.Cmd {
-	return func() tea.Msg {
-		switch parentIndex {
-
-		case state.ProfilesPaneIndex:
-			// No side-effect (passthrough)
-
-		case state.BucketsPaneIndex:
-			if globalState.HasProfile() {
-				if err := provider.Select(globalState.Profile()); err != nil {
-					return messages.AlertErrorMsg{Err: err}
-				}
-			}
-
-		default:
-			// Unsupported
-			return nil
-		}
-
-		entries, err := provider.Children()
-		if err != nil {
-			return messages.AlertErrorMsg{Err: err}
-		}
-
-		return messages.PaneMsg{
-			Index: parentIndex,
-			Msg:   messages.RefreshResultMsg{Entries: entries},
-		}
-	}
 }
 
 func (m *Model) updateTable() {

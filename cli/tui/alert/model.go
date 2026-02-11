@@ -46,7 +46,3 @@ func New(level AlertLevel, title, message string) (Model, tea.Cmd) {
 
 	return m, cmd
 }
-
-func (m Model) Init() tea.Cmd {
-	return nil
-}

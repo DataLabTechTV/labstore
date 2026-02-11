@@ -1,115 +1,75 @@
 package tui
 
 import (
-	"fmt"
-
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/infopane"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/pane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/simplelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/statusbar"
-	"github.com/IllumiKnowLabs/labstore/server/constants"
-	tea "github.com/charmbracelet/bubbletea"
+)
+
+type FocusedPane int
+
+const (
+	FocusBuckets FocusedPane = iota
+	FocusProfiles
+	FocusRemote
+	FocusLocal
 )
 
 type Model struct {
-	State *state.State
+	AppState state.State
 
-	panes     []pane.Model
-	infoPanes []infopane.Model
+	bucketsPane  pane.BucketsPane
+	profilesPane pane.ProfilesPane
+	localPane    pane.LocalPane
+	remotePane   pane.RemotePane
+
+	profileInfoPane infopane.ProfileInfoPane
+	bucketInfoPane  infopane.BucketInfoPane
+
 	statusBar statusbar.Model
 	alerts    []alert.Model
 
-	focusedPaneIndex int
-	width            int
-	height           int
+	s3BucketProvider providers.S3BucketProvider
+	profilesProvider providers.ProfilesProvider
+	s3FSProvider     providers.S3FSProvider
+	fsProvider       providers.FSProvider
+
+	focusedPane FocusedPane
+	width       int
+	height      int
 }
 
 func New() Model {
-	var globalState state.State
-
 	s3BucketProvider := providers.NewS3BucketProvider()
 	profilesProvider := providers.NewProfilesProvider()
 	s3FSProvider := providers.NewS3FSProvider()
 	fsProvider := providers.NewFSProvider()
 
-	bucketList := simplelist.New(
-		state.BucketsPaneIndex,
-		&globalState,
-		s3BucketProvider,
-		simplelist.WithRefreshInfoPaneIndexes([]int{state.BucketInfoIndex}),
-		simplelist.WithRefreshPaneIndexes([]int{state.RemotePaneIndex}),
-	)
-	profileList := simplelist.New(
-		state.ProfilesPaneIndex,
-		&globalState,
-		profilesProvider,
-		simplelist.WithRefreshInfoPaneIndexes([]int{state.ProfileInfoIndex}),
-		simplelist.WithRefreshPaneIndexes([]int{state.BucketsPaneIndex}),
-	)
-	s3FileList := filelist.New(&globalState, state.RemotePaneIndex, s3FSProvider)
-	fsFileList := filelist.New(&globalState, state.LocalPaneIndex, fsProvider)
+	bucketPane := pane.NewBuckets(1, "Buckets", pane.WithFocus(), pane.WithSimpleList())
+	profilesPane := pane.NewProfiles(2, "Profiles", pane.WithSimpleList())
+	remotePane := pane.NewRemote(3, "Remote", pane.WithFileList())
+	localPane := pane.NewLocal(4, "Local", pane.WithFileList())
 
-	bucketPane := pane.New(
-		1, "Buckets",
-		pane.WithFocus(),
-		pane.WithChild(bucketList),
-	)
-
-	profilesPane := pane.New(
-		2, "Profiles",
-		pane.WithChild(profileList),
-	)
-
-	remotePane := pane.New(
-		3, "Remote",
-		pane.WithChild(s3FileList),
-		pane.WithProvider(s3FSProvider),
-	)
-
-	localPane := pane.New(
-		4, "Local",
-		pane.WithChild(fsFileList),
-		pane.WithProvider(fsProvider),
-	)
-
-	bucketInfo := infopane.New("Active Bucket", infopane.ValueNone)
-	profileInfo := infopane.New("Active Profile", infopane.ValueNone)
+	bucketInfo := infopane.NewBucket("Active Bucket", infopane.ValueNone)
+	profileInfo := infopane.NewProfile("Active Profile", infopane.ValueNone)
 
 	return Model{
-		State:     &globalState,
-		panes:     []pane.Model{bucketPane, profilesPane, remotePane, localPane},
-		infoPanes: []infopane.Model{bucketInfo, profileInfo},
+		bucketsPane:  bucketPane,
+		profilesPane: profilesPane,
+		remotePane:   remotePane,
+		localPane:    localPane,
+
+		bucketInfoPane:  bucketInfo,
+		profileInfoPane: profileInfo,
+
 		statusBar: statusbar.New(DefaultHomeKeyMap.HelpKeys()),
+
+		s3BucketProvider: *s3BucketProvider,
+		profilesProvider: *profilesProvider,
+		s3FSProvider:     *s3FSProvider,
+		fsProvider:       *fsProvider,
 	}
-}
-
-func (m Model) Init() tea.Cmd {
-	var cmds []tea.Cmd
-
-	for _, infoPane := range m.infoPanes {
-		cmds = append(cmds, infoPane.Init())
-	}
-
-	for i, pane := range m.panes {
-		if paneCmd := pane.Init(); paneCmd != nil {
-			cmd := func() tea.Msg {
-				msg := paneCmd()
-				if msg == nil {
-					return nil
-				}
-				return messages.PaneMsg{Index: i, Msg: msg}
-			}
-			cmds = append(cmds, cmd)
-		}
-	}
-
-	cmds = append(cmds, m.statusBar.Init())
-	cmds = append(cmds, tea.SetWindowTitle(fmt.Sprintf("%s TUI", constants.Name)))
-
-	return tea.Batch(cmds...)
 }
