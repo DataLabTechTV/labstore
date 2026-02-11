@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 
+	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/charmbracelet/bubbles/key"
@@ -212,11 +213,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m, func() tea.Msg {
-			if err := m.s3FSProvider.Select(
-				m.AppState.Profile(),
-				m.AppState.Bucket(),
-				m.AppState.RemotePath(),
-			); err != nil {
+			var args []string
+
+			if !m.AppState.HasProfile() {
+				return messages.AlertErrorMsg{Err: &errs.ErrProfileNotSelected{}}
+			}
+			args = append(args, m.AppState.Profile())
+
+			if !m.AppState.HasBucket() {
+				return messages.AlertErrorMsg{Err: &errs.ErrBucketNotSelected{}}
+			}
+			args = append(args, m.AppState.Bucket())
+
+			if m.AppState.HasRemotePath() {
+				args = append(args, m.AppState.RemotePath())
+			}
+
+			if err := m.s3FSProvider.Select(args...); err != nil {
 				return messages.AlertErrorMsg{Err: err}
 			}
 
@@ -245,6 +258,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m, func() tea.Msg {
+			if !m.AppState.HasLocalPath() {
+				return func() tea.Msg { return messages.AlertErrorMsg{Err: &errs.ErrLocalPathNotSet{}} }
+			}
+
 			if err := m.fsProvider.Select(m.AppState.LocalPath()); err != nil {
 				return messages.AlertErrorMsg{Err: err}
 			}

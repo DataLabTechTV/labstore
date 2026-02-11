@@ -36,11 +36,7 @@ type (
 	AlertErrorMsg struct{ Err error }
 	AlertHideMsg  struct{ ID string }
 
-	RefreshMsg       struct{}
-	RefreshResultMsg struct {
-		Entries []providers.Entry
-		Active  *string
-	}
+	RefreshMsg struct{}
 
 	SelectItemMsg struct{ Item string }
 	SetValueMsg   struct{ Value string }

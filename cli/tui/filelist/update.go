@@ -39,14 +39,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetWidth(m.Width)
 		m.table.SetHeight(m.Height)
 
-	// case messages.RefreshMsg:
-	// 	return m, refreshCmd(m.ParentIndex, m.Provider, m.state)
-
-	case messages.RefreshResultMsg:
-		m.Entries = msg.Entries
-		m.updateTable(msg.Active)
-		return m, nil
-
 	case tea.FocusMsg:
 		m.table.Focus()
 
@@ -106,53 +98,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	return m, nil
 }
-
-// func refreshCmd(parentIndex int, provider providers.Provider, globalState *state.State) tea.Cmd {
-// 	return func() tea.Msg {
-// 		switch parentIndex {
-// 		case state.FocusLocal:
-// 			if globalState.HasLocalPath() {
-// 				if err := provider.Select(globalState.LocalPath()); err != nil {
-// 					return messages.AlertErrorMsg{Err: err}
-// 				}
-// 			}
-
-// 		case state.FocusRemote:
-// 			if globalState.HasProfile() && globalState.HasBucket() {
-// 				args := []string{globalState.Profile(), globalState.Bucket()}
-// 				if globalState.HasRemotePath() {
-// 					args = append(args, globalState.RemotePath())
-// 				}
-
-// 				if err := provider.Select(args...); err != nil {
-// 					return messages.AlertErrorMsg{Err: err}
-// 				}
-// 			}
-
-// 		default:
-// 			// Unsupported
-// 			return nil
-// 		}
-
-// 		entries, err := provider.Children()
-// 		if err != nil {
-// 			return messages.PaneMsg{
-// 				Index: parentIndex,
-// 				Msg:   messages.AlertErrorMsg{Err: err},
-// 			}
-// 		}
-
-// 		var active *string
-// 		if lastSelected, ok := provider.LastSelected(); ok && lastSelected != "" {
-// 			active = &lastSelected
-// 		}
-
-// 		return messages.PaneMsg{
-// 			Index: parentIndex,
-// 			Msg:   messages.RefreshResultMsg{Entries: entries, Active: active},
-// 		}
-// 	}
-// }
 
 func (m *Model) updateTable(active *string) {
 	cursor := 0
