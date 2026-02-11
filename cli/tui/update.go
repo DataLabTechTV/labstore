@@ -14,7 +14,10 @@ const (
 )
 
 func (m Model) Init() tea.Cmd {
-	return func() tea.Msg { return messages.LoadProfilesMsg{} }
+	return tea.Batch(
+		func() tea.Msg { return messages.LoadProfilesMsg{} },
+		func() tea.Msg { return messages.LoadLocalMsg{} },
+	)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -226,6 +229,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.remotePane = m.remotePane.SetEntries(msg.Entries, msg.Active)
 		m.remotePane, cmd = m.remotePane.Update(msg)
+		return m, cmd
+
+	case messages.LoadLocalMsg:
+		return m, func() tea.Msg {
+			entries, err := m.fsProvider.Children()
+			if err != nil {
+				return messages.AlertErrorMsg{Err: err}
+			}
+
+			var active *string
+			if lastSel, ok := m.fsProvider.LastSelected(); ok {
+				active = &lastSel
+			}
+
+			return messages.LocalLoadedMsg{Entries: entries, Active: active}
+		}
+
+	case messages.LocalLoadedMsg:
+		var cmd tea.Cmd
+		m.localPane = m.localPane.SetEntries(msg.Entries, msg.Active)
+		m.localPane, cmd = m.localPane.Update(msg)
 		return m, cmd
 
 	case messages.AlertInfoMsg:
