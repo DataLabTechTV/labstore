@@ -27,3 +27,27 @@ type ErrInsufficientArguments struct{}
 func (e *ErrInsufficientArguments) Error() string {
 	return "insufficient arguments"
 }
+
+type ErrProfileNotSelected struct{}
+
+func (e *ErrProfileNotSelected) Error() string {
+	return "no profile selected"
+}
+
+type ErrBucketNotSelected struct{}
+
+func (e *ErrBucketNotSelected) Error() string {
+	return "no bucket selected"
+}
+
+type ErrRemotePathNotSet struct{}
+
+func (e *ErrRemotePathNotSet) Error() string {
+	return "no remote path is set"
+}
+
+type ErrLocalPathNotSet struct{}
+
+func (e *ErrLocalPathNotSet) Error() string {
+	return "no local path is set"
+}
