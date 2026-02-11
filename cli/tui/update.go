@@ -62,6 +62,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch km := DefaultHomeKeyMap.(type) {
 		case HomeKeyMap:
 			switch {
+
+			case key.Matches(msg, km.Refresh):
+				var cmds []tea.Cmd
+
+				m, cmd := m.sendToAll(messages.RefreshMsg{})
+				cmds = append(cmds, cmd)
+
+				alertCmd := func() tea.Msg {
+					return messages.InfoMsg{
+						Title:   "Refreshing",
+						Content: "All panels are being refreshed",
+					}
+				}
+				cmds = append(cmds, alertCmd)
+
+				return m, tea.Batch(cmds...)
+
+			case key.Matches(msg, km.Open):
+				return m.sendToFocused(messages.OpenMsg{})
+
+			case key.Matches(msg, km.NavUp):
+				return m.sendToFocused(messages.LevelUpMsg{})
+
 			case key.Matches(msg, km.Down):
 				return m.sendToFocused(messages.MoveDownMsg{})
 
@@ -79,12 +102,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case key.Matches(msg, km.PgUp):
 				return m.sendToFocused(messages.PageUpMsg{})
-
-			case key.Matches(msg, km.NavUp):
-				return m.sendToFocused(messages.LevelUpMsg{})
-
-			case key.Matches(msg, km.Open):
-				return m.sendToFocused(messages.OpenMsg{})
 
 			case key.Matches(msg, km.Focus1):
 				return m.paneFocus(0)
@@ -116,6 +133,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 		}
+
+	case messages.InfoMsg:
+		alert, cmd := alert.New(alert.AlertInfo, msg.Title, msg.Content)
+		m.alerts = append(m.alerts, alert)
+		return m, cmd
+
+	case messages.WarnMsg:
+		alert, cmd := alert.New(alert.AlertWarn, msg.Title, msg.Content)
+		m.alerts = append(m.alerts, alert)
+		return m, cmd
 
 	case messages.ErrorMsg:
 		alert, cmd := alert.New(alert.AlertError, fmt.Sprintf("%T", msg.Err), msg.Err.Error())
@@ -181,4 +208,14 @@ func (m Model) sendToFocused(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.panes[m.focusedPaneIndex], cmd = m.panes[m.focusedPaneIndex].Update(msg)
 	return m, cmd
+}
+
+func (m Model) sendToAll(msg tea.Msg) (Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	for i := range m.panes {
+		var cmd tea.Cmd
+		m.panes[i], cmd = m.panes[i].Update(msg)
+		cmds = append(cmds, cmd)
+	}
+	return m, tea.Batch(cmds...)
 }

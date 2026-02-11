@@ -13,6 +13,7 @@ type HomeKeyMap struct {
 	Get      key.Binding
 	Delete   key.Binding
 	Head     key.Binding
+	Refresh  key.Binding
 	NavUp    key.Binding
 	Open     key.Binding
 	Select   key.Binding
@@ -40,6 +41,7 @@ func (k HomeKeyMap) HelpKeys() []key.Binding {
 		k.Get,
 		k.Delete,
 		k.Head,
+		k.Refresh,
 		k.NavUp,
 		k.Open,
 		k.Select,
@@ -54,6 +56,7 @@ var DefaultHomeKeyMap KeyMap = HomeKeyMap{
 	Get:      key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "GET")),
 	Delete:   key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "DELETE")),
 	Head:     key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "HEAD")),
+	Refresh:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "Refresh")),
 	Open:     key.NewBinding(key.WithKeys("right", "enter"), key.WithHelp("→/⏎", "Open")),
 	NavUp:    key.NewBinding(key.WithKeys("left", "backspace"), key.WithHelp("←/⌫ ", "Up a Level")),
 	Select:   key.NewBinding(key.WithKeys("space"), key.WithHelp("␣", "Select")),

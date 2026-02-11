@@ -137,8 +137,8 @@ func refreshCmd(parentID int, provider providers.Provider, state *state.State) t
 	return func() tea.Msg {
 		switch provider.(type) {
 		case *providers.S3BucketProvider:
-			if state.HasBucket() {
-				args := []string{state.Bucket()}
+			if state.HasProfile() && state.HasBucket() {
+				args := []string{state.Profile(), state.Bucket()}
 				if state.HasRemotePath() {
 					args = append(args, state.RemotePath())
 				}
