@@ -78,6 +78,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case state.ProfilesPaneIndex:
 			if m.Active == nil {
 				m.state.UnsetProfile()
+				m.state.UnsetBucket()
 			} else {
 				m.state.SetProfile(*m.Active)
 			}
@@ -88,9 +89,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.state.SetBucket(*m.Active)
 			}
-
-		case state.RemotePaneIndex:
-			// State is set on previous states
 		}
 
 		var cmds []tea.Cmd
@@ -126,16 +124,12 @@ func refreshCmd(parentIndex int, provider providers.Provider, globalState *state
 		switch parentIndex {
 
 		case state.ProfilesPaneIndex:
-			if globalState.HasProfile() {
-				if err := provider.Select(globalState.Profile()); err != nil {
-					return messages.ErrorMsg{Err: err}
-				}
-			}
+			// No side-effect (passthrough)
 
 		case state.BucketsPaneIndex:
 			if globalState.HasProfile() {
 				if err := provider.Select(globalState.Profile()); err != nil {
-					return messages.ErrorMsg{Err: err}
+					return messages.AlertErrorMsg{Err: err}
 				}
 			}
 
@@ -146,7 +140,7 @@ func refreshCmd(parentIndex int, provider providers.Provider, globalState *state
 
 		entries, err := provider.Children()
 		if err != nil {
-			return messages.ErrorMsg{Err: err}
+			return messages.AlertErrorMsg{Err: err}
 		}
 
 		return messages.PaneMsg{
