@@ -20,6 +20,12 @@ type (
 		Active  *string
 	}
 
+	LoadLocalMsg   struct{}
+	LocalLoadedMsg struct {
+		Entries []providers.Entry
+		Active  *string
+	}
+
 	PaneMsg struct {
 		Index int
 		Msg   tea.Msg
