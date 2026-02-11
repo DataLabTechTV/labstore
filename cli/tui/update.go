@@ -209,6 +209,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.LoadRemoteMsg:
 		if msg.Dirname != nil {
+			if *msg.Dirname == ".." && m.AppState.IsRemotePathRoot() {
+				return m, nil
+			}
 			m.AppState.CDRemotePath(*msg.Dirname)
 		}
 
@@ -254,6 +257,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.LoadLocalMsg:
 		if msg.Dirname != nil {
+			if *msg.Dirname == ".." && m.AppState.IsLocalPathRoot() {
+				return m, nil
+			}
 			m.AppState.CDLocalPath(*msg.Dirname)
 		}
 

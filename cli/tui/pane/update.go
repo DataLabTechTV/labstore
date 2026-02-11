@@ -36,39 +36,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Child, cmd = m.Child.Update(tea.BlurMsg{})
 		return m, cmd
 
-	case messages.MoveDownMsg, messages.MoveUpMsg,
-		messages.MoveToBottomMsg, messages.MoveToTopMsg,
-		messages.PageDownMsg, messages.PageUpMsg,
-		messages.LevelUpMsg:
+	case messages.MoveDownMsg, messages.MoveUpMsg, messages.MoveToBottomMsg, messages.MoveToTopMsg,
+		messages.PageDownMsg, messages.PageUpMsg, messages.LevelUpMsg,
+		messages.ProfilesLoadedMsg, messages.RefreshMsg:
 
-		var cmd tea.Cmd
-		m.Child, cmd = m.Child.Update(msg)
-		return m, cmd
-
-	case messages.ProfilesLoadedMsg:
 		var cmd tea.Cmd
 		if m.Child != nil {
 			m.Child, cmd = m.Child.Update(msg)
 		}
 		return m, cmd
-
-	case messages.RefreshMsg:
-		var cmd tea.Cmd
-		if m.Child != nil {
-			m.Child, cmd = m.Child.Update(msg)
-		}
-		return m, cmd
-
-		// case messages.RefreshResultMsg:
-		// 	if m.Provider != nil {
-		// 		if selected := m.Provider.Selected(); selected != "" {
-		// 			m.Title = selected
-		// 		}
-		// 	}
-
-		// 	child, cmd := m.Child.Update(msg)
-		// 	m.Child = child
-		// 	return m, cmd
 	}
 
 	return m, nil
