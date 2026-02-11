@@ -6,6 +6,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -40,6 +41,9 @@ func (m LocalPane) Update(msg tea.Msg) (LocalPane, tea.Cmd) {
 				cmd = func() tea.Msg { return messages.LoadLocalMsg{Dirname: &dirname} }
 			}
 		}
+
+	case messages.LevelUpMsg:
+		cmd = func() tea.Msg { return messages.LoadLocalMsg{Dirname: helper.Ptr("..")} }
 
 	default:
 		m.Model, cmd = m.Model.Update(msg)

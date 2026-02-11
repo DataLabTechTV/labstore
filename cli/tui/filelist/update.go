@@ -70,30 +70,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.PageUpMsg:
 		m.table.MoveUp(10)
-
-		// case messages.LevelUpMsg:
-		// 	switch m.ParentIndex {
-
-		// 	case state.FocusLocal:
-		// 		if !m.state.HasLocalPath() || m.state.IsLocalPathRoot() {
-		// 			return m, nil
-		// 		}
-		// 		m.state.CDLocalPath("..")
-
-		// 	case state.FocusRemote:
-		// 		if !m.state.HasRemotePath() || m.state.IsRemotePathRoot() {
-		// 			return m, nil
-		// 		}
-		// 		m.state.CDRemotePath("..")
-		// 	}
-
-		// 	cmd := func() tea.Msg {
-		// 		return messages.PaneMsg{
-		// 			Index: m.ParentIndex,
-		// 			Msg:   messages.RefreshMsg{},
-		// 		}
-		// 	}
-		// 	return m, cmd
 	}
 
 	return m, nil

@@ -6,6 +6,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -45,6 +46,9 @@ func (m RemotePane) Update(msg tea.Msg) (RemotePane, tea.Cmd) {
 				cmd = func() tea.Msg { return messages.LoadRemoteMsg{Dirname: &dirname} }
 			}
 		}
+
+	case messages.LevelUpMsg:
+		cmd = func() tea.Msg { return messages.LoadRemoteMsg{Dirname: helper.Ptr("..")} }
 
 	default:
 		m.Model, cmd = m.Model.Update(msg)
