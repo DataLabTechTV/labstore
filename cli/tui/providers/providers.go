@@ -3,6 +3,8 @@ package providers
 import (
 	"os"
 	"time"
+
+	"github.com/IllumiKnowLabs/labstore/server/config"
 )
 
 type Entry struct {
@@ -25,7 +27,10 @@ type Provider interface {
 
 func NewS3BucketProvider() *S3BucketProvider {
 	// TODO: keep state of last selected bucket (might not exist anymore)
-	return &S3BucketProvider{}
+	return &S3BucketProvider{
+		Host: config.App.Server.S3.Address.Host,
+		Port: config.App.Server.S3.Address.Port,
+	}
 }
 
 func NewProfilesProvider() *ProfilesProvider {
@@ -35,7 +40,10 @@ func NewProfilesProvider() *ProfilesProvider {
 
 func NewS3FSProvider() *S3FSProvider {
 	// TODO: keep state of last selected bucket and key (both might not exist anymore)
-	return &S3FSProvider{}
+	return &S3FSProvider{
+		Host: config.App.Server.S3.Address.Host,
+		Port: config.App.Server.S3.Address.Port,
+	}
 }
 
 func NewFSProvider() *FSProvider {

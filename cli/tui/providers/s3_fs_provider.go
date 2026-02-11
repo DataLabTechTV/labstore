@@ -27,8 +27,6 @@ func (p *S3FSProvider) Select(args ...string) error {
 	}
 
 	p.Active = true
-	p.Host = config.App.Server.S3.Address.Host
-	p.Port = config.App.Server.S3.Address.Port
 	p.Profile = args[0]
 	p.Bucket = args[1]
 
@@ -90,13 +88,15 @@ func (p *S3FSProvider) Children() ([]Entry, error) {
 		var entry *Entry
 		if res.CommonPrefix != nil {
 			entry = &Entry{
-				Name:    res.CommonPrefix.Prefix,
+				Name:    path.Base(res.CommonPrefix.Prefix) + "/",
+				Path:    res.CommonPrefix.Prefix,
 				IsDir:   true,
 				ModTime: time.Now(),
 			}
 		} else {
 			entry = &Entry{
-				Name:    res.Object.Key,
+				Name:    path.Base(res.Object.Key),
+				Path:    res.Object.Key,
 				IsDir:   false,
 				ModTime: time.Time(res.Object.LastModified),
 				Size:    res.Object.Size,
