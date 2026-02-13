@@ -126,9 +126,12 @@ func (s *State) CDRemotePath(dirname string) {
 	}
 
 	s.remotePath = path.Clean(cdPath)
+	if s.remotePath == "." {
+		s.remotePath = ""
+	}
 	s.hasRemotePath = true
 }
 
 func (s *State) IsRemotePathRoot() bool {
-	return s.hasRemotePath && s.remotePath == "."
+	return s.remotePath == ""
 }
