@@ -98,6 +98,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, km.NavUp):
 				return m.SendToFocusedPane(messages.LevelUpMsg{})
 
+			case key.Matches(msg, km.Select):
+				return m.SendToFocusedPane(messages.MarkMsg{})
+
 			case key.Matches(msg, km.Down):
 				return m.SendToFocusedPane(messages.MoveDownMsg{})
 

@@ -59,7 +59,7 @@ var DefaultHomeKeyMap KeyMap = HomeKeyMap{
 	Refresh:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "Refresh")),
 	Open:     key.NewBinding(key.WithKeys("right", "enter"), key.WithHelp("→/⏎", "Open")),
 	NavUp:    key.NewBinding(key.WithKeys("left", "backspace"), key.WithHelp("←/⌫ ", "Up a Level")),
-	Select:   key.NewBinding(key.WithKeys("space"), key.WithHelp("␣", "Select")),
+	Select:   key.NewBinding(key.WithKeys(" "), key.WithHelp("␣", "Select")),
 	Next:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("<tab>", "Next")),
 	Previous: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+<tab>", "Previous")),
 	Quit:     key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "Quit")),

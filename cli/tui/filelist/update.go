@@ -7,6 +7,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const (
+	markerChecked   = "☑"
+	markerUnchecked = "☐"
+)
+
 type (
 	UpdateTableMsg struct {
 		Rows   []table.Row
@@ -28,20 +33,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Width = msg.Width
 		m.Height = msg.Height
 
-		columns := make([]table.Column, 3)
+		columns := make([]table.Column, 4)
 
-		modifiedWidth := m.Width / 3
-		columns[0] = table.Column{Title: "Modified", Width: modifiedWidth}
+		remainingWidth := m.Width
 
-		sizeWidth := (m.Width - modifiedWidth) / 4
-		columns[1] = table.Column{Title: "Size", Width: sizeWidth}
+		selWidth := 2
+		columns[0] = table.Column{Width: selWidth}
+		remainingWidth -= selWidth
 
-		nameWidth := m.Width - modifiedWidth - sizeWidth - m.hCellPad*len(columns)
-		columns[2] = table.Column{Title: "Name", Width: nameWidth}
+		modWidth := remainingWidth / 3
+		remainingWidth -= modWidth
+		columns[1] = table.Column{Title: "Modified", Width: modWidth}
 
-		m.table.SetColumns(columns)
+		sizeWidth := remainingWidth / 4
+		remainingWidth -= sizeWidth
+		columns[2] = table.Column{Title: "Size", Width: sizeWidth}
+
+		nameWidth := remainingWidth - m.hCellPad*len(columns)
+		columns[3] = table.Column{Title: "Name", Width: nameWidth}
+
 		m.table.SetWidth(m.Width)
 		m.table.SetHeight(m.Height)
+		m.table.SetColumns(columns)
 
 	case messages.MoveDownMsg:
 		if last := len(m.table.Rows()) - 1; m.table.Cursor() == last {
@@ -68,6 +81,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.PageUpMsg:
 		m.table.MoveUp(10)
+
+	case messages.MarkMsg:
+		m = m.Mark()
 	}
 
 	return m, nil
@@ -92,9 +108,16 @@ func (m *Model) updateTable(active *string) {
 			cursor = i
 		}
 
-		rows = append(rows, table.Row{date, size, name})
+		if entry.Marked {
+			rows = append(rows, table.Row{markerChecked, date, size, name})
+		} else {
+			rows = append(rows, table.Row{markerUnchecked, date, size, name})
+		}
 	}
 
+	if active == nil {
+		cursor = m.table.Cursor()
+	}
 	m.table.SetRows(rows)
 	m.table.SetCursor(cursor)
 	m.table.MoveDown(0)

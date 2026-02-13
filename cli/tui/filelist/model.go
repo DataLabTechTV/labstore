@@ -55,9 +55,19 @@ func (m Model) Clear() Model {
 
 func (m Model) Selected() (string, bool) {
 	selectedRow := m.table.SelectedRow()
-	if len(selectedRow) < 3 {
+	if len(selectedRow) < 4 {
 		return "", false
 	}
-	value := selectedRow[2]
+	value := selectedRow[3]
 	return value, true
+}
+
+func (m Model) Mark() Model {
+	idx := m.table.Cursor()
+	if idx >= len(m.Entries) {
+		return m
+	}
+	m.Entries[idx].Marked = !m.Entries[idx].Marked
+	m.updateTable(nil)
+	return m
 }
