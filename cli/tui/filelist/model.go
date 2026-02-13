@@ -66,3 +66,13 @@ func (m *Model) Mark() {
 		m.updateTable(nil)
 	}
 }
+
+func (m Model) Marked() []providers.Entry {
+	marked := []providers.Entry{}
+	for _, entry := range m.Entries {
+		if entry.Marked {
+			marked = append(marked, entry)
+		}
+	}
+	return marked
+}

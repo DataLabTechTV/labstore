@@ -138,6 +138,10 @@ func (p *S3FSProvider) Children() ([]Entry, error) {
 	return entries, nil
 }
 
+func (p *S3FSProvider) Upload(dst string, src ...Entry) error {
+	return nil
+}
+
 func (p *S3FSProvider) Stat(path string) (Entry, error) {
 	return Entry{}, nil
 }

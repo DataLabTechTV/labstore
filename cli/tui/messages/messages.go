@@ -33,8 +33,12 @@ type (
 
 	AlertInfoMsg  struct{ Title, Content string }
 	AlertWarnMsg  struct{ Title, Content string }
-	AlertErrorMsg struct{ Err error }
-	AlertHideMsg  struct{ ID string }
+	AlertErrorMsg struct {
+		Title   string
+		Content string
+		Err     error
+	}
+	AlertHideMsg struct{ ID string }
 
 	MoveDownMsg     struct{}
 	MoveUpMsg       struct{}
