@@ -2,7 +2,6 @@ package messages
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type (
@@ -26,20 +25,12 @@ type (
 		Active  *string
 	}
 
-	PaneMsg struct {
-		Index int
-		Msg   tea.Msg
-	}
+	RefreshAllMsg struct{}
 
 	AlertInfoMsg  struct{ Title, Content string }
 	AlertWarnMsg  struct{ Title, Content string }
 	AlertErrorMsg struct{ Err error }
 	AlertHideMsg  struct{ ID string }
-
-	RefreshAllMsg struct{}
-
-	SelectItemMsg struct{ Item string }
-	SetValueMsg   struct{ Value string }
 
 	MoveDownMsg     struct{}
 	MoveUpMsg       struct{}
