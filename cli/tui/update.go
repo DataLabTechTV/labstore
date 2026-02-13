@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
@@ -215,34 +216,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.AppState.CDRemotePath(*msg.Dirname)
 		}
 
+		var args []string
+
+		if !m.AppState.HasProfile() {
+			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: &errs.ErrNoProfileSelected{}} }
+		}
+		args = append(args, m.AppState.Profile())
+
+		if !m.AppState.HasBucket() {
+			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: &errs.ErrNoBucketSelected{}} }
+		}
+		args = append(args, m.AppState.Bucket())
+
+		if m.AppState.HasRemotePath() {
+			args = append(args, m.AppState.RemotePath())
+		}
+
+		if err := m.s3FSProvider.Select(args...); err != nil {
+			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
+		}
+
 		return m, func() tea.Msg {
-			var args []string
-
-			if !m.AppState.HasProfile() {
-				return messages.AlertErrorMsg{Err: &errs.ErrProfileNotSelected{}}
-			}
-			args = append(args, m.AppState.Profile())
-
-			if !m.AppState.HasBucket() {
-				return messages.AlertErrorMsg{Err: &errs.ErrBucketNotSelected{}}
-			}
-			args = append(args, m.AppState.Bucket())
-
-			if m.AppState.HasRemotePath() {
-				args = append(args, m.AppState.RemotePath())
-			}
-
-			if err := m.s3FSProvider.Select(args...); err != nil {
-				return messages.AlertErrorMsg{Err: err}
-			}
-
 			entries, err := m.s3FSProvider.Children()
 			if err != nil {
 				return messages.AlertErrorMsg{Err: err}
 			}
 
 			var active *string
-			if lastSel, ok := m.s3BucketProvider.LastSelected(); ok {
+			if lastSel, ok := m.s3FSProvider.LastSelected(); ok {
 				active = &lastSel
 			}
 
@@ -256,22 +257,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case messages.LoadLocalMsg:
-		if msg.Dirname != nil {
+		if msg.Dirname == nil {
+			path, err := os.Getwd()
+			if err != nil {
+				return m, func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
+			}
+			m.AppState.SetLocalPath(path)
+		} else {
 			if *msg.Dirname == ".." && m.AppState.IsLocalPathRoot() {
 				return m, nil
 			}
 			m.AppState.CDLocalPath(*msg.Dirname)
 		}
 
+		if !m.AppState.HasLocalPath() {
+			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: &errs.ErrLocalPathNotSet{}} }
+		}
+
+		if err := m.fsProvider.Select(m.AppState.LocalPath()); err != nil {
+			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
+		}
+
 		return m, func() tea.Msg {
-			if !m.AppState.HasLocalPath() {
-				return func() tea.Msg { return messages.AlertErrorMsg{Err: &errs.ErrLocalPathNotSet{}} }
-			}
-
-			if err := m.fsProvider.Select(m.AppState.LocalPath()); err != nil {
-				return messages.AlertErrorMsg{Err: err}
-			}
-
 			entries, err := m.fsProvider.Children()
 			if err != nil {
 				return messages.AlertErrorMsg{Err: err}

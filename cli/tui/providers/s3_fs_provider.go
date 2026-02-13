@@ -54,6 +54,7 @@ func (p *S3FSProvider) Deselect() error {
 	p.Profile = ""
 	p.Bucket = ""
 	p.Key = ""
+	p.lastSelected = make(map[string]string)
 	return nil
 }
 

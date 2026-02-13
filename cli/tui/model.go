@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"os"
-
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/infopane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/pane"
@@ -74,12 +72,6 @@ func New() Model {
 		s3FSProvider:     *s3FSProvider,
 		fsProvider:       *fsProvider,
 	}
-
-	path, err := os.Getwd()
-	if err != nil {
-		path = "."
-	}
-	m.AppState.SetLocalPath(path)
 
 	return m
 }
