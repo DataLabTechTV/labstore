@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	markerChecked   = "☑"
-	markerUnchecked = "☐"
+	markerUnchecked = " "
+	markerChecked   = "➤"
 )
 
 type (
