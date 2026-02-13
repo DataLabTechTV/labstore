@@ -17,6 +17,14 @@ type S3BucketProvider struct {
 	Profile string
 }
 
+func NewS3BucketProvider() *S3BucketProvider {
+	// TODO: keep state of last selected bucket (might not exist anymore)
+	return &S3BucketProvider{
+		Host: config.App.Server.S3.Address.Host,
+		Port: config.App.Server.S3.Address.Port,
+	}
+}
+
 func (p *S3BucketProvider) Select(args ...string) error {
 	if len(args) < 1 {
 		return &errs.ErrInsufficientArguments{}
@@ -36,11 +44,6 @@ func (p *S3BucketProvider) Deselect() error {
 
 func (p *S3BucketProvider) Selected() string {
 	return p.Profile
-}
-
-func (p *S3BucketProvider) LastSelected() (string, bool) {
-	// No state, because there is no navigation.
-	return "", false
 }
 
 func (p *S3BucketProvider) Children() ([]Entry, error) {

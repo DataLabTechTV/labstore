@@ -11,6 +11,11 @@ type ProfilesProvider struct {
 
 var initialized bool = false
 
+func NewProfilesProvider() *ProfilesProvider {
+	// TODO: keep state of last selected profile (fallback to default if it does not exist anymore)
+	return &ProfilesProvider{ActiveProfile: nil}
+}
+
 func (p *ProfilesProvider) Select(args ...string) error {
 	if len(args) < 1 {
 		return &errs.ErrInsufficientArguments{}
@@ -29,10 +34,6 @@ func (p *ProfilesProvider) Selected() string {
 	return *p.ActiveProfile
 }
 
-func (p *ProfilesProvider) LastSelected() (string, bool) {
-	return "", false
-}
-
 func (*ProfilesProvider) Children() ([]Entry, error) {
 	if !initialized {
 		credentials.Init()
@@ -49,10 +50,6 @@ func (*ProfilesProvider) Children() ([]Entry, error) {
 		entries = append(entries, Entry{Name: profile})
 	}
 	return entries, nil
-}
-
-func (*ProfilesProvider) Stat(path string) (Entry, error) {
-	return Entry{}, nil
 }
 
 func (*ProfilesProvider) Delete(path string) error {

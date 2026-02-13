@@ -14,6 +14,12 @@ type FSProvider struct {
 	lastSelected map[string]string
 }
 
+func NewFSProvider() *FSProvider {
+	return &FSProvider{
+		lastSelected: make(map[string]string),
+	}
+}
+
 func (p *FSProvider) Select(args ...string) error {
 	if len(args) < 1 {
 		return &errs.ErrInsufficientArguments{}
@@ -22,10 +28,6 @@ func (p *FSProvider) Select(args ...string) error {
 	localPath := args[0]
 	p.lastSelected[p.Path] = localPath
 	p.Path = localPath
-	return nil
-}
-
-func (p *FSProvider) Deselect() error {
 	return nil
 }
 

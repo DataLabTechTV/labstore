@@ -24,6 +24,16 @@ type S3FSProvider struct {
 	lastSelected map[string]string
 }
 
+func NewS3FSProvider() *S3FSProvider {
+	// TODO: keep state of last selected bucket and key (both might not exist anymore)
+	return &S3FSProvider{
+		Host: config.App.Server.S3.Address.Host,
+		Port: config.App.Server.S3.Address.Port,
+
+		lastSelected: make(map[string]string),
+	}
+}
+
 func (p *S3FSProvider) Select(args ...string) error {
 	if len(args) < 2 {
 		return &errs.ErrInsufficientArguments{}
