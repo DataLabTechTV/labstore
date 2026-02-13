@@ -63,5 +63,5 @@ func (m *Model) updateTable() {
 		rows = append(rows, table.Row{entry})
 	}
 	m.table.SetRows(rows)
-	m.table.SetCursor(0)
+	m.table.GotoTop()
 }

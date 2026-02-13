@@ -27,6 +27,11 @@ func (m LocalPane) SetEntries(entries []providers.Entry, active *string) LocalPa
 	return m
 }
 
+func (m LocalPane) Clear() LocalPane {
+	m.Model = m.Model.Clear()
+	return m
+}
+
 func (m LocalPane) Update(msg tea.Msg) (LocalPane, tea.Cmd) {
 	var cmd tea.Cmd
 

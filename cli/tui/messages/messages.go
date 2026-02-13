@@ -10,7 +10,7 @@ type (
 	ProfilesLoadedMsg  struct{ Entries []providers.Entry }
 	ProfileSelectedMsg struct{ Profile string }
 
-	LoadBucketsMsg    struct{ Profile string }
+	LoadBucketsMsg    struct{}
 	BucketsLoadedMsg  struct{ Entries []providers.Entry }
 	BucketSelectedMsg struct{ Bucket string }
 
@@ -36,7 +36,7 @@ type (
 	AlertErrorMsg struct{ Err error }
 	AlertHideMsg  struct{ ID string }
 
-	RefreshMsg struct{}
+	RefreshAllMsg struct{}
 
 	SelectItemMsg struct{ Item string }
 	SetValueMsg   struct{ Value string }
