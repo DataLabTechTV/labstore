@@ -6,6 +6,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -76,6 +77,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.RefreshAllMsg:
 		return m.HandleRefreshAll(msg)
 
+	case messages.UploadMsg:
+		return m.HandleUpload(msg)
+
 	case messages.AlertInfoMsg:
 		return m.HandleAlertInfo(msg)
 
@@ -143,6 +147,9 @@ func (m Model) HandleKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	switch km := DefaultHomeKeyMap.(type) {
 	case HomeKeyMap:
 		switch {
+
+		case key.Matches(msg, km.Put):
+			return m, func() tea.Msg { return messages.UploadMsg{} }
 
 		case key.Matches(msg, km.Refresh):
 			var cmds []tea.Cmd
@@ -225,7 +232,7 @@ func (m Model) HandleProfilesLoaded(msg messages.ProfilesLoadedMsg) (Model, tea.
 }
 
 func (m Model) HandleProfilesFailed(msg messages.ProfilesFailedMsg) (Model, tea.Cmd) {
-	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
+	return m, func() tea.Msg { return messages.AlertErrorMsg{Err: msg.Err} }
 }
 
 func (m Model) HandleProfileSelected(msg messages.ProfileSelectedMsg) (Model, tea.Cmd) {
@@ -257,7 +264,7 @@ func (m Model) HandleBucketsLoaded(msg messages.BucketsLoadedMsg) (Model, tea.Cm
 
 func (m Model) HandleBucketsFailed(msg messages.BucketsFailedMsg) (Model, tea.Cmd) {
 	m.resetBuckets()
-	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
+	return m, func() tea.Msg { return messages.AlertErrorMsg{Err: msg.Err} }
 }
 
 func (m Model) HandleBucketSelected(msg messages.BucketSelectedMsg) (Model, tea.Cmd) {
@@ -315,7 +322,7 @@ func (m Model) HandleRemoteLoaded(msg messages.RemoteLoadedMsg) (Model, tea.Cmd)
 }
 
 func (m Model) HandleRemoteFailed(msg messages.RemoteFailedMsg) (Model, tea.Cmd) {
-	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
+	return m, func() tea.Msg { return messages.AlertErrorMsg{Err: msg.Err} }
 }
 
 func (m Model) HandleLoadLocal(msg messages.LoadLocalMsg) (Model, tea.Cmd) {
@@ -351,7 +358,7 @@ func (m Model) HandleLocalLoaded(msg messages.LocalLoadedMsg) (Model, tea.Cmd) {
 }
 
 func (m Model) HandleLocalFailed(msg messages.LocalFailedMsg) (Model, tea.Cmd) {
-	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
+	return m, func() tea.Msg { return messages.AlertErrorMsg{Err: msg.Err} }
 }
 
 func (m Model) HandleRefreshAll(msg messages.RefreshAllMsg) (Model, tea.Cmd) {
@@ -370,6 +377,72 @@ func (m Model) HandleRefreshAll(msg messages.RefreshAllMsg) (Model, tea.Cmd) {
 	)
 }
 
+func (m Model) HandleUpload(msg messages.UploadMsg) (Model, tea.Cmd) {
+	fileList, ok := m.localPane.Child.(filelist.Model)
+	if !ok {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Upload Failed",
+				Content: "Local pane does not contain a file list",
+			}
+		}
+	}
+
+	remoteList, ok := m.remotePane.Child.(filelist.Model)
+	if !ok {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Upload Failed",
+				Content: "Remote pane does not contain a file list",
+			}
+		}
+	}
+
+	dst, ok := remoteList.Selected()
+	if !ok {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Upload Failed",
+				Content: "No selected destination on remote",
+			}
+		}
+	}
+
+	src := fileList.Marked()
+	if len(src) < 1 {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Upload Failed",
+				Content: "No selected source files",
+			}
+		}
+	}
+
+	var cmds []tea.Cmd
+
+	cmd := func() tea.Msg {
+		return messages.AlertInfoMsg{
+			Title:   "Upload Started",
+			Content: fmt.Sprintf("Uploading %d files to %s", len(src), dst),
+		}
+	}
+	cmds = append(cmds, cmd)
+
+	cmd = func() tea.Msg {
+		if err := m.s3FSProvider.Upload(dst, src...); err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
+
+		return messages.AlertInfoMsg{
+			Title:   "Upload Success",
+			Content: fmt.Sprintf("Successfully uploaded %d files", len(src)),
+		}
+	}
+	cmds = append(cmds, cmd)
+
+	return m, tea.Sequence(cmds...)
+}
+
 func (m Model) HandleAlertInfo(msg messages.AlertInfoMsg) (Model, tea.Cmd) {
 	alert, cmd := alert.New(alert.AlertInfo, msg.Title, msg.Content)
 	m.alerts = append(m.alerts, alert)
@@ -383,9 +456,21 @@ func (m Model) HandleAlertWarn(msg messages.AlertWarnMsg) (Model, tea.Cmd) {
 }
 
 func (m Model) HandleAlertError(msg messages.AlertErrorMsg) (Model, tea.Cmd) {
-	alert, cmd := alert.New(alert.AlertError, fmt.Sprintf("%T", msg.Err), msg.Err.Error())
-	m.alerts = append(m.alerts, alert)
-	return m, cmd
+	var cmds []tea.Cmd
+
+	if msg.Err != nil {
+		alert, cmd := alert.New(alert.AlertError, fmt.Sprintf("%T", msg.Err), msg.Err.Error())
+		cmds = append(cmds, cmd)
+		m.alerts = append(m.alerts, alert)
+	}
+
+	if msg.Title != "" && msg.Content != "" {
+		alert, cmd := alert.New(alert.AlertError, msg.Title, msg.Content)
+		cmds = append(cmds, cmd)
+		m.alerts = append(m.alerts, alert)
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) HandleAlertHide(msg messages.AlertHideMsg) (Model, tea.Cmd) {
