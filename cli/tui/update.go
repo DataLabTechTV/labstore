@@ -79,8 +79,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, km.Refresh):
 				var cmds []tea.Cmd
 
-				m, cmd := m.SendToAllPanes(messages.RefreshMsg{})
-				cmds = append(cmds, cmd)
+				refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+				cmds = append(cmds, refreshCmd)
 
 				alertCmd := func() tea.Msg {
 					return messages.AlertInfoMsg{
@@ -140,13 +140,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case messages.LoadProfilesMsg:
-		return m, func() tea.Msg {
-			entries, err := m.profilesProvider.Children()
-			if err != nil {
-				return messages.AlertErrorMsg{Err: err}
-			}
-			return messages.ProfilesLoadedMsg{Entries: entries}
-		}
+		return m, m.loadProfilesCmd()
 
 	case messages.ProfilesLoadedMsg:
 		var cmd tea.Cmd
@@ -168,22 +162,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.profileInfoPane.Value = msg.Profile
 			m.AppState.SetProfile(msg.Profile)
-			return m, func() tea.Msg { return messages.LoadBucketsMsg(msg) }
+			return m, func() tea.Msg { return messages.LoadBucketsMsg{} }
 		}
 
 	case messages.LoadBucketsMsg:
-		return m, func() tea.Msg {
-			if err := m.s3BucketProvider.Select(msg.Profile); err != nil {
-				return messages.AlertErrorMsg{Err: err}
-			}
-
-			entries, err := m.s3BucketProvider.Children()
-			if err != nil {
-				return messages.AlertErrorMsg{Err: err}
-			}
-
-			return messages.BucketsLoadedMsg{Entries: entries}
+		if !m.AppState.HasProfile() {
+			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: &errs.ErrNoProfileSelected{}} }
 		}
+
+		return m, m.loadBucketsCmd()
 
 	case messages.BucketsLoadedMsg:
 		var cmd tea.Cmd
@@ -233,19 +220,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
 		}
 
-		return m, func() tea.Msg {
-			entries, err := m.s3FSProvider.Children()
-			if err != nil {
-				return messages.AlertErrorMsg{Err: err}
-			}
-
-			var active *string
-			if lastSel, ok := m.s3FSProvider.LastSelected(); ok {
-				active = &lastSel
-			}
-
-			return messages.RemoteLoadedMsg{Entries: entries, Active: active}
-		}
+		return m, m.loadRemoteCmd()
 
 	case messages.RemoteLoadedMsg:
 		var cmd tea.Cmd
@@ -275,25 +250,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
 		}
 
-		return m, func() tea.Msg {
-			entries, err := m.fsProvider.Children()
-			if err != nil {
-				return messages.AlertErrorMsg{Err: err}
-			}
-
-			var active *string
-			if lastSel, ok := m.fsProvider.LastSelected(); ok {
-				active = &lastSel
-			}
-
-			return messages.LocalLoadedMsg{Entries: entries, Active: active}
-		}
+		return m, m.loadLocalCmd()
 
 	case messages.LocalLoadedMsg:
 		var cmd tea.Cmd
 		m.localPane = m.localPane.SetEntries(msg.Entries, msg.Active)
 		m.localPane, cmd = m.localPane.Update(msg)
 		return m, cmd
+
+	case messages.RefreshAllMsg:
+		m.bucketsPane = m.bucketsPane.Clear()
+		m.profilesPane = m.profilesPane.Clear()
+		m.remotePane = m.remotePane.Clear()
+		m.localPane = m.localPane.Clear()
+
+		return m, tea.Batch(
+			m.loadProfilesCmd(),
+			m.loadBucketsCmd(),
+			m.loadRemoteCmd(),
+			m.loadLocalCmd(),
+		)
 
 	case messages.AlertInfoMsg:
 		alert, cmd := alert.New(alert.AlertInfo, msg.Title, msg.Content)
@@ -354,22 +330,59 @@ func (m Model) SendToFocusedPane(msg tea.Msg) (Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) SendToAllPanes(msg tea.Msg) (Model, tea.Cmd) {
-	var cmds []tea.Cmd
+func (m Model) loadProfilesCmd() tea.Cmd {
+	return func() tea.Msg {
+		entries, err := m.profilesProvider.Children()
+		if err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
+		return messages.ProfilesLoadedMsg{Entries: entries}
+	}
+}
 
-	var cmd tea.Cmd
+func (m Model) loadBucketsCmd() tea.Cmd {
+	return func() tea.Msg {
+		if err := m.s3BucketProvider.Select(m.AppState.Profile()); err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
 
-	m.bucketsPane, cmd = m.bucketsPane.Update(msg)
-	cmds = append(cmds, cmd)
+		entries, err := m.s3BucketProvider.Children()
+		if err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
 
-	m.profilesPane, cmd = m.profilesPane.Update(msg)
-	cmds = append(cmds, cmd)
+		return messages.BucketsLoadedMsg{Entries: entries}
+	}
+}
 
-	m.remotePane, cmd = m.remotePane.Update(msg)
-	cmds = append(cmds, cmd)
+func (m Model) loadRemoteCmd() tea.Cmd {
+	return func() tea.Msg {
+		entries, err := m.s3FSProvider.Children()
+		if err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
 
-	m.localPane, cmd = m.localPane.Update(msg)
-	cmds = append(cmds, cmd)
+		var active *string
+		if lastSel, ok := m.s3FSProvider.LastSelected(); ok {
+			active = &lastSel
+		}
 
-	return m, tea.Batch(cmds...)
+		return messages.RemoteLoadedMsg{Entries: entries, Active: active}
+	}
+}
+
+func (m Model) loadLocalCmd() tea.Cmd {
+	return func() tea.Msg {
+		entries, err := m.fsProvider.Children()
+		if err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
+
+		var active *string
+		if lastSel, ok := m.fsProvider.LastSelected(); ok {
+			active = &lastSel
+		}
+
+		return messages.LocalLoadedMsg{Entries: entries, Active: active}
+	}
 }

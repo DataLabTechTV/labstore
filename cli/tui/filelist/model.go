@@ -49,7 +49,7 @@ func (m Model) SetEntries(entries []providers.Entry, active *string) Model {
 func (m Model) Clear() Model {
 	m.Entries = []providers.Entry{}
 	m.table.SetRows([]table.Row{})
-	m.table.SetCursor(0)
+	m.table.GotoTop()
 	return m
 }
 

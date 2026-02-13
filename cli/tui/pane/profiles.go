@@ -24,6 +24,11 @@ func (m ProfilesPane) SetEntries(entries []providers.Entry) ProfilesPane {
 	return m
 }
 
+func (m ProfilesPane) Clear() ProfilesPane {
+	m.Model = m.Model.Clear()
+	return m
+}
+
 func (m ProfilesPane) Update(msg tea.Msg) (ProfilesPane, tea.Cmd) {
 	var cmd tea.Cmd
 
