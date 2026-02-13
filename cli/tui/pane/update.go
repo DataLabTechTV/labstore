@@ -24,18 +24,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.Child, _ = m.Child.Update(tea.WindowSizeMsg{Width: msg.Width - 2, Height: msg.Height - 2})
 		}
 
-	case tea.FocusMsg:
-		var cmd tea.Cmd
-		m.Focused = true
-		m.Child, cmd = m.Child.Update(tea.FocusMsg{})
-		return m, cmd
-
-	case tea.BlurMsg:
-		var cmd tea.Cmd
-		m.Focused = false
-		m.Child, cmd = m.Child.Update(tea.BlurMsg{})
-		return m, cmd
-
 	case messages.MoveDownMsg, messages.MoveUpMsg, messages.MoveToBottomMsg, messages.MoveToTopMsg,
 		messages.PageDownMsg, messages.PageUpMsg:
 
