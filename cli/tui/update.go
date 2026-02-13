@@ -37,6 +37,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.ProfilesLoadedMsg:
 		return m.HandleProfilesLoaded(msg)
 
+	case messages.ProfilesFailedMsg:
+		return m.HandleProfilesFailed(msg)
+
 	case messages.ProfileSelectedMsg:
 		return m.HandleProfileSelected(msg)
 
@@ -45,6 +48,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.BucketsLoadedMsg:
 		return m.HandleBucketsLoaded(msg)
+
+	case messages.BucketsFailedMsg:
+		return m.HandleBucketsFailed(msg)
 
 	case messages.BucketSelectedMsg:
 		return m.HandleBucketSelected(msg)
@@ -55,11 +61,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.RemoteLoadedMsg:
 		return m.HandleRemoteLoaded(msg)
 
+	case messages.RemoteFailedMsg:
+		return m.HandleRemoteFailed(msg)
+
 	case messages.LoadLocalMsg:
 		return m.HandleLoadLocal(msg)
 
 	case messages.LocalLoadedMsg:
 		return m.HandleLocalLoaded(msg)
+
+	case messages.LocalFailedMsg:
+		return m.HandleLocalFailed(msg)
 
 	case messages.RefreshAllMsg:
 		return m.HandleRefreshAll(msg)
@@ -212,6 +224,10 @@ func (m Model) HandleProfilesLoaded(msg messages.ProfilesLoadedMsg) (Model, tea.
 	return m, cmd
 }
 
+func (m Model) HandleProfilesFailed(msg messages.ProfilesFailedMsg) (Model, tea.Cmd) {
+	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
+}
+
 func (m Model) HandleProfileSelected(msg messages.ProfileSelectedMsg) (Model, tea.Cmd) {
 	if m.profileInfoPane.Value == msg.Profile {
 		m.deselectProfile()
@@ -237,6 +253,11 @@ func (m Model) HandleBucketsLoaded(msg messages.BucketsLoadedMsg) (Model, tea.Cm
 	m.bucketsPane.SetEntries(msg.Entries)
 	m.bucketsPane, cmd = m.bucketsPane.Update(msg)
 	return m, cmd
+}
+
+func (m Model) HandleBucketsFailed(msg messages.BucketsFailedMsg) (Model, tea.Cmd) {
+	m.resetBuckets()
+	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
 }
 
 func (m Model) HandleBucketSelected(msg messages.BucketSelectedMsg) (Model, tea.Cmd) {
@@ -292,6 +313,10 @@ func (m Model) HandleRemoteLoaded(msg messages.RemoteLoadedMsg) (Model, tea.Cmd)
 	return m, cmd
 }
 
+func (m Model) HandleRemoteFailed(msg messages.RemoteFailedMsg) (Model, tea.Cmd) {
+	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
+}
+
 func (m Model) HandleLoadLocal(msg messages.LoadLocalMsg) (Model, tea.Cmd) {
 	if msg.Dirname == nil {
 		path, err := os.Getwd()
@@ -322,6 +347,10 @@ func (m Model) HandleLocalLoaded(msg messages.LocalLoadedMsg) (Model, tea.Cmd) {
 	m.localPane.SetEntries(msg.Entries, msg.Active)
 	m.localPane, cmd = m.localPane.Update(msg)
 	return m, cmd
+}
+
+func (m Model) HandleLocalFailed(msg messages.LocalFailedMsg) (Model, tea.Cmd) {
+	return m, func() tea.Msg { return messages.AlertErrorMsg(msg) }
 }
 
 func (m Model) HandleRefreshAll(msg messages.RefreshAllMsg) (Model, tea.Cmd) {
@@ -402,7 +431,7 @@ func (m Model) loadProfilesCmd() tea.Cmd {
 	return func() tea.Msg {
 		entries, err := m.profilesProvider.Children()
 		if err != nil {
-			return messages.AlertErrorMsg{Err: err}
+			return messages.ProfilesFailedMsg{Err: err}
 		}
 		return messages.ProfilesLoadedMsg{Entries: entries}
 	}
@@ -411,12 +440,12 @@ func (m Model) loadProfilesCmd() tea.Cmd {
 func (m Model) loadBucketsCmd() tea.Cmd {
 	return func() tea.Msg {
 		if err := m.s3BucketProvider.Select(m.AppState.Profile()); err != nil {
-			return messages.AlertErrorMsg{Err: err}
+			return messages.BucketsFailedMsg{Err: err}
 		}
 
 		entries, err := m.s3BucketProvider.Children()
 		if err != nil {
-			return messages.AlertErrorMsg{Err: err}
+			return messages.BucketsFailedMsg{Err: err}
 		}
 
 		return messages.BucketsLoadedMsg{Entries: entries}
@@ -427,7 +456,7 @@ func (m Model) loadRemoteCmd() tea.Cmd {
 	return func() tea.Msg {
 		entries, err := m.s3FSProvider.Children()
 		if err != nil {
-			return messages.AlertErrorMsg{Err: err}
+			return messages.RemoteFailedMsg{Err: err}
 		}
 
 		var active *string
@@ -443,7 +472,7 @@ func (m Model) loadLocalCmd() tea.Cmd {
 	return func() tea.Msg {
 		entries, err := m.fsProvider.Children()
 		if err != nil {
-			return messages.AlertErrorMsg{Err: err}
+			return messages.LocalFailedMsg{Err: err}
 		}
 
 		var active *string
