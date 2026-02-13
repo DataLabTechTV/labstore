@@ -7,10 +7,12 @@ import (
 type (
 	LoadProfilesMsg    struct{}
 	ProfilesLoadedMsg  struct{ Entries []providers.Entry }
+	ProfilesFailedMsg  struct{ Err error }
 	ProfileSelectedMsg struct{ Profile string }
 
 	LoadBucketsMsg    struct{}
 	BucketsLoadedMsg  struct{ Entries []providers.Entry }
+	BucketsFailedMsg  struct{ Err error }
 	BucketSelectedMsg struct{ Bucket string }
 
 	LoadRemoteMsg   struct{ Dirname *string }
@@ -18,12 +20,14 @@ type (
 		Entries []providers.Entry
 		Active  *string
 	}
+	RemoteFailedMsg struct{ Err error }
 
 	LoadLocalMsg   struct{ Dirname *string }
 	LocalLoadedMsg struct {
 		Entries []providers.Entry
 		Active  *string
 	}
+	LocalFailedMsg struct{ Err error }
 
 	RefreshAllMsg struct{}
 
