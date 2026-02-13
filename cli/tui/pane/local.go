@@ -20,16 +20,15 @@ func NewLocal(id int, title string, opts ...PaneOption) LocalPane {
 	}
 }
 
-func (m LocalPane) SetEntries(entries []providers.Entry, active *string) LocalPane {
+func (m *LocalPane) SetEntries(entries []providers.Entry, active *string) {
 	if list, ok := m.Child.(filelist.Model); ok {
-		m.Child = list.SetEntries(entries, active)
+		list.SetEntries(entries, active)
+		m.Child = list
 	}
-	return m
 }
 
-func (m LocalPane) Clear() LocalPane {
-	m.Model = m.Model.Clear()
-	return m
+func (m *LocalPane) Clear() {
+	m.Model.Clear()
 }
 
 func (m LocalPane) Update(msg tea.Msg) (LocalPane, tea.Cmd) {

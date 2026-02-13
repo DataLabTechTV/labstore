@@ -20,16 +20,15 @@ func NewRemote(id int, title string, opts ...PaneOption) RemotePane {
 	}
 }
 
-func (m RemotePane) SetEntries(entries []providers.Entry, active *string) RemotePane {
+func (m *RemotePane) SetEntries(entries []providers.Entry, active *string) {
 	if list, ok := m.Child.(filelist.Model); ok {
-		m.Child = list.SetEntries(entries, active)
+		list.SetEntries(entries, active)
+		m.Child = list
 	}
-	return m
 }
 
-func (m RemotePane) Clear() RemotePane {
-	m.Model = m.Model.Clear()
-	return m
+func (m *RemotePane) Clear() {
+	m.Model.Clear()
 }
 
 func (m RemotePane) Update(msg tea.Msg) (RemotePane, tea.Cmd) {

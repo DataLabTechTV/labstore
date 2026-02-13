@@ -83,7 +83,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.MoveUp(10)
 
 	case messages.MarkMsg:
-		m = m.Mark()
+		m.Mark()
 	}
 
 	return m, nil

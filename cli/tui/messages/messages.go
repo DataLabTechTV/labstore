@@ -41,4 +41,9 @@ type (
 	LevelUpMsg      struct{}
 	OpenMsg         struct{}
 	MarkMsg         struct{}
+
+	UploadMsg   struct{}
+	DownloadMsg struct{}
+	StatMsg     struct{}
+	DeleteMsg   struct{}
 )
