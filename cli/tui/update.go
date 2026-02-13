@@ -189,6 +189,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.AppState.UnsetBucket()
 			m.AppState.UnsetRemotePath()
+
+			var errs []error
+
+			if err := m.s3BucketProvider.Deselect(); err != nil {
+				errs = append(errs, err)
+			}
+
+			if err := m.s3FSProvider.Deselect(); err != nil {
+				errs = append(errs, err)
+			}
+
+			var cmds []tea.Cmd
+			for _, err := range errs {
+				cmds = append(cmds, func() tea.Msg { return messages.AlertErrorMsg{Err: err} })
+			}
+			if len(cmds) > 0 {
+				return m, tea.Batch(cmds...)
+			}
 		} else {
 			m.bucketInfoPane.Value = msg.Bucket
 			m.AppState.SetBucket(msg.Bucket)
