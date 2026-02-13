@@ -40,17 +40,15 @@ func New() Model {
 	}
 }
 
-func (m Model) SetEntries(entries []providers.Entry, active *string) Model {
+func (m *Model) SetEntries(entries []providers.Entry, active *string) {
 	m.Entries = entries
 	m.updateTable(active)
-	return m
 }
 
-func (m Model) Clear() Model {
+func (m *Model) Clear() {
 	m.Entries = []providers.Entry{}
 	m.table.SetRows([]table.Row{})
 	m.table.GotoTop()
-	return m
 }
 
 func (m Model) Selected() (string, bool) {
@@ -62,12 +60,9 @@ func (m Model) Selected() (string, bool) {
 	return value, true
 }
 
-func (m Model) Mark() Model {
-	idx := m.table.Cursor()
-	if idx >= len(m.Entries) {
-		return m
+func (m *Model) Mark() {
+	if idx := m.table.Cursor(); idx < len(m.Entries) {
+		m.Entries[idx].Marked = !m.Entries[idx].Marked
+		m.updateTable(nil)
 	}
-	m.Entries[idx].Marked = !m.Entries[idx].Marked
-	m.updateTable(nil)
-	return m
 }

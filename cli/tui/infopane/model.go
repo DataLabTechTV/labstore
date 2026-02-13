@@ -17,7 +17,6 @@ func New(label string, value string) Model {
 	}
 }
 
-func (m Model) Clear() Model {
+func (m *Model) Clear() {
 	m.Value = ""
-	return m
 }

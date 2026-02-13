@@ -25,9 +25,8 @@ func (p *ProfilesProvider) Select(args ...string) error {
 	return nil
 }
 
-func (p *ProfilesProvider) Deselect() error {
+func (p *ProfilesProvider) Deselect() {
 	p.ActiveProfile = nil
-	return nil
 }
 
 func (p *ProfilesProvider) Selected() string {

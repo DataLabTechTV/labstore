@@ -36,10 +36,9 @@ func (p *S3BucketProvider) Select(args ...string) error {
 	return nil
 }
 
-func (p *S3BucketProvider) Deselect() error {
+func (p *S3BucketProvider) Deselect() {
 	p.Active = false
 	p.Profile = ""
-	return nil
 }
 
 func (p *S3BucketProvider) Selected() string {

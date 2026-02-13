@@ -38,17 +38,15 @@ func New() Model {
 	return model
 }
 
-func (m Model) SetEntries(entries []providers.Entry) Model {
+func (m *Model) SetEntries(entries []providers.Entry) {
 	m.Entries = providers.EntryNames(entries)
 	m.updateTable()
-	return m
 }
 
-func (m Model) Clear() Model {
+func (m *Model) Clear() {
 	m.Entries = []string{}
 	m.table.SetRows([]table.Row{})
 	m.table.GotoTop()
-	return m
 }
 
 func (m Model) Selected() (string, bool) {

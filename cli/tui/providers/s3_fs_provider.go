@@ -59,13 +59,12 @@ func (p *S3FSProvider) Select(args ...string) error {
 	return nil
 }
 
-func (p *S3FSProvider) Deselect() error {
+func (p *S3FSProvider) Deselect() {
 	p.Active = false
 	p.Profile = ""
 	p.Bucket = ""
 	p.Key = ""
 	p.lastSelected = make(map[string]string)
-	return nil
 }
 
 func (p *S3FSProvider) Selected() string {

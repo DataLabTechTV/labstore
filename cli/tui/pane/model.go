@@ -60,15 +60,15 @@ func (m Model) SetFocused(focused bool) Model {
 	return m
 }
 
-func (m Model) Clear() Model {
+func (m *Model) Clear() {
 	switch child := m.Child.(type) {
 
 	case simplelist.Model:
-		m.Child = child.Clear()
+		child.Clear()
+		m.Child = child
 
 	case filelist.Model:
-		m.Child = child.Clear()
+		child.Clear()
+		m.Child = child
 	}
-
-	return m
 }

@@ -8,7 +8,6 @@ func NewBucket(label, value string) BucketInfoPane {
 	return BucketInfoPane{Model: New(label, value)}
 }
 
-func (m BucketInfoPane) Clear() BucketInfoPane {
-	m.Model = m.Model.Clear()
-	return m
+func (m *BucketInfoPane) Clear() {
+	m.Model.Clear()
 }

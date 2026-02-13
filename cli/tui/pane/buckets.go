@@ -17,16 +17,15 @@ func NewBuckets(id int, title string, opts ...PaneOption) BucketsPane {
 	}
 }
 
-func (m BucketsPane) SetEntries(entries []providers.Entry) BucketsPane {
+func (m *BucketsPane) SetEntries(entries []providers.Entry) {
 	if list, ok := m.Child.(simplelist.Model); ok {
-		m.Child = list.SetEntries(entries)
+		list.SetEntries(entries)
+		m.Child = list
 	}
-	return m
 }
 
-func (m BucketsPane) Clear() BucketsPane {
-	m.Model = m.Model.Clear()
-	return m
+func (m *BucketsPane) Clear() {
+	m.Model.Clear()
 }
 
 func (m BucketsPane) Update(msg tea.Msg) (BucketsPane, tea.Cmd) {
