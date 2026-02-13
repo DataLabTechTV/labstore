@@ -21,12 +21,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetWidth(m.Width)
 		m.table.SetHeight(m.Height)
 
-	case tea.FocusMsg:
-		m.table.Focus()
-
-	case tea.BlurMsg:
-		m.table.Blur()
-
 	case messages.MoveDownMsg:
 		if last := len(m.table.Rows()) - 1; m.table.Cursor() == last {
 			m.table.GotoTop()
