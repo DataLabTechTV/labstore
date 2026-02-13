@@ -261,9 +261,10 @@ func (m Model) HandleBucketsFailed(msg messages.BucketsFailedMsg) (Model, tea.Cm
 }
 
 func (m Model) HandleBucketSelected(msg messages.BucketSelectedMsg) (Model, tea.Cmd) {
+	m.resetRemote()
+
 	if m.bucketInfoPane.Value == msg.Bucket {
 		m.deselectBucket()
-
 		m.s3BucketProvider.Deselect()
 		m.s3FSProvider.Deselect()
 	} else {
