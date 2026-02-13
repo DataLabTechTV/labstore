@@ -117,10 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.SendToFocusedPane(messages.PageUpMsg{})
 
 			case key.Matches(msg, km.Focus1):
-				var cmd tea.Cmd
 				m = m.SetFocusedPane(FocusBuckets)
-				m.bucketsPane, cmd = m.bucketsPane.Update(messages.RefreshMsg{})
-				return m, cmd
 
 			case key.Matches(msg, km.Focus2):
 				m = m.SetFocusedPane(FocusProfiles)
