@@ -15,7 +15,7 @@ type (
 )
 
 func (m Model) Init() tea.Cmd {
-	return func() tea.Msg { return messages.RefreshMsg{} }
+	return nil
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
