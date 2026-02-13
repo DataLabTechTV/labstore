@@ -37,8 +37,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, cmd
 
 	case messages.MoveDownMsg, messages.MoveUpMsg, messages.MoveToBottomMsg, messages.MoveToTopMsg,
-		messages.PageDownMsg, messages.PageUpMsg, messages.LevelUpMsg,
-		messages.ProfilesLoadedMsg, messages.RefreshMsg:
+		messages.PageDownMsg, messages.PageUpMsg:
 
 		var cmd tea.Cmd
 		if m.Child != nil {
