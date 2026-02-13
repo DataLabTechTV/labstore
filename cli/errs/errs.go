@@ -28,15 +28,15 @@ func (e *ErrInsufficientArguments) Error() string {
 	return "insufficient arguments"
 }
 
-type ErrProfileNotSelected struct{}
+type ErrNoProfileSelected struct{}
 
-func (e *ErrProfileNotSelected) Error() string {
+func (e *ErrNoProfileSelected) Error() string {
 	return "no profile selected"
 }
 
-type ErrBucketNotSelected struct{}
+type ErrNoBucketSelected struct{}
 
-func (e *ErrBucketNotSelected) Error() string {
+func (e *ErrNoBucketSelected) Error() string {
 	return "no bucket selected"
 }
 
