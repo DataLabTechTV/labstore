@@ -99,4 +99,5 @@ func (m *Model) updateTable(active *string) {
 
 	m.table.SetRows(rows)
 	m.table.SetCursor(cursor)
+	m.table.MoveDown(0)
 }
