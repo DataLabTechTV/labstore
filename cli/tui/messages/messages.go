@@ -40,4 +40,5 @@ type (
 	PageUpMsg       struct{}
 	LevelUpMsg      struct{}
 	OpenMsg         struct{}
+	MarkMsg         struct{}
 )
