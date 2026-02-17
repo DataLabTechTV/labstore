@@ -13,6 +13,8 @@ func Run(ctx context.Context) {
 		New(),
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
+		tea.WithOutput(os.Stdout),
+		tea.WithInput(os.Stdin),
 	)
 
 	if _, err := program.Run(); err != nil {
