@@ -2,12 +2,12 @@ package filelist
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 	"github.com/charmbracelet/bubbles/table"
 )
 
 type Model struct {
-	Entries []providers.Entry
+	Entries []types.Entry
 	Width   int
 	Height  int
 
@@ -40,13 +40,13 @@ func New() Model {
 	}
 }
 
-func (m *Model) SetEntries(entries []providers.Entry, active *string) {
+func (m *Model) SetEntries(entries []types.Entry, active *string) {
 	m.Entries = entries
 	m.updateTable(active)
 }
 
 func (m *Model) Clear() {
-	m.Entries = []providers.Entry{}
+	m.Entries = []types.Entry{}
 	m.table.SetRows([]table.Row{})
 	m.table.GotoTop()
 }
@@ -67,8 +67,8 @@ func (m *Model) Mark() {
 	}
 }
 
-func (m Model) Marked() []providers.Entry {
-	marked := []providers.Entry{}
+func (m Model) Marked() []types.Entry {
+	marked := []types.Entry{}
 	for _, entry := range m.Entries {
 		if entry.Marked {
 			marked = append(marked, entry)

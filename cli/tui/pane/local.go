@@ -5,7 +5,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -20,7 +20,7 @@ func NewLocal(id int, title string, opts ...PaneOption) LocalPane {
 	}
 }
 
-func (m *LocalPane) SetEntries(entries []providers.Entry, active *string) {
+func (m *LocalPane) SetEntries(entries []types.Entry, active *string) {
 	if list, ok := m.Child.(filelist.Model); ok {
 		list.SetEntries(entries, active)
 		m.Child = list

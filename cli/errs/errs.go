@@ -51,3 +51,9 @@ type ErrLocalPathNotSet struct{}
 func (e *ErrLocalPathNotSet) Error() string {
 	return "no local path is set"
 }
+
+type ErrProviderInactive struct{}
+
+func (e *ErrProviderInactive) Error() string {
+	return "provider is inactive"
+}

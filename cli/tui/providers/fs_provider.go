@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 
@@ -41,8 +42,8 @@ func (p *FSProvider) Selected() string {
 	return homeRelPath
 }
 
-func (p *FSProvider) Children() ([]Entry, error) {
-	entries := []Entry{}
+func (p *FSProvider) Children() ([]types.Entry, error) {
+	entries := []types.Entry{}
 
 	if parent, ok := parentDir(p.Path); ok {
 		var size int64
@@ -57,7 +58,7 @@ func (p *FSProvider) Children() ([]Entry, error) {
 			modTime = info.ModTime()
 		}
 
-		entry := Entry{
+		entry := types.Entry{
 			Name:    "..",
 			Path:    parent,
 			IsDir:   true,
@@ -84,7 +85,7 @@ func (p *FSProvider) Children() ([]Entry, error) {
 			name += "/"
 		}
 
-		entry := Entry{
+		entry := types.Entry{
 			Name:    name,
 			Path:    filepath.Join(p.Path, dirEntry.Name()),
 			IsDir:   dirEntry.IsDir(),
@@ -98,8 +99,8 @@ func (p *FSProvider) Children() ([]Entry, error) {
 	return entries, nil
 }
 
-func (p *FSProvider) Stat(path string) (Entry, error) {
-	return Entry{}, nil
+func (p *FSProvider) Stat(path string) (types.Entry, error) {
+	return types.Entry{}, nil
 }
 
 func (p *FSProvider) Delete(path string) error {

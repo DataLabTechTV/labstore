@@ -2,7 +2,7 @@ package simplelist
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/render"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 	"github.com/charmbracelet/bubbles/table"
 )
 
@@ -38,8 +38,8 @@ func New() Model {
 	return model
 }
 
-func (m *Model) SetEntries(entries []providers.Entry) {
-	m.Entries = providers.EntryNames(entries)
+func (m *Model) SetEntries(entries []types.Entry) {
+	m.Entries = types.EntryNames(entries)
 	m.updateTable()
 }
 
