@@ -1,4 +1,4 @@
-package ui
+package progressbar
 
 import (
 	"context"
@@ -24,7 +24,7 @@ type progressMsg struct {
 
 type consoleMsg string
 
-type ProgressBarModel struct {
+type Model struct {
 	Ctx            context.Context
 	Bar            progress.Model
 	MaxConsoleSize int
@@ -46,10 +46,10 @@ type consoleWriter struct {
 	ch  chan<- string
 }
 
-func NewProgressBarModel(ctx context.Context, debug bool) (*ProgressBarModel, error) {
+func New(ctx context.Context, debug bool) (*Model, error) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	m := &ProgressBarModel{
+	m := &Model{
 		Ctx:            ctx,
 		Bar:            progress.New(progress.WithDefaultGradient()),
 		MaxConsoleSize: defaultMaxConsoleSize,
@@ -68,11 +68,11 @@ func NewProgressBarModel(ctx context.Context, debug bool) (*ProgressBarModel, er
 	return m, nil
 }
 
-func (m *ProgressBarModel) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return m.Bar.Init()
 }
 
-func (m *ProgressBarModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case progressMsg:
 		pct := float64(msg.current) / float64(msg.total)
@@ -114,7 +114,7 @@ func (m *ProgressBarModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *ProgressBarModel) View() string {
+func (m *Model) View() string {
 	rows := []string{}
 
 	if len(m.console) > 0 {
@@ -137,7 +137,7 @@ func (m *ProgressBarModel) View() string {
 	)
 }
 
-func (m *ProgressBarModel) Run() {
+func (m *Model) Run() {
 	defer close(m.done)
 
 	var wg sync.WaitGroup
@@ -207,7 +207,7 @@ func (m *ProgressBarModel) Run() {
 	slog.Debug("progress bar done")
 }
 
-func (m *ProgressBarModel) Close() {
+func (m *Model) Close() {
 	m.cancel()
 
 	if m.program != nil {
