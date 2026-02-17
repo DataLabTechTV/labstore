@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"context"
+
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/infopane"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/multiprogress"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/pane"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/state"
@@ -19,6 +22,7 @@ const (
 )
 
 type Model struct {
+	Ctx      context.Context
 	AppState state.State
 
 	bucketsPane  pane.BucketsPane
@@ -29,8 +33,9 @@ type Model struct {
 	profileInfoPane infopane.ProfileInfoPane
 	bucketInfoPane  infopane.BucketInfoPane
 
-	statusBar statusbar.Model
-	alerts    []alert.Model
+	alerts        []alert.Model
+	multiProgress *multiprogress.Model
+	statusBar     statusbar.Model
 
 	s3BucketProvider providers.S3BucketProvider
 	profilesProvider providers.ProfilesProvider
@@ -57,6 +62,8 @@ func New() Model {
 	profileInfo := infopane.NewProfile("Active Profile", infopane.ValueNone)
 
 	m := Model{
+		Ctx: context.Background(),
+
 		bucketsPane:  bucketPane,
 		profilesPane: profilesPane,
 		remotePane:   remotePane,

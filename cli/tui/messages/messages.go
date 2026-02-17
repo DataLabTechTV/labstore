@@ -1,30 +1,28 @@
 package messages
 
-import (
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
-)
+import "github.com/IllumiKnowLabs/labstore/cli/types"
 
 type (
 	LoadProfilesMsg    struct{}
-	ProfilesLoadedMsg  struct{ Entries []providers.Entry }
+	ProfilesLoadedMsg  struct{ Entries []types.Entry }
 	ProfilesFailedMsg  struct{ Err error }
 	ProfileSelectedMsg struct{ Profile string }
 
 	LoadBucketsMsg    struct{}
-	BucketsLoadedMsg  struct{ Entries []providers.Entry }
+	BucketsLoadedMsg  struct{ Entries []types.Entry }
 	BucketsFailedMsg  struct{ Err error }
 	BucketSelectedMsg struct{ Bucket string }
 
 	LoadRemoteMsg   struct{ Dirname *string }
 	RemoteLoadedMsg struct {
-		Entries []providers.Entry
+		Entries []types.Entry
 		Active  *string
 	}
 	RemoteFailedMsg struct{ Err error }
 
 	LoadLocalMsg   struct{ Dirname *string }
 	LocalLoadedMsg struct {
-		Entries []providers.Entry
+		Entries []types.Entry
 		Active  *string
 	}
 	LocalFailedMsg struct{ Err error }
@@ -50,8 +48,22 @@ type (
 	OpenMsg         struct{}
 	MarkMsg         struct{}
 
-	UploadMsg   struct{}
-	DownloadMsg struct{}
-	StatMsg     struct{}
-	DeleteMsg   struct{}
+	StartUploadMsg    struct{}
+	UploadProgressMsg struct {
+		FileIndex int
+		Uploaded  int64
+		Err       error
+	}
+	UploadDoneMsg struct{ FileCount int }
+
+	StartDownloadMsg    struct{}
+	DownloadProgressMsg struct {
+		FileIndex  int
+		Downloaded int64
+		Err        error
+	}
+	DownloadDoneMsg struct{}
+
+	StatMsg   struct{}
+	DeleteMsg struct{}
 )

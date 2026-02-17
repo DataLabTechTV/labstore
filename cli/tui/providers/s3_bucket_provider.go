@@ -6,6 +6,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 	"github.com/IllumiKnowLabs/labstore/client/s3"
 	"github.com/IllumiKnowLabs/labstore/server/config"
 )
@@ -45,9 +46,9 @@ func (p *S3BucketProvider) Selected() string {
 	return p.Profile
 }
 
-func (p *S3BucketProvider) Children() ([]Entry, error) {
+func (p *S3BucketProvider) Children() ([]types.Entry, error) {
 	if !p.Active {
-		return []Entry{}, nil
+		return []types.Entry{}, nil
 	}
 
 	profile, err := credentials.LoadProfile(p.Profile)
@@ -70,9 +71,9 @@ func (p *S3BucketProvider) Children() ([]Entry, error) {
 		return nil, err
 	}
 
-	var entries []Entry
+	var entries []types.Entry
 	for _, bucket := range buckets {
-		entry := Entry{
+		entry := types.Entry{
 			Name:    bucket.Name,
 			ModTime: time.Time(bucket.CreationDate),
 		}
@@ -81,8 +82,8 @@ func (p *S3BucketProvider) Children() ([]Entry, error) {
 	return entries, nil
 }
 
-func (p *S3BucketProvider) Stat(path string) (Entry, error) {
-	return Entry{}, nil
+func (p *S3BucketProvider) Stat(path string) (types.Entry, error) {
+	return types.Entry{}, nil
 }
 
 func (p *S3BucketProvider) Delete(path string) error {

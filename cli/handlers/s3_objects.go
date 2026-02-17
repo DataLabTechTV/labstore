@@ -7,7 +7,7 @@ import (
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/render"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/progressbar"
+	"github.com/IllumiKnowLabs/labstore/cli/ui/progressbar"
 	"github.com/IllumiKnowLabs/labstore/server/helper"
 )
 

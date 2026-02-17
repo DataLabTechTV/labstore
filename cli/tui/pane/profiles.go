@@ -2,8 +2,8 @@ package pane
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
-	"github.com/IllumiKnowLabs/labstore/cli/tui/providers"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/simplelist"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -17,7 +17,7 @@ func NewProfiles(id int, title string, opts ...PaneOption) ProfilesPane {
 	}
 }
 
-func (m *ProfilesPane) SetEntries(entries []providers.Entry) {
+func (m *ProfilesPane) SetEntries(entries []types.Entry) {
 	if list, ok := m.Child.(simplelist.Model); ok {
 		list.SetEntries(entries)
 		m.Child = list

@@ -48,5 +48,10 @@ func (m Model) View() string {
 
 	view := overlay.Composite(alertsView, mainView, overlay.Right, overlay.Top, -2, 1)
 
+	if m.multiProgress != nil {
+		progressBarView := m.multiProgress.View()
+		view = overlay.Composite(progressBarView, view, overlay.Center, overlay.Center, 0, 0)
+	}
+
 	return view
 }

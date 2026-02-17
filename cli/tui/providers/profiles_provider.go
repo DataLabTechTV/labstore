@@ -3,6 +3,7 @@ package providers
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 )
 
 type ProfilesProvider struct {
@@ -33,7 +34,7 @@ func (p *ProfilesProvider) Selected() string {
 	return *p.ActiveProfile
 }
 
-func (*ProfilesProvider) Children() ([]Entry, error) {
+func (*ProfilesProvider) Children() ([]types.Entry, error) {
 	if !initialized {
 		credentials.Init()
 		initialized = true
@@ -44,9 +45,9 @@ func (*ProfilesProvider) Children() ([]Entry, error) {
 		return nil, err
 	}
 
-	var entries []Entry
+	var entries []types.Entry
 	for profile := range cred.Profiles {
-		entries = append(entries, Entry{Name: profile})
+		entries = append(entries, types.Entry{Name: profile})
 	}
 	return entries, nil
 }
