@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -29,6 +30,11 @@ type S3FSProvider struct {
 	Key     string
 
 	lastSelected map[string]string
+}
+
+type IndexedPath struct {
+	FileIndex int
+	Path      string
 }
 
 func NewS3FSProvider() *S3FSProvider {
@@ -141,8 +147,6 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 	go func() {
 		defer close(progressCh)
 
-		numFiles := len(srcs)
-
 		var wg sync.WaitGroup
 
 		if !p.Active {
@@ -156,24 +160,52 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 			return
 		}
 
+		var indexedPaths []IndexedPath
+
 		for srcIndex, src := range srcs {
-			relPath, err := filepath.Rel(root, src.Path)
+			if helper.IsDir(src.Path) {
+				err := filepath.WalkDir(src.Path, func(path string, d fs.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+					if d.Type().IsRegular() {
+						indexedSrc := IndexedPath{
+							FileIndex: srcIndex,
+							Path:      path,
+						}
+						indexedPaths = append(indexedPaths, indexedSrc)
+					}
+					return nil
+				})
+				if err != nil {
+					progressCh <- messages.UploadProgressMsg{Err: err}
+					return
+				}
+			} else {
+				indexedSrc := IndexedPath{FileIndex: srcIndex, Path: src.Path}
+				indexedPaths = append(indexedPaths, indexedSrc)
+			}
+		}
+
+		numFiles := len(indexedPaths)
+
+		for _, indexedPath := range indexedPaths {
+			relPath, err := filepath.Rel(root, indexedPath.Path)
 			if err != nil {
 				progressCh <- messages.UploadProgressMsg{
 					FileCount: numFiles,
-					FileIndex: srcIndex,
+					FileIndex: indexedPath.FileIndex,
 					Err:       err,
 				}
 				continue
 			}
-
 			key := p.Key + strings.ReplaceAll(relPath, string(filepath.Separator), "/")
 
-			file, err := os.Open(src.Path)
+			file, err := os.Open(indexedPath.Path)
 			if err != nil {
 				progressCh <- messages.UploadProgressMsg{
 					FileCount: numFiles,
-					FileIndex: srcIndex,
+					FileIndex: indexedPath.FileIndex,
 					Err:       err,
 				}
 				continue
@@ -192,7 +224,7 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 						Uploaded:  int64(msg.Current),
 					}
 				}
-			}(srcIndex, fileProgressCh)
+			}(indexedPath.FileIndex, fileProgressCh)
 
 			_, err = s3Client.PutObject(p.Bucket, key, file, fileProgressCh)
 			close(fileProgressCh)
@@ -201,7 +233,7 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 			if err != nil {
 				progressCh <- messages.UploadProgressMsg{
 					FileCount: numFiles,
-					FileIndex: srcIndex,
+					FileIndex: indexedPath.FileIndex,
 					Err:       err,
 				}
 			}
