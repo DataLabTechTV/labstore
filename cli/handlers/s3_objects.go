@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/render"
@@ -33,13 +32,14 @@ func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) error {
 		return &errs.RuntimeError{}
 	}
 	go progressBar.Run()
-	defer progressBar.Close()
 
 	code, err := h.Client.PutObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
 		return &errs.RuntimeError{}
 	}
+
+	progressBar.Close()
 
 	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%s uploaded", localPath)))
 	return nil
@@ -80,14 +80,13 @@ func (h *S3Handler) GetObject(bucket, key, localPath string, debug bool) error {
 		return &errs.RuntimeError{}
 	}
 	go progressBar.Run()
-	defer progressBar.Close()
 
 	code, err := h.Client.GetObject(bucket, key, file, progressBar.Progress)
 	if err != nil {
 		fmt.Println(render.HttpStatusOrError(code, err))
 		return &errs.RuntimeError{}
 	}
-	time.Sleep(50 * time.Millisecond)
+	progressBar.Close()
 
 	fmt.Println(render.HttpStatus(code, fmt.Sprintf("%s downloaded", localPath)))
 	return nil
