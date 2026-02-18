@@ -8,6 +8,7 @@ server/router/assets/
 .zed/
 .vscode/
 __debug*
+*.data
 labstore.yml
 
 # If you prefer the allow list template instead of the deny list, see community template:
