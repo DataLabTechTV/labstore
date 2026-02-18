@@ -6,13 +6,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
+	"time"
 
 	"github.com/IllumiKnowLabs/labstore/server/config"
 	"github.com/IllumiKnowLabs/labstore/server/core"
@@ -219,7 +219,6 @@ func list(res *types.BaseListBucketResult, req *BaseListObjectsRequest) error {
 
 	slices.Sort(paths)
 
-	hash := md5.New()
 	keyCount := 0
 
 	for _, path := range paths {
@@ -251,10 +250,10 @@ func list(res *types.BaseListBucketResult, req *BaseListObjectsRequest) error {
 		}
 		defer helper.CloseWithErr(file, &err)
 
-		if _, err := io.Copy(hash, file); err != nil {
-			return fmt.Errorf("could not compute hash: %s", key)
+		eTag, err := computeETag(path)
+		if err != nil {
+			eTag = time.Time(lastModified).UTC().Format(time.RFC1123)
 		}
-		eTag := hex.EncodeToString(hash.Sum(nil))
 
 		size := info.Size()
 
@@ -278,4 +277,31 @@ func list(res *types.BaseListBucketResult, req *BaseListObjectsRequest) error {
 	}
 
 	return nil
+}
+
+// This computes a hash based on the first 1 MiB of content,
+// as well as the modification time and size, when available.
+func computeETag(path string) (string, error) {
+	hash := md5.New()
+
+	file, err := os.Open(path)
+	if err != nil {
+		return "", errors.New("could not read file")
+	}
+	defer helper.CloseWithErr(file, &err)
+
+	buf := make([]byte, 1*helper.MiB)
+	n, err := file.Read(buf)
+	hash.Write(buf[:n])
+
+	if stat, err := file.Stat(); err == nil {
+		modTime := fmt.Sprintf("%d", stat.ModTime().UTC().UnixNano())
+		hash.Write([]byte(modTime))
+
+		size := fmt.Sprintf("%d", stat.Size())
+		hash.Write([]byte(size))
+	}
+
+	eTag := hex.EncodeToString(hash.Sum(nil))
+	return eTag, nil
 }
