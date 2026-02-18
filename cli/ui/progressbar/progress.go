@@ -76,11 +76,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case progressMsg:
 		pct := float64(msg.current) / float64(msg.total)
-
-		if m.Bar.Percent() >= 1.0 {
-			return m, tea.Quit
-		}
-
 		cmd := m.Bar.SetPercent(pct)
 		return m, cmd
 
@@ -101,6 +96,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case progress.FrameMsg:
 		progressModel, cmd := m.Bar.Update(msg)
 		m.Bar = progressModel.(progress.Model)
+		if !m.Bar.IsAnimating() && m.Bar.Percent() >= 1.0 {
+			return m, tea.Quit
+		}
 		return m, cmd
 
 	case tea.WindowSizeMsg:
@@ -201,15 +199,8 @@ func (m *Model) Run() {
 }
 
 func (m *Model) Close() {
-	m.cancel()
-
-	if m.program != nil {
-		m.program.Quit()
-	}
-
-	close(m.Message)
-
 	<-m.done
+	close(m.Message)
 }
 
 func (w *consoleWriter) Write(buf []byte) (n int, err error) {
@@ -218,7 +209,6 @@ func (w *consoleWriter) Write(buf []byte) (n int, err error) {
 	select {
 	case <-w.ctx.Done():
 		return 0, io.ErrClosedPipe
-	// !FIXME: a panic occurs when channel is prematurely closed (e.g., PUT /:bucket/:key for non-existing bucket)
 	case w.ch <- msg:
 		return len(buf), nil
 	}
