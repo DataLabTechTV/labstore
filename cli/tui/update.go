@@ -403,6 +403,11 @@ func (m Model) HandleLocalFailed(msg messages.LocalFailedMsg) (Model, tea.Cmd) {
 }
 
 func (m Model) HandleRefreshAll(msg messages.RefreshAllMsg) (Model, tea.Cmd) {
+	m.profilesPane.Clear()
+	m.bucketsPane.Clear()
+	m.remotePane.Clear()
+	m.localPane.Clear()
+
 	return m, tea.Batch(
 		m.loadProfilesCmd(),
 		m.loadBucketsCmd(),
