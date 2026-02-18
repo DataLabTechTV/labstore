@@ -24,6 +24,13 @@ func (m *ProfilesPane) SetEntries(entries []types.Entry) {
 	}
 }
 
+func (m *ProfilesPane) EntryNames() []string {
+	if list, ok := m.Child.(simplelist.Model); ok {
+		return list.GetEntryNames()
+	}
+	return nil
+}
+
 func (m *ProfilesPane) Clear() {
 	m.Model.Clear()
 }
