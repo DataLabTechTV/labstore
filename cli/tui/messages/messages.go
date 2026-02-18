@@ -55,7 +55,8 @@ type (
 		Uploaded  int64
 		Err       error
 	}
-	UploadDoneMsg struct{ FileCount int }
+	UploadFailedMsg struct{ Err error }
+	UploadDoneMsg   struct{ FileCount int }
 
 	StartDownloadMsg    struct{}
 	DownloadProgressMsg struct {
@@ -64,7 +65,8 @@ type (
 		Downloaded int64
 		Err        error
 	}
-	DownloadDoneMsg struct{}
+	DownloadFailedMsg struct{ Err error }
+	DownloadDoneMsg   struct{}
 
 	StatMsg   struct{}
 	DeleteMsg struct{}

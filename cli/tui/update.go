@@ -90,6 +90,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.UploadProgressMsg:
 		return m.HandleUploadProgress(msg)
 
+	case messages.UploadFailedMsg:
+		return m.HandleUploadFailed(msg)
+
 	case messages.UploadDoneMsg:
 		return m.HandleUploadDone(msg)
 
@@ -479,7 +482,8 @@ func (m Model) waitForUploadProgressCmd(fileCount int) tea.Cmd {
 		}
 
 		if progressMsg.Err != nil {
-			return messages.AlertErrorMsg{Err: progressMsg.Err}
+			time.Sleep(1 * time.Second)
+			return messages.UploadFailedMsg{Err: progressMsg.Err}
 		}
 
 		return progressMsg
@@ -492,10 +496,28 @@ func (m Model) HandleUploadProgress(msg messages.UploadProgressMsg) (Model, tea.
 	return m, tea.Sequence(cmd, m.waitForUploadProgressCmd(msg.FileCount))
 }
 
+func (m Model) HandleUploadFailed(msg messages.UploadFailedMsg) (Model, tea.Cmd) {
+	m.multiProgress = nil
+
+	var cmds []tea.Cmd
+
+	alertCmd := func() tea.Msg {
+		return messages.AlertErrorMsg{Err: msg.Err}
+	}
+	cmds = append(cmds, alertCmd)
+
+	refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+	cmds = append(cmds, refreshCmd)
+
+	return m, tea.Batch(cmds...)
+}
+
 func (m Model) HandleUploadDone(msg messages.UploadDoneMsg) (Model, tea.Cmd) {
 	m.multiProgress = nil
 
-	return m, func() tea.Msg {
+	var cmds []tea.Cmd
+
+	alertCmd := func() tea.Msg {
 		var plural rune
 		if msg.FileCount > 1 {
 			plural = 's'
@@ -505,6 +527,12 @@ func (m Model) HandleUploadDone(msg messages.UploadDoneMsg) (Model, tea.Cmd) {
 			Content: fmt.Sprintf("Successfully uploaded %d file%c", msg.FileCount, plural),
 		}
 	}
+	cmds = append(cmds, alertCmd)
+
+	refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+	cmds = append(cmds, refreshCmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) HandleAlertInfo(msg messages.AlertInfoMsg) (Model, tea.Cmd) {
