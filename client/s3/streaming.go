@@ -96,6 +96,7 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 
 	enc.chunk.Data = make([]byte, enc.ChunkSize)
 	n, err := enc.reader.Read(enc.chunk.Data)
+	enc.chunk.Data = enc.chunk.Data[:n]
 	if err != nil && err != io.EOF {
 		return 0, err
 	}
