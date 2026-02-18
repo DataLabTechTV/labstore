@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
@@ -135,10 +136,14 @@ func (p *S3FSProvider) Children() ([]types.Entry, error) {
 }
 
 func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.UploadProgressMsg {
-	progressCh := make(chan messages.UploadProgressMsg)
+	progressCh := make(chan messages.UploadProgressMsg, 10)
 
 	go func() {
 		defer close(progressCh)
+
+		numFiles := len(srcs)
+
+		var wg sync.WaitGroup
 
 		if !p.Active {
 			progressCh <- messages.UploadProgressMsg{Err: &errs.ErrProviderInactive{}}
@@ -154,7 +159,11 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 		for srcIndex, src := range srcs {
 			relPath, err := filepath.Rel(root, src.Path)
 			if err != nil {
-				progressCh <- messages.UploadProgressMsg{FileIndex: srcIndex, Err: err}
+				progressCh <- messages.UploadProgressMsg{
+					FileCount: numFiles,
+					FileIndex: srcIndex,
+					Err:       err,
+				}
 				continue
 			}
 
@@ -162,29 +171,43 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 
 			file, err := os.Open(src.Path)
 			if err != nil {
-				progressCh <- messages.UploadProgressMsg{FileIndex: srcIndex, Err: err}
+				progressCh <- messages.UploadProgressMsg{
+					FileCount: numFiles,
+					FileIndex: srcIndex,
+					Err:       err,
+				}
 				continue
 			}
 
-			fileProgress := make(chan clientTypes.Progress)
+			fileProgressCh := make(chan clientTypes.Progress, 10)
 
+			wg.Add(1)
 			go func(srcIndex int, fileProgress <-chan clientTypes.Progress) {
+				defer wg.Done()
+
 				for msg := range fileProgress {
 					progressCh <- messages.UploadProgressMsg{
+						FileCount: numFiles,
 						FileIndex: srcIndex,
 						Uploaded:  int64(msg.Current),
 					}
 				}
-			}(srcIndex, fileProgress)
+			}(srcIndex, fileProgressCh)
 
-			_, err = s3Client.PutObject(p.Bucket, key, file, fileProgress)
-			close(fileProgress)
+			_, err = s3Client.PutObject(p.Bucket, key, file, fileProgressCh)
+			close(fileProgressCh)
 			helper.CloseWithErr(file, &err)
 
 			if err != nil {
-				progressCh <- messages.UploadProgressMsg{FileIndex: srcIndex, Err: err}
+				progressCh <- messages.UploadProgressMsg{
+					FileCount: numFiles,
+					FileIndex: srcIndex,
+					Err:       err,
+				}
 			}
 		}
+
+		wg.Wait()
 	}()
 
 	return progressCh

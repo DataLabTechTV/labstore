@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
@@ -428,9 +429,15 @@ func (m Model) HandleStartUpload(msg messages.StartUploadMsg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	cmd := func() tea.Msg {
+		var plural rune
+		if len(srcs) > 1 {
+			plural = 's'
+		}
 		return messages.AlertInfoMsg{
-			Title:   "Upload Started",
-			Content: fmt.Sprintf("Uploading %d files to %s/%s", len(srcs), m.s3FSProvider.Bucket, m.s3FSProvider.Key),
+			Title: "Upload Started",
+			Content: fmt.Sprintf(
+				"Uploading %d file%c to s3://%s/%s",
+				len(srcs), plural, m.s3FSProvider.Bucket, m.s3FSProvider.Key),
 		}
 	}
 	cmds = append(cmds, cmd)
@@ -447,16 +454,17 @@ func (m Model) HandleStartUpload(msg messages.StartUploadMsg) (Model, tea.Cmd) {
 	}
 
 	m.multiProgress.UploadProgressCh = m.s3FSProvider.Upload(m.fsProvider.Path, srcs...)
-	cmds = append(cmds, m.waitForUploadProgressCmd())
+	cmds = append(cmds, m.waitForUploadProgressCmd(len(srcs)))
 
 	return m, tea.Sequence(cmds...)
 }
 
-func (m Model) waitForUploadProgressCmd() tea.Cmd {
+func (m Model) waitForUploadProgressCmd(fileCount int) tea.Cmd {
 	return func() tea.Msg {
 		progressMsg, ok := <-m.multiProgress.UploadProgressCh
 		if !ok {
-			return messages.UploadDoneMsg{}
+			time.Sleep(1 * time.Second)
+			return messages.UploadDoneMsg{FileCount: fileCount}
 		}
 
 		if progressMsg.Err != nil {
@@ -470,14 +478,20 @@ func (m Model) waitForUploadProgressCmd() tea.Cmd {
 func (m Model) HandleUploadProgress(msg messages.UploadProgressMsg) (Model, tea.Cmd) {
 	multiProgress, cmd := m.multiProgress.Update(msg)
 	m.multiProgress = &multiProgress
-	return m, tea.Sequence(cmd, m.waitForUploadProgressCmd())
+	return m, tea.Sequence(cmd, m.waitForUploadProgressCmd(msg.FileCount))
 }
 
 func (m Model) HandleUploadDone(msg messages.UploadDoneMsg) (Model, tea.Cmd) {
+	m.multiProgress = nil
+
 	return m, func() tea.Msg {
+		var plural rune
+		if msg.FileCount > 1 {
+			plural = 's'
+		}
 		return messages.AlertInfoMsg{
 			Title:   "Upload Success",
-			Content: fmt.Sprintf("Successfully uploaded %d files", msg.FileCount),
+			Content: fmt.Sprintf("Successfully uploaded %d file%c", msg.FileCount, plural),
 		}
 	}
 }

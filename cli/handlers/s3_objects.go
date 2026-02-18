@@ -25,6 +25,7 @@ func (h *S3Handler) PutObject(bucket, key, localPath string, debug bool) error {
 		fmt.Println(render.Error(err))
 		return &errs.RuntimeError{}
 	}
+	defer helper.CloseWithErr(file, &err)
 
 	progressBar, err := progressbar.New(h.Client.Ctx, debug)
 	if err != nil {

@@ -23,7 +23,7 @@ type HeadObjectResponse struct {
 	StatusCode    int
 }
 
-func (c *Client) PutObject(bucket, key string, file *os.File, progress chan<- types.Progress) (int, error) {
+func (c *Client) PutObject(bucket, key string, file *os.File, progressCh chan<- types.Progress) (int, error) {
 	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return 0, err
@@ -34,7 +34,7 @@ func (c *Client) PutObject(bucket, key string, file *os.File, progress chan<- ty
 		return 0, err
 	}
 
-	enc := NewSigV4ChunkEncoder(c.Ctx, file, int(info.Size()), c.ChunkSize, progress)
+	enc := NewSigV4ChunkEncoder(c.Ctx, file, int(info.Size()), c.ChunkSize, progressCh)
 	resp, err := c.DoSigV4Request("PUT", reqURL.String(), enc)
 	if err != nil {
 		return 0, err

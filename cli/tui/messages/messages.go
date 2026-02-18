@@ -50,6 +50,7 @@ type (
 
 	StartUploadMsg    struct{}
 	UploadProgressMsg struct {
+		FileCount int
 		FileIndex int
 		Uploaded  int64
 		Err       error
@@ -58,6 +59,7 @@ type (
 
 	StartDownloadMsg    struct{}
 	DownloadProgressMsg struct {
+		FileCount  int
 		FileIndex  int
 		Downloaded int64
 		Err        error
