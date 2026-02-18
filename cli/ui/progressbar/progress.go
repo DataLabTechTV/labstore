@@ -77,9 +77,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case progressMsg:
 		pct := float64(msg.current) / float64(msg.total)
 
-		if pct >= 1.0 {
-			cmd := m.Bar.SetPercent(1.0)
-			return m, tea.Sequence(cmd, tea.Quit)
+		if m.Bar.Percent() >= 1.0 {
+			return m, tea.Quit
 		}
 
 		cmd := m.Bar.SetPercent(pct)
@@ -158,10 +157,7 @@ func (m *Model) Run() {
 						if !ok {
 							return
 						}
-						m.program.Send(progressMsg{
-							current: msg.Current,
-							total:   msg.Total,
-						})
+						m.program.Send(progressMsg{current: msg.Current, total: msg.Total})
 					default:
 						return
 					}
@@ -171,10 +167,7 @@ func (m *Model) Run() {
 				if !ok {
 					return
 				}
-				m.program.Send(progressMsg{
-					current: msg.Current,
-					total:   msg.Total,
-				})
+				m.program.Send(progressMsg{current: msg.Current, total: msg.Total})
 			}
 		}
 	}()

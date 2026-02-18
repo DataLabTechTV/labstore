@@ -10,6 +10,11 @@ import (
 
 	client "github.com/IllumiKnowLabs/labstore/client/types"
 	"github.com/IllumiKnowLabs/labstore/server/auth"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
+)
+
+const (
+	reportProgressPerBytes = 100 * helper.MiB
 )
 
 type SigV4ChunkEncoder struct {
@@ -19,12 +24,13 @@ type SigV4ChunkEncoder struct {
 	TotalSize int
 	ChunkSize int
 
-	progress chan<- client.Progress
-	reader   *bufio.Reader
-	chunk    *auth.SigV4Chunk
-	chunkBuf []byte
-	read     int
-	done     bool
+	progressCh chan<- client.Progress
+	reader     *bufio.Reader
+	chunk      *auth.SigV4Chunk
+	chunkBuf   []byte
+	read       int
+	readAcc    int
+	done       bool
 }
 
 func NewSigV4ChunkEncoder(
@@ -32,7 +38,7 @@ func NewSigV4ChunkEncoder(
 	src io.ReadCloser,
 	dataSize int,
 	chunkSize int,
-	progress chan<- client.Progress,
+	progressCh chan<- client.Progress,
 ) *SigV4ChunkEncoder {
 	enc := &SigV4ChunkEncoder{
 		Ctx:       ctx,
@@ -40,8 +46,8 @@ func NewSigV4ChunkEncoder(
 		DataSize:  dataSize,
 		ChunkSize: chunkSize,
 
-		progress: progress,
-		reader:   bufio.NewReaderSize(src, chunkSize),
+		progressCh: progressCh,
+		reader:     bufio.NewReaderSize(src, chunkSize),
 
 		chunk: &auth.SigV4Chunk{
 			Ctx: &auth.SigV4Context{},
@@ -59,6 +65,7 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 		enc.chunkBuf = enc.chunkBuf[n:]
 
 		enc.read += n
+		enc.readAcc += n
 		slog.Debug(
 			"sigv4 chunk encoder",
 			"enc.read", enc.read,
@@ -66,13 +73,17 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 			"pct", float64(enc.read)/float64(enc.TotalSize)*100,
 		)
 
-		if enc.progress != nil {
-			msg := client.Progress{Current: enc.read, Total: enc.TotalSize}
+		if enc.progressCh != nil {
+			if enc.readAcc >= reportProgressPerBytes || enc.read >= enc.TotalSize {
+				msg := client.Progress{Current: enc.read, Total: enc.TotalSize}
 
-			select {
-			case <-enc.Ctx.Done():
-				return 0, io.ErrClosedPipe
-			case enc.progress <- msg:
+				select {
+				case <-enc.Ctx.Done():
+					return 0, io.ErrClosedPipe
+				case enc.progressCh <- msg:
+					enc.readAcc = 0
+				default:
+				}
 			}
 		}
 
@@ -118,6 +129,7 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 	enc.chunkBuf = enc.chunkBuf[n:]
 
 	enc.read += n
+	enc.readAcc += n
 	slog.Debug(
 		"sigv4 chunk encoder",
 		"enc.read", enc.read,
@@ -125,13 +137,17 @@ func (enc *SigV4ChunkEncoder) Read(buf []byte) (int, error) {
 		"pct", float64(enc.read)/float64(enc.TotalSize)*100,
 	)
 
-	if enc.progress != nil {
-		msg := client.Progress{Current: enc.read, Total: enc.TotalSize}
+	if enc.progressCh != nil {
+		if enc.readAcc >= reportProgressPerBytes || enc.read >= enc.TotalSize {
+			msg := client.Progress{Current: enc.read, Total: enc.TotalSize}
 
-		select {
-		case <-enc.Ctx.Done():
-			return 0, io.ErrClosedPipe
-		case enc.progress <- msg:
+			select {
+			case <-enc.Ctx.Done():
+				return 0, io.ErrClosedPipe
+			case enc.progressCh <- msg:
+				enc.readAcc = 0
+			default:
+			}
 		}
 	}
 
