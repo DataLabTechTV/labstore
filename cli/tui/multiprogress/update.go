@@ -14,7 +14,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
-		m.Progress.Width = msg.Width
+		m.Width = msg.Width
+		m.Height = msg.Height
 
 	case messages.UploadProgressMsg:
 		m.Current[msg.FileIndex] = msg.Uploaded

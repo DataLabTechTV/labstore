@@ -158,8 +158,8 @@ func (m Model) HandleWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 
 	if m.multiProgress != nil {
 		m.multiProgress.Update(tea.WindowSizeMsg{
-			Width:  m.width - m.width/4,
-			Height: m.height - m.height/4,
+			Width:  msg.Width / 2,
+			Height: msg.Height / 2,
 		})
 	}
 
@@ -456,7 +456,7 @@ func (m Model) HandleStartUpload(msg messages.StartUploadMsg) (Model, tea.Cmd) {
 	}
 	cmds = append(cmds, cmd)
 
-	m.multiProgress = multiprogress.New(len(srcs))
+	m.multiProgress = multiprogress.New(len(srcs), m.width/2, m.height/2)
 	cmds = append(cmds, m.multiProgress.Init())
 
 	for _, src := range srcs {
@@ -477,12 +477,12 @@ func (m Model) waitForUploadProgressCmd(fileCount int) tea.Cmd {
 	return func() tea.Msg {
 		progressMsg, ok := <-m.multiProgress.UploadProgressCh
 		if !ok {
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 			return messages.UploadDoneMsg{FileCount: fileCount}
 		}
 
 		if progressMsg.Err != nil {
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 			return messages.UploadFailedMsg{Err: progressMsg.Err}
 		}
 
