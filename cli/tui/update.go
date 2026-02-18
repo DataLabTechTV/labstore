@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/IllumiKnowLabs/labstore/cli/errs"
@@ -254,8 +255,14 @@ func (m Model) HandleLoadProfiles(msg messages.LoadProfilesMsg) (Model, tea.Cmd)
 
 func (m Model) HandleProfilesLoaded(msg messages.ProfilesLoadedMsg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
+
 	m.profilesPane.SetEntries(msg.Entries)
 	m.profilesPane, cmd = m.profilesPane.Update(msg)
+
+	if !slices.Contains(m.profilesPane.EntryNames(), m.AppState.Profile()) {
+		m.deselectProfile()
+	}
+
 	return m, cmd
 }
 
@@ -285,8 +292,14 @@ func (m Model) HandleLoadBuckets(msg messages.LoadBucketsMsg) (Model, tea.Cmd) {
 
 func (m Model) HandleBucketsLoaded(msg messages.BucketsLoadedMsg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
+
 	m.bucketsPane.SetEntries(msg.Entries)
 	m.bucketsPane, cmd = m.bucketsPane.Update(msg)
+
+	if !slices.Contains(m.bucketsPane.EntryNames(), m.AppState.Bucket()) {
+		m.deselectBucket()
+	}
+
 	return m, cmd
 }
 
@@ -390,13 +403,6 @@ func (m Model) HandleLocalFailed(msg messages.LocalFailedMsg) (Model, tea.Cmd) {
 }
 
 func (m Model) HandleRefreshAll(msg messages.RefreshAllMsg) (Model, tea.Cmd) {
-	m.bucketInfoPane.Clear()
-	m.profileInfoPane.Clear()
-	m.bucketsPane.Clear()
-	m.profilesPane.Clear()
-	m.remotePane.Clear()
-	m.localPane.Clear()
-
 	return m, tea.Batch(
 		m.loadProfilesCmd(),
 		m.loadBucketsCmd(),

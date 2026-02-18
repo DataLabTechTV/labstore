@@ -24,6 +24,13 @@ func (m *BucketsPane) SetEntries(entries []types.Entry) {
 	}
 }
 
+func (m *BucketsPane) EntryNames() []string {
+	if list, ok := m.Child.(simplelist.Model); ok {
+		return list.GetEntryNames()
+	}
+	return nil
+}
+
 func (m *BucketsPane) Clear() {
 	m.Model.Clear()
 }

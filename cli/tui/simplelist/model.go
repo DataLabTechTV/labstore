@@ -43,6 +43,12 @@ func (m *Model) SetEntries(entries []types.Entry) {
 	m.updateTable()
 }
 
+func (m Model) GetEntryNames() []string {
+	var entryNames []string
+	entryNames = append(entryNames, m.Entries...)
+	return entryNames
+}
+
 func (m *Model) Clear() {
 	m.Entries = []string{}
 	m.table.SetRows([]table.Row{})
