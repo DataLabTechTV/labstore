@@ -29,7 +29,7 @@ var (
 		TextMuted:    lipgloss.Color("008"),
 		TextInverted: lipgloss.Color("005"),
 
-		Surface:      lipgloss.Color("000"),
+		Surface:      lipgloss.Color("240"),
 		SurfaceAlt:   lipgloss.Color("008"),
 		SurfaceHover: lipgloss.Color("007"),
 
