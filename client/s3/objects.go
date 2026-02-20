@@ -8,10 +8,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/IllumiKnowLabs/labstore/client/errs"
 	"github.com/IllumiKnowLabs/labstore/client/helper"
 	"github.com/IllumiKnowLabs/labstore/client/types"
 	"github.com/IllumiKnowLabs/labstore/server/config"
-	"github.com/IllumiKnowLabs/labstore/server/errs"
+	serverErrs "github.com/IllumiKnowLabs/labstore/server/errs"
 	serverHelper "github.com/IllumiKnowLabs/labstore/server/helper"
 	serverTypes "github.com/IllumiKnowLabs/labstore/server/types"
 )
@@ -45,7 +46,7 @@ func (c *Client) PutObject(bucket, key string, file *os.File, progressCh chan<- 
 		return resp.StatusCode, nil
 	}
 
-	var s3Err errs.S3Error
+	var s3Err serverErrs.S3Error
 	if err := serverHelper.ReadXML(resp.Body, &s3Err); err != nil {
 		return 0, err
 	}
@@ -66,17 +67,17 @@ func (c *Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
 	}
 	defer serverHelper.CloseWithErr(resp.Body, &err)
 
-	contentLength, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	lastModified, err := time.Parse(http.TimeFormat, resp.Header.Get("Last-Modified"))
-	if err != nil {
-		return nil, err
-	}
-
 	if resp.StatusCode == http.StatusOK {
+		contentLength, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		lastModified, err := time.Parse(http.TimeFormat, resp.Header.Get("Last-Modified"))
+		if err != nil {
+			return nil, err
+		}
+
 		out := &HeadObjectResponse{
 			ContentType:   resp.Header.Get("Content-Type"),
 			ContentLength: contentLength,
@@ -86,13 +87,7 @@ func (c *Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
 		return out, nil
 	}
 
-	var s3Err errs.S3Error
-	if err := serverHelper.ReadXML(resp.Body, &s3Err); err != nil {
-		return nil, err
-	}
-	s3Err.StatusCode = resp.StatusCode
-
-	return nil, &s3Err
+	return nil, errs.ErrHTTPStatusCode(resp.StatusCode)
 }
 
 func (c *Client) GetObject(bucket, key string, writer io.Writer, progress chan<- types.Progress) (int, error) {
@@ -141,7 +136,7 @@ func (c *Client) GetObject(bucket, key string, writer io.Writer, progress chan<-
 		return resp.StatusCode, nil
 	}
 
-	var s3Err errs.S3Error
+	var s3Err serverErrs.S3Error
 	if err := serverHelper.ReadXML(resp.Body, &s3Err); err != nil {
 		return 0, err
 	}
@@ -166,7 +161,7 @@ func (c *Client) DeleteObject(bucket, key string) (int, error) {
 		return resp.StatusCode, nil
 	}
 
-	var s3Err errs.S3Error
+	var s3Err serverErrs.S3Error
 	if err := serverHelper.ReadXML(resp.Body, &s3Err); err != nil {
 		return 0, err
 	}
@@ -232,7 +227,7 @@ func (c *Client) DeleteObjects(bucket string, keys ...string) (*serverTypes.Dele
 		return &res, resp.StatusCode, nil
 	}
 
-	var s3Err errs.S3Error
+	var s3Err serverErrs.S3Error
 	if err := serverHelper.ReadXML(resp.Body, &s3Err); err != nil {
 		return nil, 0, err
 	}
