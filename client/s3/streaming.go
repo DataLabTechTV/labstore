@@ -10,11 +10,6 @@ import (
 
 	client "github.com/IllumiKnowLabs/labstore/client/types"
 	"github.com/IllumiKnowLabs/labstore/server/auth"
-	"github.com/IllumiKnowLabs/labstore/server/helper"
-)
-
-const (
-	reportProgressPerBytes = 100 * helper.MiB
 )
 
 type SigV4ChunkEncoder struct {

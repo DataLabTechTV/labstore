@@ -17,6 +17,10 @@ import (
 	serverTypes "github.com/IllumiKnowLabs/labstore/server/types"
 )
 
+const (
+	reportProgressPerBytes = 100 * serverHelper.MiB
+)
+
 type HeadObjectResponse struct {
 	ContentType   string
 	ContentLength int64
@@ -110,6 +114,7 @@ func (c *Client) GetObject(bucket, key string, writer io.Writer, progressCh chan
 
 		buf := make([]byte, config.App.Server.S3.IO.BufferSize)
 		read := 0
+		readAcc := 0
 		for {
 			n, err := resp.Body.Read(buf)
 
@@ -119,9 +124,18 @@ func (c *Client) GetObject(bucket, key string, writer io.Writer, progressCh chan
 				}
 
 				read += n
+				readAcc += n
 
 				if progressCh != nil {
-					progressCh <- types.Progress{Current: read, Total: size}
+					if readAcc >= reportProgressPerBytes || read >= size {
+						msg := types.Progress{Current: read, Total: size}
+
+						select {
+						case progressCh <- msg:
+							readAcc = 0
+						default:
+						}
+					}
 				}
 			}
 
