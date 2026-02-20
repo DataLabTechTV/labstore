@@ -1,5 +1,11 @@
 package constants
 
+// general constants
+const (
+	Empty   = "**EMPTY**"
+	Unknown = "unknown"
+)
+
 // app constants
 const (
 	Name        = "LabStore"
@@ -16,13 +22,8 @@ const (
 
 // ldflags variables (defaults)
 var (
-	GitTag    = "unknown"
-	GitCommit = "unknown"
-	BuildTime = "unknown"
-	Builder   = "unknown"
-)
-
-// general constants
-const (
-	Empty = "**EMPTY**"
+	GitTag    = Unknown
+	GitCommit = Unknown
+	BuildTime = Unknown
+	Builder   = Unknown
 )
