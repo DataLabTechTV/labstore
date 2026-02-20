@@ -84,6 +84,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.LocalFailedMsg:
 		return m.HandleLocalFailed(msg)
 
+	case messages.DeleteMsg:
+		return m.HandleDelete(msg)
+
+	case messages.BucketDeleteMsg:
+		return m.HandleBucketDelete(msg)
+
 	case messages.RefreshAllMsg:
 		return m.HandleRefreshAll(msg)
 
@@ -186,17 +192,17 @@ func (m Model) HandleKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	case HomeKeyMap:
 		switch {
 
-		case key.Matches(msg, km.Profiles):
-			return m.comingSoon()
-
-		case key.Matches(msg, km.NewBucket):
-			return m.comingSoon()
+		case key.Matches(msg, km.Quit):
+			return m, tea.Quit
 
 		case key.Matches(msg, km.Put):
 			return m, func() tea.Msg { return messages.StartUploadMsg{} }
 
 		case key.Matches(msg, km.Get):
 			return m, func() tea.Msg { return messages.StartDownloadMsg{} }
+
+		case key.Matches(msg, km.Delete):
+			return m.sendToFocusedPane(messages.DeleteMsg{})
 
 		case key.Matches(msg, km.Refresh):
 			var cmds []tea.Cmd
@@ -222,6 +228,12 @@ func (m Model) HandleKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 
 		case key.Matches(msg, km.Select):
 			return m.sendToFocusedPane(messages.MarkMsg{})
+
+		case key.Matches(msg, km.Next):
+			m.setFocusedPane((m.focusedPane + 1) % 4)
+
+		case key.Matches(msg, km.Previous):
+			m.setFocusedPane((m.focusedPane + 4 - 1) % 4)
 
 		case key.Matches(msg, km.Down):
 			return m.sendToFocusedPane(messages.MoveDownMsg{})
@@ -252,15 +264,6 @@ func (m Model) HandleKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 
 		case key.Matches(msg, km.Focus4):
 			m.setFocusedPane(FocusLocal)
-
-		case key.Matches(msg, km.Next):
-			m.setFocusedPane((m.focusedPane + 1) % 4)
-
-		case key.Matches(msg, km.Previous):
-			m.setFocusedPane((m.focusedPane + 4 - 1) % 4)
-
-		case key.Matches(msg, km.Quit):
-			return m, tea.Quit
 		}
 	}
 
@@ -434,6 +437,30 @@ func (m Model) HandleLocalLoaded(msg messages.LocalLoadedMsg) (Model, tea.Cmd) {
 
 func (m Model) HandleLocalFailed(msg messages.LocalFailedMsg) (Model, tea.Cmd) {
 	return m, func() tea.Msg { return messages.AlertErrorMsg{Err: msg.Err} }
+}
+
+func (m Model) HandleDelete(msg messages.DeleteMsg) (Model, tea.Cmd) {
+	return m.sendToFocusedPane(msg)
+}
+
+func (m Model) HandleBucketDelete(msg messages.BucketDeleteMsg) (Model, tea.Cmd) {
+	deleteCmd := func() tea.Msg {
+		if err := m.s3BucketProvider.Select(m.AppState.Profile()); err != nil {
+			return messages.BucketsFailedMsg{Err: err}
+		}
+
+		if err := m.s3BucketProvider.Delete(msg.Bucket); err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
+		return messages.AlertInfoMsg{
+			Title:   "Bucket Deleted",
+			Content: fmt.Sprintf("Bucket %s was deleted", msg.Bucket),
+		}
+	}
+
+	refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+
+	return m, tea.Sequence(deleteCmd, refreshCmd)
 }
 
 func (m Model) HandleRefreshAll(msg messages.RefreshAllMsg) (Model, tea.Cmd) {
@@ -758,15 +785,6 @@ func (m Model) sendToFocusedPane(msg tea.Msg) (Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) comingSoon() (Model, tea.Cmd) {
-	return m, func() tea.Msg {
-		return messages.AlertWarnMsg{
-			Title:   "Not Implemented",
-			Content: "Coming soon!",
-		}
-	}
-}
-
 func (m Model) loadProfilesCmd() tea.Cmd {
 	return func() tea.Msg {
 		entries, err := m.profilesProvider.Children()
@@ -826,7 +844,6 @@ func (m Model) loadLocalCmd() tea.Cmd {
 
 func (m *Model) deselectProfile() {
 	m.AppState.UnsetProfile()
-	m.profilesProvider.Deselect()
 	m.profileInfoPane.Clear()
 	m.resetBuckets()
 }

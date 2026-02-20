@@ -68,6 +68,13 @@ type (
 	DownloadFailedMsg struct{ Err error }
 	DownloadDoneMsg   struct{ FileCount int }
 
-	StatMsg   struct{}
-	DeleteMsg struct{}
+	DeleteMsg        struct{}
+	BucketDeleteMsg  struct{ Bucket string }
+	ProfileDeleteMsg struct{ Profile string }
+	RemoteDeleteMsg  struct{}
+	LocalDeleteMsg   struct{}
+
+	StatMsg       struct{}
+	BucketStatMsg struct{ Bucket string }
+	RemoteStatMsg struct{}
 )

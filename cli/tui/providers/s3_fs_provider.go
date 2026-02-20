@@ -454,8 +454,24 @@ func (p *S3FSProvider) WalkDir(root types.Entry, fn WalkDirFunc) error {
 	return nil
 }
 
-func (p *S3FSProvider) Delete(key string) error {
-	return nil
+func (p *S3FSProvider) Delete(keys ...string) (int, error) {
+	if !p.Active {
+		return 0, nil
+	}
+
+	s3Client, err := p.newClient()
+	if err != nil {
+		return 0, err
+	}
+
+	res, _, err := s3Client.DeleteObjects(p.Bucket, keys...)
+	if err != nil {
+		return 0, err
+	}
+
+	okCount := len(res.Deleted)
+
+	return okCount, nil
 }
 
 func (p *S3FSProvider) newClient() (*s3.Client, error) {

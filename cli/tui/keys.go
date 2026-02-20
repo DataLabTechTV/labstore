@@ -7,19 +7,19 @@ type KeyMap interface {
 }
 
 type HomeKeyMap struct {
-	Quit      key.Binding
-	Put       key.Binding
-	Get       key.Binding
-	Delete    key.Binding
-	Head      key.Binding
-	Refresh   key.Binding
-	NavUp     key.Binding
-	Open      key.Binding
-	Select    key.Binding
-	Next      key.Binding
-	Previous  key.Binding
-	Profiles  key.Binding
-	NewBucket key.Binding
+	Quit   key.Binding
+	Put    key.Binding
+	Get    key.Binding
+	Delete key.Binding
+	// Head      key.Binding
+	Refresh  key.Binding
+	NavUp    key.Binding
+	Open     key.Binding
+	Select   key.Binding
+	Next     key.Binding
+	Previous key.Binding
+	// Profiles  key.Binding
+	// NewBucket key.Binding
 
 	Down key.Binding
 	Up   key.Binding
@@ -40,32 +40,32 @@ func (k HomeKeyMap) HelpKeys() []key.Binding {
 		k.Put,
 		k.Get,
 		k.Delete,
-		k.Head,
+		// k.Head,
 		k.Refresh,
 		k.NavUp,
 		k.Open,
 		k.Select,
 		k.Next,
 		k.Previous,
-		k.Profiles,
-		k.NewBucket,
+		// k.Profiles,
+		// k.NewBucket,
 	}
 }
 
 var DefaultHomeKeyMap KeyMap = HomeKeyMap{
-	Quit:      key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "Quit")),
-	Put:       key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "PUT")),
-	Get:       key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "GET")),
-	Delete:    key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "DELETE")),
-	Head:      key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "HEAD")),
-	Refresh:   key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "Refresh")),
-	Open:      key.NewBinding(key.WithKeys("right", "enter"), key.WithHelp("→/⏎", "Open")),
-	NavUp:     key.NewBinding(key.WithKeys("left", "backspace"), key.WithHelp("←/⌫ ", "Up a Level")),
-	Select:    key.NewBinding(key.WithKeys(" "), key.WithHelp("␣", "Select")),
-	Next:      key.NewBinding(key.WithKeys("tab"), key.WithHelp("<tab>", "Next")),
-	Previous:  key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+<tab>", "Previous")),
-	Profiles:  key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "Profiles")),
-	NewBucket: key.NewBinding(key.WithKeys("ctrl+b"), key.WithHelp("ctrl+b", "New Bucket")),
+	Quit:   key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "Quit")),
+	Put:    key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "PUT")),
+	Get:    key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "GET")),
+	Delete: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "DELETE")),
+	// Head:      key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "HEAD")),
+	Refresh:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "Refresh")),
+	Open:     key.NewBinding(key.WithKeys("right", "enter"), key.WithHelp("→/⏎", "Open")),
+	NavUp:    key.NewBinding(key.WithKeys("left", "backspace"), key.WithHelp("←/⌫ ", "Up a Level")),
+	Select:   key.NewBinding(key.WithKeys(" "), key.WithHelp("␣", "Select")),
+	Next:     key.NewBinding(key.WithKeys("tab"), key.WithHelp("<tab>", "Next")),
+	Previous: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+<tab>", "Previous")),
+	// Profiles:  key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "Profiles")),
+	// NewBucket: key.NewBinding(key.WithKeys("ctrl+b"), key.WithHelp("ctrl+b", "New Bucket")),
 
 	Down: key.NewBinding(key.WithKeys("down", "j")),
 	Up:   key.NewBinding(key.WithKeys("up", "k")),

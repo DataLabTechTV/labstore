@@ -47,6 +47,20 @@ func (m BucketsPane) Update(msg tea.Msg) (BucketsPane, tea.Cmd) {
 			}
 		}
 
+	case messages.DeleteMsg:
+		if list, ok := m.Child.(simplelist.Model); ok {
+			if selection, ok := list.Selected(); ok {
+				cmd = func() tea.Msg { return messages.BucketDeleteMsg{Bucket: selection} }
+			}
+		}
+
+	case messages.StatMsg:
+		if list, ok := m.Child.(simplelist.Model); ok {
+			if selection, ok := list.Selected(); ok {
+				cmd = func() tea.Msg { return messages.BucketStatMsg{Bucket: selection} }
+			}
+		}
+
 	default:
 		m.Model, cmd = m.Model.Update(msg)
 	}
