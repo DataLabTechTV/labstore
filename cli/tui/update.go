@@ -186,6 +186,12 @@ func (m Model) HandleKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	case HomeKeyMap:
 		switch {
 
+		case key.Matches(msg, km.Profiles):
+			return m.comingSoon()
+
+		case key.Matches(msg, km.NewBucket):
+			return m.comingSoon()
+
 		case key.Matches(msg, km.Put):
 			return m, func() tea.Msg { return messages.StartUploadMsg{} }
 
@@ -750,6 +756,15 @@ func (m Model) sendToFocusedPane(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	return m, cmd
+}
+
+func (m Model) comingSoon() (Model, tea.Cmd) {
+	return m, func() tea.Msg {
+		return messages.AlertWarnMsg{
+			Title:   "Not Implemented",
+			Content: "Coming soon!",
+		}
+	}
 }
 
 func (m Model) loadProfilesCmd() tea.Cmd {
