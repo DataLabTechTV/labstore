@@ -12,6 +12,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/multiprogress"
 	"github.com/IllumiKnowLabs/labstore/cli/types"
+	"github.com/IllumiKnowLabs/labstore/server/helper"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
@@ -364,6 +365,11 @@ func (m Model) HandleLoadRemote(msg messages.LoadRemoteMsg) (Model, tea.Cmd) {
 	args = append(args, m.AppState.Bucket())
 
 	if m.AppState.HasRemotePath() {
+		if m.AppState.RemotePath() == "" {
+			m.remotePane.SetTitle("Remote")
+		} else {
+			m.remotePane.SetTitle(m.AppState.RemotePath())
+		}
 		args = append(args, m.AppState.RemotePath())
 	}
 
@@ -402,6 +408,8 @@ func (m Model) HandleLoadLocal(msg messages.LoadLocalMsg) (Model, tea.Cmd) {
 	if !m.AppState.HasLocalPath() {
 		return m, func() tea.Msg { return messages.AlertErrorMsg{Err: &errs.ErrLocalPathNotSet{}} }
 	}
+
+	m.localPane.SetTitle(helper.TildePath(m.AppState.LocalPath()))
 
 	if err := m.fsProvider.Select(m.AppState.LocalPath()); err != nil {
 		return m, func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
@@ -472,7 +480,7 @@ func (m Model) HandleStartUpload(msg messages.StartUploadMsg) (Model, tea.Cmd) {
 	}
 	cmds = append(cmds, cmd)
 
-	m.multiProgress = multiprogress.New(len(srcs), m.width/2, m.height/2)
+	m.multiProgress = multiprogress.New(m.width/2, m.height/2)
 	cmds = append(cmds, m.multiProgress.Init())
 
 	for _, src := range srcs {
@@ -584,7 +592,7 @@ func (m Model) HandleStartDownload(msg messages.StartDownloadMsg) (Model, tea.Cm
 	}
 	cmds = append(cmds, cmd)
 
-	m.multiProgress = multiprogress.New(len(srcs), m.width/2, m.height/2)
+	m.multiProgress = multiprogress.New(m.width/2, m.height/2)
 	cmds = append(cmds, m.multiProgress.Init())
 
 	for _, src := range srcs {
@@ -716,10 +724,10 @@ func (m Model) HandleAlertHide(msg messages.AlertHideMsg) (Model, tea.Cmd) {
 
 func (m *Model) setFocusedPane(focusedPane FocusedPane) {
 	m.focusedPane = focusedPane
-	m.bucketsPane.Model = m.bucketsPane.SetFocused(focusedPane == FocusBuckets)
-	m.profilesPane.Model = m.profilesPane.SetFocused(focusedPane == FocusProfiles)
-	m.remotePane.Model = m.remotePane.SetFocused(focusedPane == FocusRemote)
-	m.localPane.Model = m.localPane.SetFocused(focusedPane == FocusLocal)
+	m.bucketsPane.SetFocused(focusedPane == FocusBuckets)
+	m.profilesPane.SetFocused(focusedPane == FocusProfiles)
+	m.remotePane.SetFocused(focusedPane == FocusRemote)
+	m.localPane.SetFocused(focusedPane == FocusLocal)
 }
 
 func (m Model) sendToFocusedPane(msg tea.Msg) (Model, tea.Cmd) {

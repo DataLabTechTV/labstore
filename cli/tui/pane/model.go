@@ -55,9 +55,12 @@ func WithFileList() PaneOption {
 	}
 }
 
-func (m Model) SetFocused(focused bool) Model {
+func (m *Model) SetFocused(focused bool) {
 	m.Focused = focused
-	return m
+}
+
+func (m *Model) SetTitle(title string) {
+	m.Title = title
 }
 
 func (m *Model) Clear() {

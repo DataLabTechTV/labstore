@@ -17,7 +17,7 @@ type Model struct {
 	DownloadProgressCh <-chan messages.DownloadProgressMsg
 }
 
-func New(numItems, width, height int) *Model {
+func New(width, height int) *Model {
 	return &Model{
 		Progress: progress.New(progress.WithDefaultGradient()),
 		Width:    width,
