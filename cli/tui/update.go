@@ -90,6 +90,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.BucketDeleteMsg:
 		return m.HandleBucketDelete(msg)
 
+	case messages.RemoteDeleteMsg:
+		return m.HandleRemoteDelete(msg)
+
+	case messages.LocalDeleteMsg:
+		return m.HandleLocalDelete(msg)
+
 	case messages.RefreshAllMsg:
 		return m.HandleRefreshAll(msg)
 
@@ -455,6 +461,84 @@ func (m Model) HandleBucketDelete(msg messages.BucketDeleteMsg) (Model, tea.Cmd)
 		return messages.AlertInfoMsg{
 			Title:   "Bucket Deleted",
 			Content: fmt.Sprintf("Bucket %s was deleted", msg.Bucket),
+		}
+	}
+
+	refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+
+	return m, tea.Sequence(deleteCmd, refreshCmd)
+}
+
+func (m Model) HandleRemoteDelete(msg messages.RemoteDeleteMsg) (Model, tea.Cmd) {
+	fileList, ok := m.remotePane.Child.(filelist.Model)
+	if !ok {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Delete Failed",
+				Content: "Remote pane does not contain a file list",
+			}
+		}
+	}
+
+	srcs := fileList.Marked()
+	if len(srcs) < 1 {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Delete Failed",
+				Content: "No selected source files on remote",
+			}
+		}
+	}
+
+	deleteCmd := func() tea.Msg {
+		var okCount int
+		var err error
+
+		if okCount, err = m.s3FSProvider.Delete(srcs...); err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
+		return messages.AlertInfoMsg{
+			Title:   "Delete Success",
+			Content: fmt.Sprintf("%d objects were deleted", okCount),
+		}
+	}
+
+	refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+
+	return m, tea.Sequence(deleteCmd, refreshCmd)
+}
+
+func (m Model) HandleLocalDelete(msg messages.LocalDeleteMsg) (Model, tea.Cmd) {
+	fileList, ok := m.localPane.Child.(filelist.Model)
+	if !ok {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Delete Failed",
+				Content: "Local pane does not contain a file list",
+			}
+		}
+	}
+
+	srcs := fileList.Marked()
+	if len(srcs) < 1 {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Delete Failed",
+				Content: "No selected source files on local",
+			}
+		}
+	}
+
+	deleteCmd := func() tea.Msg {
+		var okCount int
+		var err error
+
+		if okCount, err = m.fsProvider.Delete(srcs...); err != nil {
+			return messages.AlertErrorMsg{Err: err}
+		}
+		return messages.AlertInfoMsg{
+			Title:   "Delete Success",
+			Content: fmt.Sprintf("%d files were deleted", okCount),
 		}
 	}
 

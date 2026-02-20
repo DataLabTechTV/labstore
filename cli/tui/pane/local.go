@@ -49,6 +49,9 @@ func (m LocalPane) Update(msg tea.Msg) (LocalPane, tea.Cmd) {
 	case messages.LevelUpMsg:
 		cmd = func() tea.Msg { return messages.LoadLocalMsg{Dirname: helper.Ptr("..")} }
 
+	case messages.DeleteMsg:
+		cmd = func() tea.Msg { return messages.LocalDeleteMsg{} }
+
 	default:
 		m.Model, cmd = m.Model.Update(msg)
 	}

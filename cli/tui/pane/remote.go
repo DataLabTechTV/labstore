@@ -49,6 +49,9 @@ func (m RemotePane) Update(msg tea.Msg) (RemotePane, tea.Cmd) {
 	case messages.LevelUpMsg:
 		cmd = func() tea.Msg { return messages.LoadRemoteMsg{Dirname: helper.Ptr("..")} }
 
+	case messages.DeleteMsg:
+		cmd = func() tea.Msg { return messages.RemoteDeleteMsg{} }
+
 	default:
 		m.Model, cmd = m.Model.Update(msg)
 	}

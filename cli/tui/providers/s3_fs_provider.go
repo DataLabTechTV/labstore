@@ -454,7 +454,7 @@ func (p *S3FSProvider) WalkDir(root types.Entry, fn WalkDirFunc) error {
 	return nil
 }
 
-func (p *S3FSProvider) Delete(keys ...string) (int, error) {
+func (p *S3FSProvider) Delete(srcs ...types.Entry) (int, error) {
 	if !p.Active {
 		return 0, nil
 	}
@@ -462,6 +462,26 @@ func (p *S3FSProvider) Delete(keys ...string) (int, error) {
 	s3Client, err := p.newClient()
 	if err != nil {
 		return 0, err
+	}
+
+	var keys []string
+	for _, src := range srcs {
+		if src.IsDir {
+			err := p.WalkDir(src, func(path string, d *types.Entry, err error) error {
+				if err != nil {
+					return err
+				}
+				if !d.IsDir {
+					keys = append(keys, d.Path)
+				}
+				return nil
+			})
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			keys = append(keys, src.Path)
+		}
 	}
 
 	res, _, err := s3Client.DeleteObjects(p.Bucket, keys...)
