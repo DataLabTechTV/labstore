@@ -66,7 +66,7 @@ type (
 		Err        error
 	}
 	DownloadFailedMsg struct{ Err error }
-	DownloadDoneMsg   struct{}
+	DownloadDoneMsg   struct{ FileCount int }
 
 	StatMsg   struct{}
 	DeleteMsg struct{}

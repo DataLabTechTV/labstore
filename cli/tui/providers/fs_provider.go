@@ -99,8 +99,8 @@ func (p *FSProvider) Children() ([]types.Entry, error) {
 	return entries, nil
 }
 
-func (p *FSProvider) Stat(path string) (types.Entry, error) {
-	return types.Entry{}, nil
+func (p *FSProvider) Stat(path string) (*types.Entry, error) {
+	return &types.Entry{}, nil
 }
 
 func (p *FSProvider) Delete(path string) error {

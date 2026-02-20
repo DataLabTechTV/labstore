@@ -3,12 +3,13 @@ package types
 import "time"
 
 type Entry struct {
-	Name    string
-	Path    string
-	IsDir   bool
-	Size    int64
-	ModTime time.Time
-	Marked  bool
+	Name        string
+	Path        string
+	IsDir       bool
+	Size        int64
+	ModTime     time.Time
+	ContentType string
+	Marked      bool
 }
 
 func EntryNames(entries []Entry) []string {

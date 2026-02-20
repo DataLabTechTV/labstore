@@ -11,6 +11,7 @@ import (
 	"github.com/IllumiKnowLabs/labstore/cli/tui/filelist"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/messages"
 	"github.com/IllumiKnowLabs/labstore/cli/tui/multiprogress"
+	"github.com/IllumiKnowLabs/labstore/cli/types"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
@@ -96,6 +97,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.UploadDoneMsg:
 		return m.HandleUploadDone(msg)
 
+	case messages.StartDownloadMsg:
+		return m.HandleStartDownload(msg)
+
+	case messages.DownloadProgressMsg:
+		return m.HandleDownloadProgress(msg)
+
+	case messages.DownloadFailedMsg:
+		return m.HandleDownloadFailed(msg)
+
+	case messages.DownloadDoneMsg:
+		return m.HandleDownloadDone(msg)
+
 	case messages.AlertInfoMsg:
 		return m.HandleAlertInfo(msg)
 
@@ -173,6 +186,9 @@ func (m Model) HandleKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 
 		case key.Matches(msg, km.Put):
 			return m, func() tea.Msg { return messages.StartUploadMsg{} }
+
+		case key.Matches(msg, km.Get):
+			return m, func() tea.Msg { return messages.StartDownloadMsg{} }
 
 		case key.Matches(msg, km.Refresh):
 			var cmds []tea.Cmd
@@ -435,7 +451,7 @@ func (m Model) HandleStartUpload(msg messages.StartUploadMsg) (Model, tea.Cmd) {
 		return m, func() tea.Msg {
 			return messages.AlertErrorMsg{
 				Title:   "Upload Failed",
-				Content: "No selected source files",
+				Content: "No selected source files on local",
 			}
 		}
 	}
@@ -460,11 +476,7 @@ func (m Model) HandleStartUpload(msg messages.StartUploadMsg) (Model, tea.Cmd) {
 	cmds = append(cmds, m.multiProgress.Init())
 
 	for _, src := range srcs {
-		stat, err := os.Stat(src.Path)
-		if err != nil {
-			return m, func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
-		}
-		m.multiProgress.Total += stat.Size()
+		m.multiProgress.Total += src.Size
 	}
 
 	m.multiProgress.UploadProgressCh = m.s3FSProvider.Upload(m.fsProvider.Path, srcs...)
@@ -525,6 +537,132 @@ func (m Model) HandleUploadDone(msg messages.UploadDoneMsg) (Model, tea.Cmd) {
 		return messages.AlertInfoMsg{
 			Title:   "Upload Success",
 			Content: fmt.Sprintf("Successfully uploaded %d file%c", msg.FileCount, plural),
+		}
+	}
+	cmds = append(cmds, alertCmd)
+
+	refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+	cmds = append(cmds, refreshCmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m Model) HandleStartDownload(msg messages.StartDownloadMsg) (Model, tea.Cmd) {
+	fileList, ok := m.remotePane.Child.(filelist.Model)
+	if !ok {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Download Failed",
+				Content: "Remote pane does not contain a file list",
+			}
+		}
+	}
+
+	srcs := fileList.Marked()
+	if len(srcs) < 1 {
+		return m, func() tea.Msg {
+			return messages.AlertErrorMsg{
+				Title:   "Download Failed",
+				Content: "No selected source files on remote",
+			}
+		}
+	}
+
+	var cmds []tea.Cmd
+
+	cmd := func() tea.Msg {
+		var plural rune
+		if len(srcs) > 1 {
+			plural = 's'
+		}
+		return messages.AlertInfoMsg{
+			Title: "Download Started",
+			Content: fmt.Sprintf(
+				"Downloading %d file%c to %s",
+				len(srcs), plural, m.fsProvider.Path),
+		}
+	}
+	cmds = append(cmds, cmd)
+
+	m.multiProgress = multiprogress.New(len(srcs), m.width/2, m.height/2)
+	cmds = append(cmds, m.multiProgress.Init())
+
+	for _, src := range srcs {
+		if src.IsDir {
+			err := m.s3FSProvider.WalkDir(src, func(path string, d *types.Entry, err error) error {
+				if !d.IsDir {
+					m.multiProgress.Total += d.Size
+				}
+				return nil
+			})
+			if err != nil {
+				cmd := func() tea.Msg { return messages.AlertErrorMsg{Err: err} }
+				cmds = append(cmds, cmd)
+				return m, tea.Sequence(cmds...)
+			}
+		} else {
+			m.multiProgress.Total += src.Size
+		}
+	}
+
+	m.multiProgress.DownloadProgressCh = m.s3FSProvider.Download(m.fsProvider.Path, srcs...)
+	cmds = append(cmds, m.waitForDownloadProgressCmd(len(srcs)))
+
+	return m, tea.Sequence(cmds...)
+}
+
+func (m Model) waitForDownloadProgressCmd(fileCount int) tea.Cmd {
+	return func() tea.Msg {
+		progressMsg, ok := <-m.multiProgress.DownloadProgressCh
+		if !ok {
+			time.Sleep(500 * time.Millisecond)
+			return messages.DownloadDoneMsg{FileCount: fileCount}
+		}
+
+		if progressMsg.Err != nil {
+			time.Sleep(500 * time.Millisecond)
+			return messages.DownloadFailedMsg{Err: progressMsg.Err}
+		}
+
+		return progressMsg
+	}
+}
+
+func (m Model) HandleDownloadProgress(msg messages.DownloadProgressMsg) (Model, tea.Cmd) {
+	multiProgress, cmd := m.multiProgress.Update(msg)
+	m.multiProgress = &multiProgress
+	return m, tea.Sequence(cmd, m.waitForDownloadProgressCmd(msg.FileCount))
+}
+
+func (m Model) HandleDownloadFailed(msg messages.DownloadFailedMsg) (Model, tea.Cmd) {
+	m.multiProgress = nil
+
+	var cmds []tea.Cmd
+
+	alertCmd := func() tea.Msg {
+		return messages.AlertErrorMsg{Err: msg.Err}
+	}
+	cmds = append(cmds, alertCmd)
+
+	refreshCmd := func() tea.Msg { return messages.RefreshAllMsg{} }
+	cmds = append(cmds, refreshCmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m Model) HandleDownloadDone(msg messages.DownloadDoneMsg) (Model, tea.Cmd) {
+	m.multiProgress = nil
+
+	var cmds []tea.Cmd
+
+	alertCmd := func() tea.Msg {
+		var plural rune
+		if msg.FileCount > 1 {
+			plural = 's'
+		}
+		return messages.AlertInfoMsg{
+			Title:   "Download Success",
+			Content: fmt.Sprintf("Successfully downloaded %d file%c", msg.FileCount, plural),
 		}
 	}
 	cmds = append(cmds, alertCmd)

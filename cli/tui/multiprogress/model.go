@@ -10,7 +10,7 @@ type Model struct {
 	Width    int
 	Height   int
 
-	Current []int64
+	Current map[int]int64
 	Total   int64
 
 	UploadProgressCh   <-chan messages.UploadProgressMsg
@@ -19,11 +19,9 @@ type Model struct {
 
 func New(numItems, width, height int) *Model {
 	return &Model{
-		Progress:           progress.New(progress.WithDefaultGradient()),
-		Width:              width,
-		Height:             height,
-		Current:            make([]int64, numItems),
-		UploadProgressCh:   make(chan messages.UploadProgressMsg),
-		DownloadProgressCh: make(chan messages.DownloadProgressMsg),
+		Progress: progress.New(progress.WithDefaultGradient()),
+		Width:    width,
+		Height:   height,
+		Current:  map[int]int64{},
 	}
 }

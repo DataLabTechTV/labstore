@@ -82,8 +82,8 @@ func (p *S3BucketProvider) Children() ([]types.Entry, error) {
 	return entries, nil
 }
 
-func (p *S3BucketProvider) Stat(path string) (types.Entry, error) {
-	return types.Entry{}, nil
+func (p *S3BucketProvider) Stat(bucket string) (*types.Entry, error) {
+	return &types.Entry{}, nil
 }
 
 func (p *S3BucketProvider) Delete(path string) error {
