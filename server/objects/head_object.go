@@ -21,7 +21,7 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 		var errForbidden *errs.ErrForbidden
 		if errors.As(err, &errForbidden) {
 			slog.Error("head object", "err", errForbidden)
-			errs.Handle(w, errs.S3AccessDenied())
+			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
@@ -30,19 +30,17 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 			slog.Error("head object", "err", errNotFound)
 
 			switch errNotFound.Type {
-			case errs.ErrEntityTypeObject:
-				errs.Handle(w, errs.S3NoSuchKey(errNotFound.Resource))
-			case errs.ErrEntityTypeBucket:
-				errs.Handle(w, errs.S3NoSuchBucket(bucket))
+			case errs.ErrEntityTypeObject, errs.ErrEntityTypeBucket:
+				w.WriteHeader(http.StatusNotFound)
 			default:
-				errs.Handle(w, errs.S3InternalError())
+				w.WriteHeader(http.StatusInternalServerError)
 			}
 
 			return
 		}
 
 		slog.Error("head object", "err", err)
-		errs.Handle(w, errs.S3InternalError())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer helper.CloseWithErr(res.Content, &err)
@@ -52,7 +50,7 @@ func HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	n, err := res.Content.Read(buf)
 	if err != nil && err != io.EOF {
 		slog.Error("head object", "err", err)
-		errs.Handle(w, errs.S3InternalError())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
