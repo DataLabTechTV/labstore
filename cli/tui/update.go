@@ -19,6 +19,7 @@ import (
 )
 
 const (
+	titleBarHeight  = 1
 	statusBarHeight = 1
 )
 
@@ -136,7 +137,7 @@ func (m Model) HandleWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 
 	m.bucketInfoPane.Width = leftPaneWidth
 	m.profileInfoPane.Width = leftPaneWidth
-	remainingHeight := m.height - m.bucketInfoPane.Height - m.profileInfoPane.Height - statusBarHeight
+	remainingHeight := m.height - m.bucketInfoPane.Height - m.profileInfoPane.Height - statusBarHeight - titleBarHeight
 
 	var cmds []tea.Cmd
 
@@ -160,13 +161,13 @@ func (m Model) HandleWindowSize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 
 	m.remotePane, cmd = m.remotePane.Update(tea.WindowSizeMsg{
 		Width:  rightPaneWidth,
-		Height: (m.height - statusBarHeight) / 2,
+		Height: (m.height - statusBarHeight - titleBarHeight) / 2,
 	})
 	cmds = append(cmds, cmd)
 
 	m.localPane, cmd = m.localPane.Update(tea.WindowSizeMsg{
 		Width:  rightPaneWidth,
-		Height: m.height - m.remotePane.Height - statusBarHeight,
+		Height: m.height - m.remotePane.Height - statusBarHeight - titleBarHeight,
 	})
 	cmds = append(cmds, cmd)
 

@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/IllumiKnowLabs/labstore/cli/render"
+	"github.com/IllumiKnowLabs/labstore/server/constants"
 	"github.com/charmbracelet/lipgloss"
 	overlay "github.com/rmhubbert/bubbletea-overlay"
 )
@@ -40,8 +43,24 @@ func (m Model) View() string {
 		alerts...,
 	)
 
+	var version string
+	if constants.GitTag == constants.Unknown {
+		version = constants.Version
+	} else {
+		version = constants.GitTag
+	}
+
+	titleBarView := lipgloss.NewStyle().
+		Align(lipgloss.Right).
+		Width(m.width).
+		Foreground(render.ActivePalette.TextMuted).
+		Bold(true).
+		PaddingRight(1).
+		Render(fmt.Sprintf("%s v%s, by %s, %s", constants.Name, version, constants.Author, constants.GitRepo))
+
 	mainView := lipgloss.JoinVertical(
 		lipgloss.Left,
+		titleBarView,
 		topPanes,
 		m.statusBar.View(),
 	)
