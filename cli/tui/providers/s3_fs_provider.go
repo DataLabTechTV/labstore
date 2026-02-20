@@ -37,6 +37,14 @@ type IndexedPath struct {
 	Path      string
 }
 
+type S3IndexedPath struct {
+	FileIndex int
+	Bucket    string
+	Key       string
+}
+
+type WalkDirFunc func(path string, d *types.Entry, err error) error
+
 func NewS3FSProvider() *S3FSProvider {
 	// TODO: keep state of last selected bucket and key (both might not exist anymore)
 	return &S3FSProvider{
@@ -141,7 +149,7 @@ func (p *S3FSProvider) Children() ([]types.Entry, error) {
 	return entries, nil
 }
 
-func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.UploadProgressMsg {
+func (p *S3FSProvider) Upload(srcRoot string, srcs ...types.Entry) <-chan messages.UploadProgressMsg {
 	progressCh := make(chan messages.UploadProgressMsg, 10)
 
 	go func() {
@@ -162,18 +170,17 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 
 		var indexedPaths []IndexedPath
 
-		for srcIndex, src := range srcs {
-			if helper.IsDir(src.Path) {
+		fileIndex := 0
+		for _, src := range srcs {
+			if src.IsDir {
 				err := filepath.WalkDir(src.Path, func(path string, d fs.DirEntry, err error) error {
 					if err != nil {
 						return err
 					}
 					if d.Type().IsRegular() {
-						indexedSrc := IndexedPath{
-							FileIndex: srcIndex,
-							Path:      path,
-						}
-						indexedPaths = append(indexedPaths, indexedSrc)
+						indexedPath := IndexedPath{FileIndex: fileIndex, Path: path}
+						indexedPaths = append(indexedPaths, indexedPath)
+						fileIndex++
 					}
 					return nil
 				})
@@ -182,29 +189,30 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 					return
 				}
 			} else {
-				indexedSrc := IndexedPath{FileIndex: srcIndex, Path: src.Path}
-				indexedPaths = append(indexedPaths, indexedSrc)
+				indexedPath := IndexedPath{FileIndex: fileIndex, Path: src.Path}
+				indexedPaths = append(indexedPaths, indexedPath)
+				fileIndex++
 			}
 		}
 
-		numFiles := len(indexedPaths)
+		fileCount := len(indexedPaths)
 
 		for _, indexedPath := range indexedPaths {
-			relPath, err := filepath.Rel(root, indexedPath.Path)
+			relPath, err := filepath.Rel(srcRoot, indexedPath.Path)
 			if err != nil {
 				progressCh <- messages.UploadProgressMsg{
-					FileCount: numFiles,
+					FileCount: fileCount,
 					FileIndex: indexedPath.FileIndex,
 					Err:       err,
 				}
 				continue
 			}
-			key := p.Key + strings.ReplaceAll(relPath, string(filepath.Separator), "/")
+			key := p.Key + filepath.ToSlash(relPath)
 
 			file, err := os.Open(indexedPath.Path)
 			if err != nil {
 				progressCh <- messages.UploadProgressMsg{
-					FileCount: numFiles,
+					FileCount: fileCount,
 					FileIndex: indexedPath.FileIndex,
 					Err:       err,
 				}
@@ -214,13 +222,13 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 			fileProgressCh := make(chan clientTypes.Progress, 10)
 
 			wg.Add(1)
-			go func(srcIndex int, fileProgress <-chan clientTypes.Progress) {
+			go func(fileIndex int, fileProgress <-chan clientTypes.Progress) {
 				defer wg.Done()
 
 				for msg := range fileProgress {
 					progressCh <- messages.UploadProgressMsg{
-						FileCount: numFiles,
-						FileIndex: srcIndex,
+						FileCount: fileCount,
+						FileIndex: fileIndex,
 						Uploaded:  int64(msg.Current),
 					}
 				}
@@ -232,7 +240,7 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 
 			if err != nil {
 				progressCh <- messages.UploadProgressMsg{
-					FileCount: numFiles,
+					FileCount: fileCount,
 					FileIndex: indexedPath.FileIndex,
 					Err:       err,
 				}
@@ -245,11 +253,208 @@ func (p *S3FSProvider) Upload(root string, srcs ...types.Entry) <-chan messages.
 	return progressCh
 }
 
-func (p *S3FSProvider) Stat(path string) (types.Entry, error) {
-	return types.Entry{}, nil
+func (p *S3FSProvider) Download(dstRoot string, srcs ...types.Entry) <-chan messages.DownloadProgressMsg {
+	progressCh := make(chan messages.DownloadProgressMsg, 10)
+
+	go func() {
+		defer close(progressCh)
+
+		var wg sync.WaitGroup
+
+		if !p.Active {
+			progressCh <- messages.DownloadProgressMsg{Err: &errs.ErrProviderInactive{}}
+			return
+		}
+
+		if !helper.IsDir(dstRoot) {
+			progressCh <- messages.DownloadProgressMsg{Err: &errs.ErrNotDirectory{}}
+			return
+		}
+
+		s3Client, err := p.newClient()
+		if err != nil {
+			progressCh <- messages.DownloadProgressMsg{Err: err}
+			return
+		}
+
+		var indexedPaths []S3IndexedPath
+
+		fileIndex := 0
+		for _, src := range srcs {
+			if src.IsDir {
+				err := p.WalkDir(src, func(path string, d *types.Entry, err error) error {
+					if err != nil {
+						return err
+					}
+					if !d.IsDir {
+						indexedPath := S3IndexedPath{FileIndex: fileIndex, Bucket: p.Bucket, Key: d.Path}
+						indexedPaths = append(indexedPaths, indexedPath)
+						fileIndex++
+					}
+					return nil
+				})
+				if err != nil {
+					progressCh <- messages.DownloadProgressMsg{Err: err}
+					return
+				}
+			} else {
+				indexedPath := S3IndexedPath{FileIndex: fileIndex, Bucket: p.Bucket, Key: src.Path}
+				indexedPaths = append(indexedPaths, indexedPath)
+				fileIndex++
+			}
+		}
+
+		fileCount := len(indexedPaths)
+
+		for _, indexedPath := range indexedPaths {
+			relKey, err := filepath.Rel(p.Key, indexedPath.Key)
+			if err != nil {
+				progressCh <- messages.DownloadProgressMsg{
+					FileCount: fileCount,
+					FileIndex: indexedPath.FileIndex,
+					Err:       err,
+				}
+				continue
+			}
+			localPath := filepath.Join(dstRoot, relKey)
+
+			dirPath := filepath.Dir(localPath)
+			if err := os.MkdirAll(dirPath, 0o755); err != nil {
+				progressCh <- messages.DownloadProgressMsg{
+					FileCount: fileCount,
+					FileIndex: indexedPath.FileIndex,
+					Err:       err,
+				}
+				return
+			}
+
+			writer, err := os.Create(localPath)
+			if err != nil {
+				progressCh <- messages.DownloadProgressMsg{
+					FileCount: fileCount,
+					FileIndex: indexedPath.FileIndex,
+					Err:       err,
+				}
+				continue
+			}
+
+			fileProgressCh := make(chan clientTypes.Progress, 10)
+
+			wg.Add(1)
+			go func(fileIndex int, fileProgress <-chan clientTypes.Progress) {
+				defer wg.Done()
+
+				for msg := range fileProgress {
+					progressCh <- messages.DownloadProgressMsg{
+						FileCount:  fileCount,
+						FileIndex:  fileIndex,
+						Downloaded: int64(msg.Current),
+					}
+				}
+			}(indexedPath.FileIndex, fileProgressCh)
+
+			_, err = s3Client.GetObject(p.Bucket, indexedPath.Key, writer, fileProgressCh)
+			close(fileProgressCh)
+			helper.CloseWithErr(writer, &err)
+
+			if err != nil {
+				progressCh <- messages.DownloadProgressMsg{
+					FileCount: fileCount,
+					FileIndex: indexedPath.FileIndex,
+					Err:       err,
+				}
+			}
+		}
+
+		wg.Wait()
+	}()
+
+	return progressCh
 }
 
-func (p *S3FSProvider) Delete(path string) error {
+func (p *S3FSProvider) Stat(key string) (*types.Entry, error) {
+	s3Client, err := p.newClient()
+	if err != nil {
+		return nil, err
+	}
+
+	key = path.Clean(key)
+
+	resp, err := s3Client.HeadObject(p.Bucket, key)
+	if err != nil {
+		return nil, err
+	}
+
+	entry := types.Entry{
+		Name:        path.Base(key),
+		Path:        key,
+		IsDir:       false,
+		ModTime:     resp.LastModified,
+		Size:        resp.ContentLength,
+		ContentType: resp.ContentType,
+	}
+
+	return &entry, nil
+}
+
+func (p *S3FSProvider) WalkDir(root types.Entry, fn WalkDirFunc) error {
+	if !p.Active {
+		return nil
+	}
+
+	if !root.IsDir {
+		return &errs.ErrNotDirectory{}
+	}
+
+	s3Client, err := p.newClient()
+	if err != nil {
+		return err
+	}
+
+	resCh := s3Client.ListObjects(p.Bucket, root.Path, true)
+
+	for res := range resCh {
+		if res.Err != nil {
+			if err := fn(root.Path, nil, res.Err); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if res.IsCommonPrefix() {
+			dirEntry := types.Entry{
+				Name:  path.Base(res.CommonPrefix.Prefix),
+				Path:  res.CommonPrefix.Prefix,
+				IsDir: true,
+			}
+			if err := fn(res.CommonPrefix.Prefix, &dirEntry, nil); err != nil {
+				return err
+			}
+			if err := p.WalkDir(dirEntry, fn); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if res.IsObject() {
+			entry := types.Entry{
+				Name:    path.Base(res.Object.Key),
+				Path:    res.Object.Key,
+				IsDir:   false,
+				ModTime: time.Time(res.Object.LastModified),
+				Size:    res.Object.Size,
+			}
+			if err := fn(res.Object.Key, &entry, nil); err != nil {
+				return err
+			}
+			continue
+		}
+	}
+
+	return nil
+}
+
+func (p *S3FSProvider) Delete(key string) error {
 	return nil
 }
 

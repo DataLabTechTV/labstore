@@ -90,7 +90,7 @@ func (c *Client) HeadObject(bucket, key string) (*HeadObjectResponse, error) {
 	return nil, errs.ErrHTTPStatusCode(resp.StatusCode)
 }
 
-func (c *Client) GetObject(bucket, key string, writer io.Writer, progress chan<- types.Progress) (int, error) {
+func (c *Client) GetObject(bucket, key string, writer io.Writer, progressCh chan<- types.Progress) (int, error) {
 	reqURL, err := c.baseURL.Parse(fmt.Sprintf("%s/%s", bucket, key))
 	if err != nil {
 		return 0, err
@@ -120,8 +120,8 @@ func (c *Client) GetObject(bucket, key string, writer io.Writer, progress chan<-
 
 				read += n
 
-				if progress != nil {
-					progress <- types.Progress{Current: read, Total: size}
+				if progressCh != nil {
+					progressCh <- types.Progress{Current: read, Total: size}
 				}
 			}
 

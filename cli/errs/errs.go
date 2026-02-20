@@ -57,3 +57,9 @@ type ErrProviderInactive struct{}
 func (e *ErrProviderInactive) Error() string {
 	return "provider is inactive"
 }
+
+type ErrNotDirectory struct{}
+
+func (e *ErrNotDirectory) Error() string {
+	return "not a directory"
+}
