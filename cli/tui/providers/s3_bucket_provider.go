@@ -51,22 +51,12 @@ func (p *S3BucketProvider) Children() ([]types.Entry, error) {
 		return []types.Entry{}, nil
 	}
 
-	profile, err := credentials.LoadProfile(p.Profile)
+	s3Client, err := p.newClient()
 	if err != nil {
 		return nil, err
 	}
 
-	client := s3.NewS3Client(
-		context.Background(),
-		p.Host,
-		p.Port,
-		profile.AccessKey,
-		profile.SecretKey,
-		false,
-		config.App.Server.S3.IO.BufferSize,
-	)
-
-	buckets, err := client.ListBuckets()
+	buckets, err := s3Client.ListBuckets()
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +76,39 @@ func (p *S3BucketProvider) Stat(bucket string) (*types.Entry, error) {
 	return &types.Entry{}, nil
 }
 
-func (p *S3BucketProvider) Delete(path string) error {
+func (p *S3BucketProvider) Delete(bucket string) error {
+	if !p.Active {
+		return nil
+	}
+
+	s3Client, err := p.newClient()
+	if err != nil {
+		return err
+	}
+
+	_, err = s3Client.DeleteBucket(bucket)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (p *S3BucketProvider) newClient() (*s3.Client, error) {
+	profile, err := credentials.LoadProfile(p.Profile)
+	if err != nil {
+		return nil, err
+	}
+
+	client := s3.NewS3Client(
+		context.Background(),
+		p.Host,
+		p.Port,
+		profile.AccessKey,
+		profile.SecretKey,
+		false,
+		config.App.Server.S3.IO.BufferSize,
+	)
+
+	return client, nil
 }

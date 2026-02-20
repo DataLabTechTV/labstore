@@ -2,36 +2,16 @@ package providers
 
 import (
 	"github.com/IllumiKnowLabs/labstore/cli/credentials"
-	"github.com/IllumiKnowLabs/labstore/cli/errs"
 	"github.com/IllumiKnowLabs/labstore/cli/types"
 )
 
-type ProfilesProvider struct {
-	ActiveProfile *string
-}
+type ProfilesProvider struct{}
 
 var initialized bool = false
 
 func NewProfilesProvider() *ProfilesProvider {
 	// TODO: keep state of last selected profile (fallback to default if it does not exist anymore)
-	return &ProfilesProvider{ActiveProfile: nil}
-}
-
-func (p *ProfilesProvider) Select(args ...string) error {
-	if len(args) < 1 {
-		return &errs.ErrInsufficientArguments{}
-	}
-
-	p.ActiveProfile = &args[0]
-	return nil
-}
-
-func (p *ProfilesProvider) Deselect() {
-	p.ActiveProfile = nil
-}
-
-func (p *ProfilesProvider) Selected() string {
-	return *p.ActiveProfile
+	return &ProfilesProvider{}
 }
 
 func (*ProfilesProvider) Children() ([]types.Entry, error) {

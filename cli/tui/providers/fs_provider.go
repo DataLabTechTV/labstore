@@ -103,8 +103,15 @@ func (p *FSProvider) Stat(path string) (*types.Entry, error) {
 	return &types.Entry{}, nil
 }
 
-func (p *FSProvider) Delete(path string) error {
-	return nil
+func (p *FSProvider) Delete(paths ...string) (int, error) {
+	okCount := 0
+	for _, path := range paths {
+		if err := os.Remove(path); err != nil {
+			return 0, err
+		}
+		okCount++
+	}
+	return okCount, nil
 }
 
 func parentDir(path string) (string, bool) {
