@@ -45,7 +45,7 @@ func (m Model) View() string {
 
 	var version string
 	if constants.GitTag == constants.Unknown {
-		version = constants.Version
+		version = fmt.Sprintf("v%s", constants.Version)
 	} else {
 		version = constants.GitTag
 	}
@@ -56,7 +56,7 @@ func (m Model) View() string {
 		Foreground(render.ActivePalette.TextMuted).
 		Bold(true).
 		PaddingRight(1).
-		Render(fmt.Sprintf("%s v%s, by %s, %s", constants.Name, version, constants.Author, constants.GitRepo))
+		Render(fmt.Sprintf("%s %s, by %s, %s", constants.Name, version, constants.Author, constants.GitRepo))
 
 	mainView := lipgloss.JoinVertical(
 		lipgloss.Left,
