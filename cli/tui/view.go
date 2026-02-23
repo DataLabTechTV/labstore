@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/IllumiKnowLabs/labstore/cli/render"
+	"github.com/IllumiKnowLabs/labstore/cli/tui/alert"
 	"github.com/IllumiKnowLabs/labstore/server/constants"
 	"github.com/charmbracelet/lipgloss"
 	overlay "github.com/rmhubbert/bubbletea-overlay"
@@ -65,7 +66,7 @@ func (m Model) View() string {
 		m.statusBar.View(),
 	)
 
-	view := overlay.Composite(alertsView, mainView, overlay.Right, overlay.Top, -2, 1)
+	view := overlay.Composite(alertsView, mainView, overlay.Left, overlay.Top, m.width-alert.DefaultWidth-2, 1)
 
 	if m.multiProgress != nil {
 		progressBarView := m.multiProgress.View()
